@@ -18,7 +18,7 @@ Type `genbank_select -h` for options.
 ## bam2tab.pl
 Script for filtering matepair reads from a SAM/BAM file.
 
-It optionally removes any pair of reads that (a) map to the same contig (since these have no scaffolding information), and (b) pairs where either read maps to within a specified distance from the edge of a contig. This is because there can be a lot of contamination from short-insert, FR reads in an MP library, which may lead to mis-scaffolds. By removing any read mapping to within X bases of a contig edge, you can ensure that pairs which pass the filter have a *minimum mapping distance* which is some value greater than the insert size of the contaminating FR reads.
+It optionally removes any pair of reads that (a) map to the same contig (since these have no scaffolding information), and (b) pairs where either read maps to within a specified distance from the edge of a contig. This is because there can be a lot of contamination from short-insert, FR reads in an MP library, which may lead to mis-scaffolds. By removing any read mapping to within X bases of a contig edge, you can ensure that pairs which pass the filter have a _minimum mapping distance_ which is some value greater than the insert size of the contaminating FR reads.
 
 Edge distance is calculated as:
 
