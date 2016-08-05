@@ -9,6 +9,11 @@ use Bio::Seq;
 use Bio::SeqIO;
 use Getopt::Long;
 
+##
+## TODO - set max insert as well? Ie remove pairs with $edge_distance > some_value?
+##
+##
+
 my $usage = "
 bam2tab.pl
 Converts SAM/BAM file to TAB format used in SSPACE.
@@ -21,13 +26,13 @@ OPTIONS:
   -f|--fasta         [FILE]  : fasta file of contigs [required]
   -d|--edge_distance [INT]   : filter based on minimum mapping distance from contig edge [default: 0]
   -s|--same_contig           : filter reads mapping to the same contig (i.e., are redundant) [default: no]
-  -p|--prefix        [STR]   : output prefix [PREFIX.mapping_table.txt]
+  -o|--out           [STR]   : output prefix [PREFIX.mapping_table.tab]
   -t|--outtype       [STR]   : Output format: 'table' => table [default], 'sam' => sam format
   -h|--help                  : prints this help message
 
 EXAMPLES:
-  (1) Get reads that map to within 1 kb of contig edges, discard any that map to the same contig:
-      >> bam2tab.pl -i mapping.bam -d 1000 -s -o mapping_table.1kb.txt
+  (1) Discard reads that map to within 1 kb of contig edges and that map to the same contig:
+      >> bam2tab.pl -i mapping.bam -d 1000 -s -p lib1
 \n";
 
 ## params with defaults
@@ -43,7 +48,7 @@ GetOptions (
   'fasta|f=s'          => \$fasta,
   'edge_distance|d:i'  => \$edge_distance,
   'same_contig|s'      => \$same,
-  'prefix|p:s'         => \$prefix,
+  'out|o:s'            => \$prefix,
   'outtype|t:s'        => \$outtype,
   'help|h'             => \$help,
 );
@@ -75,7 +80,7 @@ if ($outtype =~ m/sam/i){
   open ($SAM, "samtools view -h -f1 -F3340 $sam_file |") or die $!;
   print "Output set to SAM\n";
 } else {
-  $output = "$output.txt";
+  $output = "$output.tab";
   open ($SAM, "samtools view -f1 -F3340 $sam_file |") or die $!;
   print "Output set to TAB\n";
 }
