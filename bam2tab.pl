@@ -21,7 +21,7 @@ OPTIONS:
   -f|--fasta         [FILE]  : fasta file of contigs [required]
   -d|--edge_distance [INT]   : filter based on minimum mapping distance from contig edge [default: 0]
   -s|--same_contig           : filter reads mapping to the same contig (i.e., are redundant) [default: no]
-  -o|--output        [FILE]  : output file name [default: mapping_table.txt]
+  -p|--prefix        [STR]   : output prefix [PREFIX.mapping_table.txt]
   -t|--outtype       [STR]   : Output format: 'table' => table [default], 'sam' => sam format
   -h|--help                  : prints this help message
 
@@ -32,18 +32,18 @@ EXAMPLES:
 
 ## params with defaults
 my $edge_distance = 0;
-my $output = "mapping_table.txt";
+my $output = "mapping_table";
 my $outtype = "table";
 
 ## other args
-my ($sam_file,$fasta,$same,$help);
+my ($sam_file,$fasta,$same,$prefix,$help);
 
 GetOptions (
   'in|i=s'             => \$sam_file,
   'fasta|f=s'          => \$fasta,
   'edge_distance|d:i'  => \$edge_distance,
   'same_contig|s'      => \$same,
-  'output|o:s'         => \$output,
+  'prefix|p:s'         => \$prefix,
   'outtype|t:s'        => \$outtype,
   'help|h'             => \$help,
 );
@@ -55,6 +55,9 @@ die $usage unless ($sam_file && $fasta);
 if (system("samtools view &>/dev/null")==-1){
   die "[ERROR] Samtools error: is samtools in \$PATH?";
 }
+
+## set prefix if exists
+$output = "$prefix.$output" if $prefix;
 
 ## get sequence lengths from fasta
 my %lengths;
@@ -68,10 +71,11 @@ print "Found ".commify(scalar(keys %lengths))." contigs\n\n";
 ## open SAM/BAM file, only include proper pairs
 my $SAM;
 if ($outtype =~ m/sam/i){
-  $output = "mapping_table.sam";
+  $output = "$output.sam";
   open ($SAM, "samtools view -h -f1 -F3340 $sam_file |") or die $!;
   print "Output set to SAM\n";
 } else {
+  $output = "$output.txt";
   open ($SAM, "samtools view -f1 -F3340 $sam_file |") or die $!;
   print "Output set to TAB\n";
 }
