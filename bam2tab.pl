@@ -70,9 +70,12 @@ my $SAM;
 if ($outtype =~ m/sam/i){
   $output = "mapping_table.sam";
   open ($SAM, "samtools view -h -f1 -F3340 $sam_file |") or die $!;
+  print "Output set to SAM\n";
 } else {
   open ($SAM, "samtools view -f1 -F3340 $sam_file |") or die $!;
+  print "Output set to TAB\n";
 }
+print "Minimum mapping distance set to ".commify($edge_distance)." nt\n\n";
 
 my ($processed,$printed) = (0,0);
 open (my $OUT, ">$output") or die $!;
