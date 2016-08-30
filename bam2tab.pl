@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-## Author: reubwn
+## Author: reubwn Aug 2016
 
 use strict;
 use warnings;
@@ -9,34 +9,44 @@ use Bio::Seq;
 use Bio::SeqIO;
 use Getopt::Long;
 
-##
-## TODO - set max insert as well? Ie remove pairs with $edge_distance > some_value?
-##
-##
-
 my $usage = "
 bam2tab.pl
-Converts SAM/BAM file to TAB format used in SSPACE.
-NOTE: requires samtools in \$PATH and SAM/BAM sorted by readname (-n option in samtools sort).
+##########
 
+Converts SAM/BAM file to TAB format used in SSPACE.
+Optionally filters reads based on mapping distance from edge of contigs, to remove potential PE contaminant reads from MP datasets.
+Calculates mapping edge distances for pairs of reads, excludes pairs with edge distance < threshold (and optional edge distance > threshold):
+
+   contig1
+   ==========+++++++++++++
+     3'<----5'
+       read2(R)            contig2
+                           ++++++++==================
+                                 5'---->3'
+                                   read1(F)
+   The regions marked +++ must be > min_edge_distance && < max_edge_distance
+
+NOTE: requires samtools in \$PATH and SAM/BAM sorted by readname (-n option in samtools sort).
 USAGE: bam2tab.pl -i <bam_file> [-d mapping_distance] [-s] [-o output_table.txt]
 
 OPTIONS:
-  -i|--in            [FILE]  : SAM/BAM file [required]
-  -f|--fasta         [FILE]  : fasta file of contigs [required]
-  -d|--edge_distance [INT]   : filter based on minimum mapping distance from contig edge [default: 0]
-  -s|--same_contig           : filter reads mapping to the same contig (i.e., are redundant) [default: no]
-  -o|--out           [STR]   : output prefix [PREFIX.mapping_table.tab]
-  -t|--outtype       [STR]   : Output format: 'table' => table [default], 'sam' => sam format
-  -h|--help                  : prints this help message
+  -i|--in                [FILE]  : SAM/BAM file [required]
+  -f|--fasta             [FILE]  : fasta file of contigs [required]
+  -d|--min_edge_distance [INT]   : remove reads with edge distance < INT [default: 500]
+  -m|--max_edge_distance [INT]   : remove reads with edge distance > INT [default: 10,000]
+  -s|--same_contig               : remove reads mapping to the same contig (i.e., are redundant) [default: no]
+  -o|--out               [STR]   : output prefix [PREFIX.mapping_table.tab]
+  -t|--outtype           [STR]   : Output format: 'table' => table [default], 'sam' => sam format
+  -h|--help                      : prints this help message
 
 EXAMPLES:
   (1) Discard reads that map to within 1 kb of contig edges and that map to the same contig:
-      >> bam2tab.pl -i mapping.bam -d 1000 -s -p lib1
+      >> bam2tab.pl -i mapping.bam -d 1000 -s -o lib1
 \n";
 
 ## params with defaults
-my $edge_distance = 0;
+my $min_edge_distance = 500;
+my $max_edge_distance = 10000;
 my $output = "mapping_table";
 my $outtype = "table";
 
@@ -44,20 +54,21 @@ my $outtype = "table";
 my ($sam_file,$fasta,$same,$prefix,$help);
 
 GetOptions (
-  'in|i=s'             => \$sam_file,
-  'fasta|f=s'          => \$fasta,
-  'edge_distance|d:i'  => \$edge_distance,
-  'same_contig|s'      => \$same,
-  'out|o:s'            => \$prefix,
-  'outtype|t:s'        => \$outtype,
-  'help|h'             => \$help,
+  'in|i=s'                 => \$sam_file,
+  'fasta|f=s'              => \$fasta,
+  'min_edge_distance|d:i'  => \$min_edge_distance,
+  'max_edge_distance|m:i'  => \$max_edge_distance,
+  'same_contig|s'          => \$same,
+  'out|o:s'                => \$prefix,
+  'outtype|t:s'            => \$outtype,
+  'help|h'                 => \$help,
 );
 
 die $usage if $help;
 die $usage unless ($sam_file && $fasta);
 
 ## check samtools in $PATH
-if (system("samtools view &>/dev/null")==-1){
+if ( system("samtools view &>/dev/null" ) == -1){
   die "[ERROR] Samtools error: is samtools in \$PATH?";
 }
 
@@ -84,7 +95,8 @@ if ($outtype =~ m/sam/i){
   open ($SAM, "samtools view -f1 -F3340 $sam_file |") or die $!;
   print "Output set to TAB\n";
 }
-print "Minimum mapping distance set to ".commify($edge_distance)." nt\n\n";
+print "MIN mapping distance set to ".commify($min_edge_distance)." nt\n";
+print "MAX mapping distance set to ".commify($max_edge_distance)." nt\n\n";
 
 my ($processed,$printed) = (0,0);
 open (my $OUT, ">$output") or die $!;
@@ -132,7 +144,7 @@ while (<$SAM>){
     ##                                5'---->3'
     ##                                  read1(F)
     ##
-    ## the regions marked +++ must be > $edge_distance
+    ## the regions marked +++ must be > $min_edge_distance
 
     ## get start/end coords for both reads
     $start1 = $F[3];
@@ -160,7 +172,7 @@ while (<$SAM>){
     ##                                5'---->3'
     ##                                     read2(R)
     ##
-    ## the regions marked +++ must be > $edge_distance
+    ## the regions marked +++ must be > $min_edge_distance
 
     ## get start/end coords for both reads
     $start1 = $F[3] + $aln_length_1;
@@ -174,15 +186,18 @@ while (<$SAM>){
     $edge2 = $start2;
   }
 
-  ## print to $OUT if both $edge1 && $edge2 > $edge_distance
-  if (($edge1 > $edge_distance) && ($edge2 > $edge_distance)){
-    if ($outtype =~ m/sam/i){
-      print $OUT join "\t", @F;
-      print $OUT join "\t", @R;
-    } else {
-      print $OUT join "\t", $contig1,$start1,$end1,$contig2,$start2,$end2,"\n";
+  ## print to $OUT if both $edge1 && $edge2 > $min_edge_distance
+  ## AND both $edge1 and $edge2 < $max_edge_distance
+  if (($edge1 > $min_edge_distance) && ($edge2 > $min_edge_distance)){
+    if (($edge1 < $max_edge_distance) && ($edge2 < $max_edge_distance)){
+      if ($outtype =~ m/sam/i){
+        print $OUT join "\t", @F;
+        print $OUT join "\t", @R;
+      } else {
+        print $OUT join "\t", $contig1,$start1,$end1,$contig2,$start2,$end2,"\n";
+      }
+      $printed++;
     }
-    $printed++;
   }
 
   ## progress
