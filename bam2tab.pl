@@ -17,14 +17,15 @@ Converts SAM/BAM file to TAB format used in SSPACE.
 Optionally filters reads based on mapping distance from edge of contigs, to remove potential PE contaminant reads from MP datasets.
 Calculates mapping edge distances for pairs of reads, excludes pairs with edge distance < threshold (and optional edge distance > threshold):
 
-   contig1
-   ==========+++++++++++++
-     3'<----5'
-       read2(R)            contig2
-                           ++++++++==================
-                                 5'---->3'
-                                   read1(F)
-   The regions marked +++ must be > min_edge_distance && < max_edge_distance
+  contig1
+  ==========+++++++++++++
+   3'<----5'
+     read2(R)            contig2
+                         ++++++++==================
+                               5'---->3'
+                                 read1(F)
+
+  The regions marked +++ must be > min_edge_distance && < max_edge_distance
 
 NOTE: requires samtools in \$PATH and SAM/BAM sorted by readname (-n option in samtools sort).
 USAGE: bam2tab.pl -i <bam_file> [-d mapping_distance] [-s] [-o output_table.txt]
@@ -32,10 +33,10 @@ USAGE: bam2tab.pl -i <bam_file> [-d mapping_distance] [-s] [-o output_table.txt]
 OPTIONS:
   -i|--in                [FILE]  : SAM/BAM file [required]
   -f|--fasta             [FILE]  : fasta file of contigs [required]
-  -d|--min_edge_distance [INT]   : remove reads with edge distance < INT [default: 500]
-  -m|--max_edge_distance [INT]   : remove reads with edge distance > INT [default: 10,000]
-  -s|--same_contig               : remove reads mapping to the same contig (i.e., are redundant) [default: no]
-  -o|--out               [STR]   : output prefix [PREFIX.mapping_table.tab]
+  -d|--min_edge_distance [INT]   : discard reads with edge distance < INT [default: 500]
+  -m|--max_edge_distance [INT]   : discard reads with edge distance > INT [default: 10,000]
+  -s|--same_contig               : discard reads mapping to the same contig [default: no]
+  -o|--out               [STR]   : output prefix [default: mapping_table]
   -t|--outtype           [STR]   : Output format: 'table' => table [default], 'sam' => sam format
   -h|--help                      : prints this help message
 
@@ -113,11 +114,12 @@ while (<$SAM>){
     }
   }
 
-  my @F = split (/\t/, $_); ## first read
-  my @R = split (/\t/, <$SAM>); ## second read
+  my @read1 = split (/\t/, $_); ## first read
+  my @read2 = split (/\t/, <$SAM>); ## second read
 
   ## skip reads mapping to the same contig
-  if ( ($same) && ($F[6] eq "\=") ){
+  if ( ($same) && ($read1[6] eq "\=") ){
+    $processed++; ## still count them
     next;
   }
 
@@ -127,63 +129,62 @@ while (<$SAM>){
   my ($start1,$end1,$contig1, $start2,$end2,$contig2);
   my ($edge1,$edge2) = (0,0);
 
-  ## read1 is on forward strand, mate is on reverse strand
-  if ($F[1]&32){
-
-    ## calculate aln length from CIGAR
-    my ($aln_length_1,$aln_length_2) = (0,0);
-    my ($cigar1,$cigar2) = ($F[5],$R[5]);
-    $cigar1 =~ s/(\d+)[MX=DN]/$aln_length_1+=$1/eg;
-    $cigar2 =~ s/(\d+)[MX=DN]/$aln_length_2+=$1/eg;
-
-    ## contig2
-    ## ==========+++++++++++++
-    ##    3'<----5'
-    ##      read2(R)            contig1
-    ##                          ++++++++==================
-    ##                                5'---->3'
-    ##                                  read1(F)
-    ##
-    ## the regions marked +++ must be > $min_edge_distance
-
-    ## get start/end coords for both reads
-    $start1 = $F[3];
-    $end1 = $F[3] + $aln_length_1;
-    $contig1 = $F[2];
-    $start2 = $R[3] + $aln_length_2;
-    $end2 = $R[3];
-    $contig2 = $R[2];
-
-    $edge1 = $start1;
-    $edge2 = $lengths{$contig2} - $start2;
-
   ## read1 is on reverse strand, mate is on forward strand
-  } elsif ($F[1]&16) {
+  if ($read1[1]&16) {
     my ($aln_length_1,$aln_length_2) = (0,0);
-    my ($cigar1,$cigar2) = ($F[5],$R[5]);
+    my ($cigar1,$cigar2) = ($read1[5],$read2[5]);
     $cigar1 =~ s/(\d+)[MX=DN]/$aln_length_1+=$1/eg;
     $cigar2 =~ s/(\d+)[MX=DN]/$aln_length_2+=$1/eg;
 
-    ## contig1
-    ## ==========+++++++++++++
-    ##    3'<----5'
-    ##      read1(F)            contig2
-    ##                          ++++++++==================
-    ##                                5'---->3'
-    ##                                     read2(R)
+    ##                                       R2
+    ## contig1                               ---->
+    ## 5'======+++++++++++++ /break/ ++++++++=========3' F strand
+    ## 3'======+++++++++++++ /break/ ++++++++=========5' R strand
+    ##    <----                      contig2
+    ##    R1
     ##
-    ## the regions marked +++ must be > $min_edge_distance
+    ## the regions marked +++ must be > $min_edge_distance && < $max_edge_distance
 
     ## get start/end coords for both reads
-    $start1 = $F[3] + $aln_length_1;
-    $end1 = $F[3];
-    $contig1 = $F[2];
-    $start2 = $R[3];
-    $end2 = $R[3] + $aln_length_2;
-    $contig2 = $R[2];
+    $start1 = $read1[3] + $aln_length_1;
+    $end1 = $read1[3];
+    $contig1 = $read1[2];
+    $start2 = $read2[3];
+    $end2 = $read2[3] + $aln_length_2;
+    $contig2 = $read2[2];
 
     $edge1 = $lengths{$contig1} - $start1;
     $edge2 = $start2;
+
+  ## read2 is on reverse strand, mate is on forward strand
+  } elsif ($read2[1]&16){
+
+  ## calculate aln length from CIGAR
+  my ($aln_length_1,$aln_length_2) = (0,0);
+  my ($cigar1,$cigar2) = ($read1[5],$read2[5]);
+  $cigar1 =~ s/(\d+)[MX=DN]/$aln_length_1+=$1/eg;
+  $cigar2 =~ s/(\d+)[MX=DN]/$aln_length_2+=$1/eg;
+
+  ##                                       R1
+  ## contig1                               ---->
+  ## 5'======+++++++++++++ /break/ ++++++++=========3' F strand
+  ## 3'======+++++++++++++ /break/ ++++++++=========5' R strand
+  ##    <----                      contig2
+  ##    R2
+  ##
+  ## the regions marked +++ must be > $min_edge_distance && < $max_edge_distance
+
+  ## get start/end coords for both reads
+  $start1 = $read1[3];
+  $end1 = $read1[3] + $aln_length_1;
+  $contig1 = $read1[2];
+  $start2 = $read2[3] + $aln_length_2;
+  $end2 = $read2[3];
+  $contig2 = $read2[2];
+
+  $edge1 = $start1;
+  $edge2 = $lengths{$contig2} - $start2;
+
   }
 
   ## print to $OUT if both $edge1 && $edge2 > $min_edge_distance
@@ -191,8 +192,8 @@ while (<$SAM>){
   if (($edge1 > $min_edge_distance) && ($edge2 > $min_edge_distance)){
     if (($edge1 < $max_edge_distance) && ($edge2 < $max_edge_distance)){
       if ($outtype =~ m/sam/i){
-        print $OUT join "\t", @F;
-        print $OUT join "\t", @R;
+        print $OUT join "\t", @read1;
+        print $OUT join "\t", @read2;
       } else {
         print $OUT join "\t", $contig1,$start1,$end1,$contig2,$start2,$end2,"\n";
       }
