@@ -52,7 +52,6 @@ GetOptions (
   'in|i=s'                 => \$sam_file,
   'fasta|f=s'              => \$fasta,
   'min_edge_distance|d:i'  => \$min_edge_distance,
-  'max_edge_distance|m:i'  => \$max_edge_distance,
   'same_contig|s'          => \$same,
   'out|o:s'                => \$prefix,
   'outtype|t:s'            => \$outtype,
