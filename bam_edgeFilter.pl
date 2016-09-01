@@ -88,9 +88,9 @@ if ($outtype =~ m/sam/i){
 } else {
   die "Outtype not recognised!\n\n";
 }
-print "MIN mapping distance set to ".commify($min_edge_distance)." nt\n\n";
+print "MIN mapping distance set to ".commify($min_edge_distance)." nt\n";
 print "Discard reads mapping to same contig set to ";
-if ($same) {print "TRUE\n"} else {print "FALSE\n"};
+if ($same) {print "TRUE\n\n"} else {print "FALSE\n\n"};
 
 my ($processed,$printed) = (0,0);
 open (my $OUT, ">$outfile") or die $!;
