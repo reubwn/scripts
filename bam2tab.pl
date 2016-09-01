@@ -225,7 +225,7 @@ while (<$SAM>){
       print $OUT join "\t", @read1;
       print $OUT join "\t", @read2;
     } else {
-      print $OUT join "\t", $contig1,$start1,$end1,$contig2,$start2,$end2,"\n";
+      print $OUT join "\t", $contig1,$leftPos1,$rightPos1,$contig2,$leftPos2,$rightPos2,"\n";
     }
     $printed++;
   }
