@@ -23,16 +23,6 @@ Calculates mapping edge distances for pairs of reads, excludes pairs with edge d
 
   The regions marked +++ must be > min_edge_distance && < max_edge_distance
 
-
-##                                       R1
-## contig1                               ---->
-## 5'======+++++++++++++ /break/ ++++++++=========3' F strand
-## 3'======+++++++++++++ /break/ ++++++++=========5' R strand
-##    <----                      contig2
-##    R2
-##
-##
-
 NOTE: requires samtools in \$PATH and SAM/BAM sorted by readname (-n option in samtools sort).
 USAGE: bam2tab.pl -i <bam_file> [-d mapping_distance] [-s] [-o output_table.txt]
 
@@ -134,27 +124,33 @@ while (<$SAM>){
   #my ($fragment_leftmost,$fragment_rightmost,$distance_from_left,$distance_from_right);
   my ($leftPos1,$rightPos1,$contig1, $leftPos2,$rightPos2,$contig2);
   my ($leftEgde1,$rightEdge1,$leftEdge2,$rightEdge2) = (0,0,0,0);
-  my ($aln_length_1,$aln_length_2) = (0,0);
+  my ($alnLength1,$alnLength2) = (0,0);
 
   ## get read length from CIGAR
   my ($cigar1,$cigar2) = ($read1[5],$read2[5]);
-  $cigar1 =~ s/(\d+)[MX=DN]/$aln_length_1+=$1/eg;
-  $cigar2 =~ s/(\d+)[MX=DN]/$aln_length_2+=$1/eg;
+  $cigar1 =~ s/(\d+)[MX=DN]/$alnLength1+=$1/eg;
+  $cigar2 =~ s/(\d+)[MX=DN]/$alnLength2+=$1/eg;
 
   ## get left/right mapping coords for both reads
   ## NB not concerned with read orientation, ie $leftPos1 may be read1 start or end
   $leftPos1 = $read1[3];
-  $rightPos1 = $read1[3] + $aln_length_1;
+  $rightPos1 = $leftPos1 + $alnLength1;
   $contig1 = $read1[2];
 
   $leftPos2 = $read2[3];
-  $rightPos2 = $read2[3] + $aln_length_2;
+  $rightPos2 = $leftPos2 + $alnLength2;
   $contig2 = $read2[2];
 
-  $leftEgde1 = $leftPos1;
-  $rightEdge1 = $lengths{$contig1} - $rightPos1;
-  $leftEdge2 = $leftPos2;
-  $rightEdge2 = $lengths{$contig2} - $rightPos2;
+  $leftEdge_fromContigStart1 = $leftPos1;
+  $leftEdge_fromContigEnd1 = $lengths{$contig1} - $leftPos1;
+  $rightEdge_fromContigStart1 = $leftPos1 + $alnLength1;
+  $rightEdge_fromContigEnd1 = $lengths{$contig1} - $rightPos1;
+
+  $leftEdge_fromContigStart2 = $leftPos2;
+  $leftEdge_fromContigEnd2 = $lengths{$contig2} - $leftPos2;
+  $rightEdge_fromContigStart2 = $leftPos2 + $alnLength2;
+  $rightEdge_fromContigEnd2 = $lengths{$contig2} - $rightPos2;
+
 
   # ## read1 is on reverse strand, mate is on forward strand
   # if ($read1[1]&16) {
@@ -214,12 +210,15 @@ while (<$SAM>){
   #
   # }
 
-  ## print to $OUT if both $edge1 && $edge2 > $min_edge_distance
-  ## AND both $edge1 and $edge2 < $max_edge_distance
-  if ( ($leftEgde1 > $min_edge_distance) && ($leftEgde1 < $max_edge_distance) &&
-       ($rightEdge1 > $min_edge_distance) && ($rightEdge1 < $max_edge_distance) &&
-       ($leftEdge2 > $min_edge_distance) && ($leftEdge2 < $max_edge_distance) &&
-       ($rightEdge2 > $min_edge_distance) && ($rightEdge2 < $max_edge_distance) ){
+  ## print to $OUT if all edge distances > $min_edge_distance
+  if ( ($leftEdge_fromContigStart1 > $min_edge_distance) &&
+       ($leftEdge_fromContigEnd1) > $min_edge_distance &&
+       ($rightEdge_fromContigStart1) > $min_edge_distance &&
+       ($rightEdge_fromContigEnd1) > $min_edge_distance &&
+       ($leftEdge_fromContigStart2) > $min_edge_distance &&
+       ($leftEdge_fromContigEnd2) > $min_edge_distance &&
+       ($rightEdge_fromContigStart2) > $min_edge_distance &&
+       ($rightEdge_fromContigEnd2) > $min_edge_distance ){
 
     if ($outtype =~ m/sam/i){
       print $OUT join "\t", @read1;
