@@ -122,8 +122,8 @@ while (<$SAM>){
   ############################ calculate distances from contig edge
 
   #my ($fragment_leftmost,$fragment_rightmost,$distance_from_left,$distance_from_right);
-  my ($leftPos1,$rightPos1,$contig1, $leftPos2,$rightPos2,$contig2);
-  my ($leftEgde1,$rightEdge1,$leftEdge2,$rightEdge2) = (0,0,0,0);
+#  my ($leftPos1,$rightPos1,$contig1, $leftPos2,$rightPos2,$contig2);
+#  my ($leftEgde1,$rightEdge1,$leftEdge2,$rightEdge2) = (0,0,0,0);
   my ($alnLength1,$alnLength2) = (0,0);
 
   ## get read length from CIGAR
@@ -133,23 +133,23 @@ while (<$SAM>){
 
   ## get left/right mapping coords for both reads
   ## NB not concerned with read orientation, ie $leftPos1 may be read1 start or end
-  $leftPos1 = $read1[3];
-  $rightPos1 = $leftPos1 + $alnLength1;
-  $contig1 = $read1[2];
+  my $leftPos1 = $read1[3];
+  my $rightPos1 = $leftPos1 + $alnLength1;
+  my $contig1 = $read1[2];
 
-  $leftPos2 = $read2[3];
-  $rightPos2 = $leftPos2 + $alnLength2;
-  $contig2 = $read2[2];
+  my $leftPos2 = $read2[3];
+  my $rightPos2 = $leftPos2 + $alnLength2;
+  my $contig2 = $read2[2];
 
-  $leftEdge_fromContigStart1 = $leftPos1;
-  $leftEdge_fromContigEnd1 = $lengths{$contig1} - $leftPos1;
-  $rightEdge_fromContigStart1 = $leftPos1 + $alnLength1;
-  $rightEdge_fromContigEnd1 = $lengths{$contig1} - $rightPos1;
+  my $leftEdge_fromContigStart1 = $leftPos1;
+  my $leftEdge_fromContigEnd1 = $lengths{$contig1} - $leftPos1;
+  my $rightEdge_fromContigStart1 = $leftPos1 + $alnLength1;
+  my $rightEdge_fromContigEnd1 = $lengths{$contig1} - $rightPos1;
 
-  $leftEdge_fromContigStart2 = $leftPos2;
-  $leftEdge_fromContigEnd2 = $lengths{$contig2} - $leftPos2;
-  $rightEdge_fromContigStart2 = $leftPos2 + $alnLength2;
-  $rightEdge_fromContigEnd2 = $lengths{$contig2} - $rightPos2;
+  my $leftEdge_fromContigStart2 = $leftPos2;
+  my $leftEdge_fromContigEnd2 = $lengths{$contig2} - $leftPos2;
+  my $rightEdge_fromContigStart2 = $leftPos2 + $alnLength2;
+  my $rightEdge_fromContigEnd2 = $lengths{$contig2} - $rightPos2;
 
 
   # ## read1 is on reverse strand, mate is on forward strand
