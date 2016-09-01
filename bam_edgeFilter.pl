@@ -92,7 +92,7 @@ print "MIN mapping distance set to ".commify($min_edge_distance)." nt\n";
 print "Discard reads mapping to same contig set to ";
 if ($same) {print "TRUE\n\n"} else {print "FALSE\n\n"};
 
-my ($processed,$printed) = (0,0);
+my ($processed,$printed,$total) = (0,0,0);
 open (my $OUT, ">$outfile") or die $!;
 
 while (<$SAM>){
@@ -106,13 +106,14 @@ while (<$SAM>){
       next;
     }
   }
+  $total++; ## count total pairs
 
+  ## get SAM lines for both reads in pair
   my @read1 = split (/\t/, $_); ## first read in pair
   my @read2 = split (/\t/, <$SAM>); ## second read in pair
 
   ## skip reads mapping to the same contig
   if ( ($same) && ($read1[6] eq "\=") ){
-    $processed++; ## still count them
     next;
   }
 
@@ -175,14 +176,14 @@ while (<$SAM>){
 
   ## progress
   $processed++;
-  if ($processed % 200000 == 0){
+  if ($processed % 100000 == 0){
     print "\rProcessed ".commify($processed)." pairs...";
     $| = 1;
   }
 }
 
 print "\rProcessed ".commify($processed)." pairs\n";
-print "Printed ".commify($printed)." pairs\n\n";
+print "Printed ".commify($printed)." pairs (out of total ".commify($total)." pairs)\n\n";
 
 ###################### sub-routines
 
