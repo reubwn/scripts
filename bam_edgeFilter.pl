@@ -88,19 +88,14 @@ if ($outtype =~ m/sam/i){
 } else {
   die "Outtype not recognised!\n\n";
 }
+print "Discard reads mapping to same contig set to ";
+if ($same) {print "TRUE\n"} else {print "FALSE\n"};
 print "MIN mapping distance set to ".commify($min_edge_distance)." nt\n\n";
 
 my ($processed,$printed) = (0,0);
 open (my $OUT, ">$outfile") or die $!;
 
 while (<$SAM>){
-
-  ## progress
-  $processed++;
-  if ($processed % 100000 == 0){
-    print "\rProcessed ".commify($processed)." pairs...";
-    $| = 1;
-  }
 
   ## skip headers unless print to SAM
   if ($_ =~ m/^\@/){
@@ -176,6 +171,13 @@ while (<$SAM>){
       print $OUT join "\t", $contig1,$leftPos1,$rightPos1,$contig2,$leftPos2,$rightPos2,"\n";
     }
     $printed++;
+  }
+
+  ## progress
+  $processed++;
+  if ($processed % 200000 == 0){
+    print "\rProcessed ".commify($processed)." pairs...";
+    $| = 1;
   }
 }
 
