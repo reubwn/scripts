@@ -18,7 +18,7 @@ Type `genbank_select -h` for options.
 ## bam_edgeFilter.pl
 Script for filtering matepair reads from a SAM/BAM file.
 
-It optionally removes any pair of reads that (a) map to the same contig (since these have no scaffolding information), and (b) pairs where either read maps to within a specified distance from the edge of a contig. This is because there can be a lot of contamination from short-insert, FR reads in an MP library that may lead to mis-scaffolding. By removing any read mapping to within X bases of a contig edge, you can ensure that pairs which pass the filter have a _minimum mapping distance_ which is some value greater than the upper bounds of the insert size distribution of the contaminating FR reads.
+It optionally removes any pair of reads that (a) map to the same contig (since these have no scaffolding information), and (b) pairs where either read maps to within a specified distance from the edge of a contig. This is because there can be a lot of contamination from short-insert, FR reads in an MP library that may lead to mis-scaffolding. By removing any read mapping to within X bases of a contig edge, you can ensure that pairs which pass the filter have a __minimum mapping distance__ which is some value greater than the upper bounds of the insert size distribution of the contaminating FR reads.
 
 There are 4 edge distances for each mapped read:
 
@@ -45,8 +45,17 @@ OPTIONS:
   -h|--help                     : prints this help message
 ```
 
+Recommend to set -d to __at least__ the average insert size of the contaminating FR reads.
+
 ### Outputs
 Either as SAM (recommended) or as TAB formatted for use in SSPACE (untested).
+
+### Pipeline
+1. Map trimmed MP reads to assembly
+2. Estimate insert size distributions of FR, RF, Tandem reads (e.g., with PicardTools CollectInsertSizeMetrics)
+3. Run bam_edgeFilter.pl with -d <mean_FR_insert_size>
+4. Convert output SAM file to fastq (PicardTools SamToFastq)
+5. Scaffold contigs using filtered reads (e.g., SSPACE)
 
 ## bam2tab.pl
 Old SAM filtering code. Obsoleted by bam_edgeFilter.pl.
