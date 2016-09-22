@@ -16,7 +16,7 @@ OPTIONS:
   -h|--help : prints this message
 ";
 
-my ($gff_file, $help);
+my ($gff_file, $prefix, $help);
 #my $prefix = "STDOUT";
 
 GetOptions (
