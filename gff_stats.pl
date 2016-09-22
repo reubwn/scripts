@@ -17,7 +17,7 @@ OPTIONS:
 ";
 
 my ($gff_file, $help);
-my $prefix = STDOUT;
+my $prefix = "STDOUT";
 
 GetOptions (
   'in|i=s'                 => \$gff_file,
