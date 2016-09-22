@@ -30,7 +30,7 @@ die unless $gff_file;
 
 my ($transcript_name);
 
-open (my $IN, "<", $in) or die $!;
+open (my $IN, "<", $gff_file) or die $!;
 while (<$IN>){
   next if /^\#/;
   my @F = split /\t/, $_;
