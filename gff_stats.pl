@@ -17,7 +17,7 @@ OPTIONS:
 ";
 
 my ($in, $help);
-my $out = STDOUT;
+my $prefix = STDOUT;
 
 GetOptions (
   'in|i=s'                 => \$gff_file,
@@ -28,12 +28,12 @@ GetOptions (
 die if $help;
 die unless $in;
 
-my ($transcript_name)
+my ($transcript_name);
 
 open (my $IN, "<", $in) or die $!;
 while (<$IN>){
   next if /^\#/;
   my @F = split /\t/, $_;
   $transcript_name = $F[7] if $F[2] eq /transcript/;
-  print $out $transcript_name."\n";
+  print $prefix $transcript_name."\n";
 }
