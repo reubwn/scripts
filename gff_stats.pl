@@ -26,7 +26,7 @@ GetOptions (
 );
 
 die if $help;
-die unless $in;
+die unless $gff_file;
 
 my ($transcript_name);
 
