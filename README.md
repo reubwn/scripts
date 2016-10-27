@@ -63,7 +63,7 @@ Old SAM filtering code. Obsoleted by bam_edgeFilter.pl.
 ## orthofinder_selectGroups.pl
 Script for pulling out groups of interest from an orthofinder output file OrthologousGroups.txt, and writing each OG to a fasta file (eg., for downstream alignment etc).
 
-Construct the 'select' string like so: \"ID1=X,ID2=Y,IDN=Z\", where ID1 is the unique species ID corresponding to the entity on the lefthandside of the delimiter given by -d (default is '|'), and X is the number of members from species 1 you want to select groups containing.
+Construct the 'select' string like so: "ID1=X,ID2=Y,IDN=Z", where ID1 is the unique species ID corresponding to the entity on the lefthandside of the delimiter given by -d (default is '|'), and X is the number of members from species 1 you want to select groups containing.
 
 ### Usage
 ```
