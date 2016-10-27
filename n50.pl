@@ -17,7 +17,7 @@ die $usage if $ARGV[0] =~ /-h/;
 for my $i (0 .. $#ARGV){
 
 	my (@scaff_lengths);
-	my ($tot,$num200,$num500,$num1kb,$num10kb,$ass_N50,$ass_N90,$ass_L50,$ass_L90,$nns,$gc) = (0,0,0,0,0,0,0,0,0,0,0);
+	my ($tot,$num200,$num500,$num1kb,$num10kb,$ass_N50,$ass_N90,$ass_L50,$ass_L90,$nns,$soft,$gc,$nonATGCN) = (0,0,0,0,0,0,0,0,0,0,0,0,0);
 
 	my $in;
 	if ($ARGV[0] eq "-"){
@@ -30,9 +30,15 @@ for my $i (0 .. $#ARGV){
 		## count NNNs
 		my $c = $seq->seq() =~ tr/N//;
 		$nns += $c;
-		## count G+C
-		my $d = $seq->seq() =~ tr/[GC]//;
+		## count G+C (inc soft masked gc)
+		my $d = $seq->seq() =~ tr/GCgc//;
 		$gc += $d;
+		## count soft masked bases
+		my $e = $seq->seq() =~ tr/atgc//;
+		$soft += $e;
+		## count non-ATCGN bases
+		my $f = $seq->seq() =~ tr/ATGCNatgcn//c;
+		$nonATGCN += $f;
 	}
 
 	my $span = sum @scaff_lengths;
@@ -75,19 +81,22 @@ Total number sequences: ".commify(scalar(@sorted_scaffs))."
   \>500nt: ".commify($num500)."
   \>1kb  : ".commify($num1kb)."
   \>10kb : ".commify($num10kb)."
-Smallest: ".commify($sorted_scaffs[-1])."
-Longest : ".commify($sorted_scaffs[0])."
+Smallest : ".commify($sorted_scaffs[-1])."
+Longest  : ".commify($sorted_scaffs[0])."
 	
-\%GC : ".percentage($gc,$span)."
-NNNs: ".commify($nns)." (".percentage($nns,$span).")
+\%GC  : ".percentage($gc,$span)."
+NNNs : ".commify($nns)." (".percentage($nns,$span).")
+soft : ".commify($soft)." (".percentage($soft,$span).")
+other: ".commify($nonATGCN)." (".percentage($nonATGCN,$span).")
 
 N50: ".commify($ass_N50)."
 num: ".commify($ass_L50)."
 N90: ".commify($ass_N90)."
 num: ".commify($ass_L90)."
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*N50 = length of scaffold at 50\% genome
-*num = num scaffolds to get to N50
+*other = non-ATGCN characters
+*N50   = scaffold length at 50\% genome
+*num   = number scaffolds to get to N50
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n";
 }
 
