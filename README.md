@@ -59,3 +59,28 @@ Either as SAM (recommended) or as TAB formatted for use in SSPACE (untested).
 
 ## bam2tab.pl
 Old SAM filtering code. Obsoleted by bam_edgeFilter.pl.
+
+## orthofinder_selectGroups.pl
+Script for pulling out groups of interest from an orthofinder output file OrthologousGroups.txt, and writing each OG to a fasta file (eg., for downstream alignment etc).
+
+Construct the 'select' string like so: \"ID1=X,ID2=Y,IDN=Z\", where ID1 is the unique species ID corresponding to the entity on the lefthandside of the delimiter given by -d (default is '|'), and X is the number of members from species 1 you want to select groups containing.
+
+### Usage
+```
+  -i|--in     [FILE] : OrthologousGroups.txt file [required]
+  -f|--fasta  [FILE] : path to directory of fasta files used to construct OrthologousGroups.txt [required]
+  -d|--delim  [STR]  : delimiter used in the protein naming structure [assumes an OrthoMCL-style schema of "SPECIES_ID|PROTEIN_ID"]
+  -s|--select [STR]  : select string, eg. "ID1=1,ID2=1,IDN=1" would return 1:1 orthologous groups
+  -n|--noseqs        : Don't print sequences; just count the groups
+  -o|--out    [STR]  : output prefix [default: selectGroups_output]
+  -h|--help          : prints this help message
+```
+
+### Outputs
+A file "selectGroups_output.groups.txt" with only selected groups written, and a directory "selectGroups_outputDir/" with fasta files containing sequence data of selected groups.
+
+### Example
+Select ONLY those groups where species ARIC and AVAG have 4 members each, and species RMAG and RMAC have 2 members each:
+```
+>> ./orthofinder_selectGroups.pl -i OrthologousGroups.txt -f fastas/ -s "ARIC=4,AVAG=4,RMAG=2,RMAC=2"
+```
