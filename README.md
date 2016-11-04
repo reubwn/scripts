@@ -84,3 +84,17 @@ Select ONLY those groups where species ARIC and AVAG have 4 members each, and sp
 ```
 >> ./orthofinder_selectGroups.pl -i OrthologousGroups.txt -f fastas/ -s "ARIC=4,AVAG=4,RMAG=2,RMAC=2"
 ```
+
+## gc_window.pl
+Script for calculating G+C proportion in sliding windows across a fasta file. Omits windows with too many NNNs (>= 50\%).
+
+### Usage
+```
+  -f|--fasta     [FILE]  : input fasta file [required]
+  -w|--window    [INT]   : window size to calculate \%GC over [default: 500]
+  -s|--step      [INT]   : step size for next window [default: same as window size]
+  -N|--threshold [FLOAT] : threshold for proportion of NNNs in window, otherwise will print \"NA\" [default: 0.5]
+  -o|--out       [STR]   : output filename [default: print to STDOUT]
+  -n|--noheader          : omit header from output [default: print header]
+  -h|--help              : prints this help message
+```
