@@ -72,13 +72,13 @@ while (my $seq = $in -> next_seq()){
       $prop_nn = 1;
     } elsif ($nn > 0) { ## there are some NNNs in window
       $prop_nn = sprintf("%.4f",($nn/$window);
-      if ($prop_nn >= $threshold_NNNs) {
+      if ($prop_nn >= $threshold_NNNs) { ## if proportion NNNs is greater than threshold
         $prop_gc = "NA";
       } else {
         $prop_gc = sprintf("%.4f",($gc/(length($substring)-$nn)));
       }
-    } else {
-      $prop_gc = sprintf("%.4f",($gc/(length($substring)-$nn)));
+    } else { ## there are no NNNs
+      $prop_gc = sprintf("%.4f",($gc/$window);
     }
     print $OUT join "\t", $seq->display_id, $w, commify($start), commify($window), commify(length($substring)), commify($gc), commify($nn), $prop_gc, "\n";
     $start += $step;

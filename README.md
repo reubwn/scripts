@@ -86,7 +86,7 @@ Select ONLY those groups where species ARIC and AVAG have 4 members each, and sp
 ```
 
 ## gc_window.pl
-Script for calculating G+C proportion in sliding windows across a fasta file. Omits windows with too many NNNs (>= 50\%).
+Script for calculating G+C proportion in sliding windows across a fasta file. Omits windows with too many NNNs (>= 50%).
 
 ### Usage
 ```
