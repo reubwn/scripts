@@ -13,14 +13,14 @@ use File::Path 'rmtree';
 
 my $usage = "
 SYNOPSIS:
-Parses Orthofinder output file \"OrthologousGroups.txt\" for groups corresponding to input criteria.
-Construct the 'select' string like so: \"ID1=X,ID2=Y,IDN=Z\", where ID1 is the unique species ID
-corresponding to the entity on the lefthandside of the delimiter given by -d (default is '|'), and
-X is the number of members from species 1 you want to select groups containing.
+  Parses Orthofinder output file \"OrthologousGroups.txt\" for groups corresponding to input criteria.
+  Construct the 'select' string like so: \"ID1=X,ID2=Y,IDN=Z\", where ID1 is the unique species ID
+  corresponding to the entity on the lefthandside of the delimiter given by -d (default is '|'), and
+  X is the number of members from species 1 you want to select groups containing.
 
 OUTPUTS:
-A file \"selectGroups_output.groups.txt\" with only selected groups written, and a directory \"selectGroups_outputDir/\"
-with fasta files containing sequence data of selected groups.
+  A file \"selectGroups_output.groups.txt\" with only selected groups written, and a directory \"selectGroups_outputDir/\"
+  with fasta files containing sequence data of selected groups.
 
 OPTIONS:
   -i|--in     [FILE] : OrthologousGroups.txt file [required]
@@ -32,8 +32,8 @@ OPTIONS:
   -h|--help          : prints this help message
 
 EXAMPLES:
-Select ONLY those groups where species ARIC and AVAG have 4 members each, and species RMAG and RMAC have 2 members each:
-  >> ./orthofinder_selectGroups.pl -i OrthologousGroups.txt -f fastas/ -s \"ARIC=4,AVAG=4,RMAG=2,RMAC=2\"
+  Select ONLY those groups where species ARIC and AVAG have 4 members each, and species RMAG and RMAC have 2 members each:
+    >> ./orthofinder_selectGroups.pl -i OrthologousGroups.txt -f fastas/ -s \"ARIC=4,AVAG=4,RMAG=2,RMAC=2\"
 \n";
 
 my ($in,$fastas,$select,$noseqsplease,$out,$help);
