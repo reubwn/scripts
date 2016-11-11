@@ -93,3 +93,21 @@ close $FILE;
 foreach (nsort keys %filter_hash) {
   print $OUT "$_\n";
 }
+
+############################# subs
+
+sub commify {
+    my $text = reverse $_[0];
+    $text =~ s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/g;
+    return scalar reverse $text;
+}
+
+sub percentage {
+    my $numerator = $_[0];
+    my $denominator = $_[1];
+    my $places = "\%.2f"; ## default is two decimal places
+    if (exists $_[2]){$places = "\%.".$_[2]."f";};
+    my $float = (($numerator / $denominator)*100);
+    my $rounded = sprintf("$places",$float);
+    return "$rounded\%";
+}
