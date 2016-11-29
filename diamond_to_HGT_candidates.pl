@@ -94,7 +94,7 @@ while (<$DIAMOND>) {
   my @F = split (/\s+/, $_);
   if ($F[($tax_column-1)] !~ m/\d+/) {
     print STDERR "[WARN] The taxid ".$F[($tax_column-1)]." on line $. of $in does not look like a valid NCBI taxid... Skipping this entry\n" if $verbose;
-    $skipped++;
+    $skipped_entries++;
     next;
   }
   $bitscore_hash{$F[($tax_column-1)]} += $F[($bitscore_column-1)]; ## sum bitscore per taxid; key= taxid, value= sumofbitscores
