@@ -20,15 +20,16 @@ SYNOPSIS:
 OUTPUTS:
 
 OPTIONS:
-  -i|--in              [FILE] : tab formatted Diamond output file [required]
-  -n|--nodesDB         [FILE] : nodesDB.txt file from blobtools [required]
-  -t|--taxid_threshold [INT]  : NCBI taxid to recurse up to; i.e., threshold taxid to define \"ingroup\" [default = 33208 (metazoa)]
-  -c|--taxid_column    [INT]  : define taxid column for --in (first column = 1) [default: 13]
-  -b|--bitscore_column [INT]  : define bitscore column for --in (first column = 1) [default: 12]
-  -p|--prefix          [FILE] : filename prefix for outfile [default = INFILE.HGT_decisions.txt]
-  -#|--header                 : don't print header [default: do print it]
-  -v|--verbose                : say more things [default: be quiet]
-  -h|--help                   : prints this help message
+  -i|--in              [FILE]   : tab formatted Diamond output file [required]
+  -n|--nodesDB         [FILE]   : nodesDB.txt file from blobtools [required]
+  -t|--taxid_threshold [INT]    : NCBI taxid to recurse up to; i.e., threshold taxid to define \"ingroup\" [default = 33208 (metazoa)]
+  -c|--taxid_column    [INT]    : define taxid column for --in (first column = 1) [default: 13]
+  -b|--bitscore_column [INT]    : define bitscore column for --in (first column = 1) [default: 12]
+  -d|--delimiter       [STRING] : define delimiter to split --in (specify \"diamond\" for Diamond files (\"\\s+\") or \"blast\" for BLAST files (\"\\t\")) [default: diamond]
+  -p|--prefix          [FILE]   : filename prefix for outfile [default = INFILE.HGT_decisions.txt]
+  -#|--header                   : don't print header [default: do print it]
+  -v|--verbose                  : say more things [default: be quiet]
+  -h|--help                     : prints this help message
 
 EXAMPLES:
 
@@ -38,7 +39,7 @@ my ($in,$nodesDB,$prefix,$outfile,$header,$verbose,$help);
 my $tax_threshold = 33208;
 my $tax_column = 13;
 my $bitscore_column = 12;
-#my $proportion = 0.9;
+my $delimiter = "diamond";
 
 GetOptions (
   'in|i=s'              => \$in,
@@ -46,6 +47,7 @@ GetOptions (
   'tax_threshold|t:i'   => \$tax_threshold,
   'tax_column|c:i'      => \$tax_column,
   'bitscore_column|b:i' => \$bitscore_column,
+  'delimiter|d:s'       => \$delimiter,
   'prefix|p:s'          => \$prefix,
   'header|#'            => \$header,
   'verbose|v'           => \$verbose,
@@ -62,8 +64,17 @@ if ($prefix) {
   $outfile = $in.".HGT_decisions.txt";
 }
 
+## define delimiter:
+if ($delimiter eq "diamond") {
+  $delimiter = qr/\s+/;
+} elsif ($delimiter eq "blast") {
+  $delimiter = qr/\t/;
+} else {
+  die "[ERROR] Unknown delimiter, please choose \"diamond\" or \"blast\"\n";
+}
+
 ## parse nodesDB:
-print STDOUT "Building taxonomy databases from $nodesDB...\n";
+print STDOUT "[INFO] Building taxonomy databases from $nodesDB...";
 my (%nodes_hash, %names_hash, %rank_hash, %file_hash);
 open(my $NODES, $nodesDB) or die $!;
 while (<$NODES>) {
@@ -75,7 +86,8 @@ while (<$NODES>) {
   $rank_hash{$F[0]} = $F[1]; ## key= taxid; value= rank
 }
 close $NODES;
-print STDOUT "  Nodes parsed: ".scalar(keys %nodes_hash)."\n";
+print STDOUT " done\n";
+print STDOUT "[INFO] Nodes parsed: ".scalar(keys %nodes_hash)."\n";
 #foreach (nsort keys %tax_hash) { print "$_\t$tax_hash{$_}\n"; }
 
 ## test recursive walk:
@@ -84,14 +96,14 @@ print STDOUT "  Nodes parsed: ".scalar(keys %nodes_hash)."\n";
 #print "Result is: ".tax_walk_to_get_rank($test)."\n";
 
 ## parse Diamond file:
-print STDOUT "Parsing Diamond file: $in...\n";
+print STDOUT "[INFO] Parsing Diamond file: $in...";
 my (%bitscore_hash,%sum_bitscores_per_query_hash,%num_hits_per_query_hash);
 my $skipped_entries = 0;
 open (my $DIAMOND, $in) or die $!;
 while (<$DIAMOND>) {
   chomp;
   next if /^\#/;
-  my @F = split (/\s+/, $_);
+  my @F = split ($delimiter, $_);
   if ($F[($tax_column-1)] !~ m/\d+/) {
     print STDERR "[WARN] The taxid ".$F[($tax_column-1)]." on line $. of $in does not look like a valid NCBI taxid... Skipping this entry\n" if $verbose;
     $skipped_entries++;
@@ -102,8 +114,8 @@ while (<$DIAMOND>) {
   $num_hits_per_query_hash{$F[0]}++; ## not sure if this is needed?
 }
 close $DIAMOND;
-print STDOUT "  Done\n";
-print STDOUT "  [INFO] There were $skipped_entries invalid taxids in $in (run with \$verbose to see them); these entries were omitted from the analysis\n" if $skipped_entries > 0;
+print STDOUT " done\n";
+print STDOUT "[WARN] There were $skipped_entries invalid taxids in \"$in\" (run with --verbose to see them); these entries were omitted from the analysis\n" if $skipped_entries > 0;
 
 ## open outfile:
 open (my $OUT, ">",$outfile) or die $!;
@@ -112,6 +124,8 @@ print $OUT "\#query\ttaxid\tbestsumbitscore\tsuperkingdom;kingdom;phylum\tingrou
 ############################################ MAIN CODE
 
 ## get winning bitscore and taxid; calculate congruence among all taxids for all hits per query:
+my $processed = 0;
+print STDOUT "[INFO] Calculating bestsum bitscore and hit support...";
 foreach my $query (nsort keys %sum_bitscores_per_query_hash) {
   my %bitscore_hash = %{ $sum_bitscores_per_query_hash{$query} }; ## key= taxid; value= summed bitscore
   my (%count_categories, %support_categories);
@@ -133,6 +147,13 @@ foreach my $query (nsort keys %sum_bitscores_per_query_hash) {
 
   ## print to $out
   print $OUT join "\t", $query, $taxid_with_highest_bitscore, $bitscore_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank($taxid_with_highest_bitscore), "ingroup=".$names_hash{$tax_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, "\n";
+
+  ## progress
+  $processed++;
+  if ($processed % 1000 == 0){
+    print "\r[PROGRESS] Processed ".commify($processed)." queries...";
+    $| = 1;
+  }
 }
 close $OUT;
 
