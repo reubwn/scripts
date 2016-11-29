@@ -89,8 +89,12 @@ my (%bitscore_hash,%sum_bitscores_per_query_hash,%num_hits_per_query_hash);
 open (my $DIAMOND, $in) or die $!;
 while (<$DIAMOND>) {
   chomp;
-  next if /\#/;
+  next if /^\#/;
   my @F = split (/\s+/, $_);
+  if ($F[($tax_column-1)] !~ m/\d+/) {
+    print STDERR "[WARN] The taxid ".$F[($tax_column-1)]." on line $. of $in does not look like a valid NCBI taxid... Skipping this entry\n";
+    next;
+  }
   $bitscore_hash{$F[($tax_column-1)]} += $F[($bitscore_column-1)]; ## sum bitscore per taxid; key= taxid, value= sumofbitscores
   $sum_bitscores_per_query_hash{$F[0]} = \%bitscore_hash; ## key= query name; value= hash of {key= taxid; value= sum of bitscores per taxid}
   $num_hits_per_query_hash{$F[0]}++; ## not sure if this is needed?
