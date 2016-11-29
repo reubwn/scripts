@@ -86,13 +86,15 @@ print STDOUT "  Nodes parsed: ".scalar(keys %nodes_hash)."\n";
 ## parse Diamond file:
 print STDOUT "Parsing Diamond file: $in...\n";
 my (%bitscore_hash,%sum_bitscores_per_query_hash,%num_hits_per_query_hash);
+my $skipped_entries = 0;
 open (my $DIAMOND, $in) or die $!;
 while (<$DIAMOND>) {
   chomp;
   next if /^\#/;
   my @F = split (/\s+/, $_);
   if ($F[($tax_column-1)] !~ m/\d+/) {
-    print STDERR "[WARN] The taxid ".$F[($tax_column-1)]." on line $. of $in does not look like a valid NCBI taxid... Skipping this entry\n";
+    print STDERR "[WARN] The taxid ".$F[($tax_column-1)]." on line $. of $in does not look like a valid NCBI taxid... Skipping this entry\n" if $verbose;
+    $skipped++;
     next;
   }
   $bitscore_hash{$F[($tax_column-1)]} += $F[($bitscore_column-1)]; ## sum bitscore per taxid; key= taxid, value= sumofbitscores
@@ -101,6 +103,7 @@ while (<$DIAMOND>) {
 }
 close $DIAMOND;
 print STDOUT "  Done\n";
+print STDOUT "  [INFO] There were $skipped_entries invalid taxids in $in (run with \$verbose to see them); these entries were omitted from the analysis\n" if $skipped_entries > 0;
 
 ## open outfile:
 open (my $OUT, ">",$outfile) or die $!;
