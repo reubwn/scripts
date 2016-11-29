@@ -22,8 +22,8 @@ OUTPUTS:
 OPTIONS:
   -i|--in              [FILE] : tab formatted Diamond output file [required]
   -n|--nodesDB         [FILE] : nodesDB.txt file from blobtools [required]
-  -t|--tax_threshold   [INT]  : NCBI taxid to recurse up to; i.e., threshold taxid to define \"ingroup\" [default = 33208 (metazoa)]
-  -c|--tax_column      [INT]  : define taxid column for --in (first column = 1) [default: 13]
+  -t|--taxid_threshold [INT]  : NCBI taxid to recurse up to; i.e., threshold taxid to define \"ingroup\" [default = 33208 (metazoa)]
+  -c|--taxid_column    [INT]  : define taxid column for --in (first column = 1) [default: 13]
   -b|--bitscore_column [INT]  : define bitscore column for --in (first column = 1) [default: 12]
   -p|--prefix          [FILE] : filename prefix for outfile [default = INFILE.HGT_decisions.txt]
   -#|--header                 : don't print header [default: do print it]
@@ -41,13 +41,15 @@ my $bitscore_column = 12;
 #my $proportion = 0.9;
 
 GetOptions (
-  'in|i=s'          => \$in,
-  'nodesDB|n=s'     => \$nodesDB,
-  'tax_threshold|t:s' => \$tax_threshold,
-  'prefix|p:s'         => \$prefix,
-  'header|#'        => \$header,
-  'verbose|v'       => \$verbose,
-  'help|h'          => \$help,
+  'in|i=s'              => \$in,
+  'nodesDB|n=s'         => \$nodesDB,
+  'tax_threshold|t:i'   => \$tax_threshold,
+  'tax_column|c:i'      => \$tax_column,
+  'bitscore_column|b:i' => \$bitscore_column,
+  'prefix|p:s'          => \$prefix,
+  'header|#'            => \$header,
+  'verbose|v'           => \$verbose,
+  'help|h'              => \$help,
 );
 
 die $usage if $help;
