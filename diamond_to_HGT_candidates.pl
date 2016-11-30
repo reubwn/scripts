@@ -69,20 +69,6 @@ die $usage if $help;
 die $usage unless ($in);
 die $usage unless (($nodesfile && $namesfile) || $nodesDBfile);
 
-## define outfiles:
-if ($prefix) {
-  $outfile = $prefix.".HGT_decisions.txt";
-  $warningsfile = $prefix.".warnings.txt";
-} else {
-  $outfile = $in.".HGT_decisions.txt";
-  $warningsfile = $in.".warnings.txt";
-}
-
-## open outfiles:
-open (my $OUT, ">",$outfile) or die $!;
-open (my $WARN, ">",$warningsfile) or die $!;
-print $OUT "\#query\ttaxid\tbestsumBitscore\tsuperkingdom;kingdom;phylum\tingroupTaxname\tdecision\tsupport\n" unless $header;
-
 ## define delimiter:
 if ($delimiter eq "diamond") {
   $delimiter = qr/\s+/;
@@ -91,6 +77,8 @@ if ($delimiter eq "diamond") {
 } else {
   die "[ERROR] Unknown delimiter, please choose \"diamond\" or \"blast\"\n";
 }
+
+############################################## PARSE NODES
 
 ## parse nodes and names:
 my (%nodes_hash, %names_hash, %rank_hash);
@@ -141,6 +129,24 @@ print STDOUT " done\n";
 print STDOUT "[INFO] Nodes parsed: ".scalar(keys %nodes_hash)."\n";
 print STDOUT "[INFO] Threshold taxid set to \"$taxid_threshold\" ($names_hash{$taxid_threshold})\n";
 print STDOUT "[INFO] INGROUP set to \"$names_hash{$taxid_threshold}\"; OUTGROUP is therefore \"non-$names_hash{$taxid_threshold}\"\n";
+
+############################################ OUTFILES
+
+## define outfiles:
+if ($prefix) {
+  $outfile = "$prefix.HGT_decisions.$names_hash{$taxid_threshold}.txt";
+  $warningsfile = "$prefix.warnings.txt";
+} else {
+  $outfile = "$in.HGT_decisions.$names_hash{$taxid_threshold}.txt";
+  $warningsfile = "$in.warnings.txt";
+}
+
+## open outfiles:
+open (my $OUT, ">",$outfile) or die $!;
+open (my $WARN, ">",$warningsfile) or die $!;
+print $OUT "\#query\ttaxid\tbestsumBitscore\tsuperkingdom;kingdom;phylum\tingroupTaxname\tdecision\tsupport\n" unless $header;
+
+############################################## PARSE DIAMOND
 
 ## parse Diamond file:
 print STDOUT "[INFO] Parsing Diamond file \"$in\"...";
