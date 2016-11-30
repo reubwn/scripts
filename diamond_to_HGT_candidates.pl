@@ -7,7 +7,8 @@ use warnings;
 
 use Getopt::Long;
 use Sort::Naturally;
-use List::Util qw(reduce);
+use Data::Dumper qw(Dumper);
+use List::Util qw(reduce sum);
 
 my $usage = "
 SYNOPSIS:
@@ -20,49 +21,67 @@ SYNOPSIS:
 OUTPUTS:
 
 OPTIONS:
-  -i|--in              [FILE]   : tab formatted Diamond output file [required]
-  -n|--nodesDB         [FILE]   : nodesDB.txt file from blobtools [required]
-  -t|--taxid_threshold [INT]    : NCBI taxid to recurse up to; i.e., threshold taxid to define \"ingroup\" [default = 33208 (metazoa)]
-  -b|--bitscore_column [INT]    : define bitscore column for --in (first column = 1) [default: 12]
-  -c|--taxid_column    [INT]    : define taxid column for --in (first column = 1) [default: 13]
-  -d|--delimiter       [STRING] : define delimiter to split --in (specify \"diamond\" for Diamond files (\"\\s+\") or \"blast\" for BLAST files (\"\\t\")) [default: diamond]
-  -p|--prefix          [FILE]   : filename prefix for outfile [default = INFILE.HGT_decisions.txt]
-  -#|--header                   : don't print header [default: do print it]
-  -v|--verbose                  : say more things [default: be quiet]
-  -h|--help                     : prints this help message
+  -i|--in                [FILE]   : tab formatted Diamond output file [required]
+  -o|--nodes             [FILE]   : path to nodes.dmp [required unless --nodesDB]
+  -a|--names             [FILE]   : path to names.dmp [required unless --nodesDB]
+  -m|--merged            [FILE]   : path to merged.dmp
+  -n|--nodesDB           [FILE]   : nodesDB.txt file from blobtools [required unless --nodes && --names]
+  -t|--taxid_threshold   [INT]    : NCBI taxid to recurse up to; i.e., threshold taxid to define \"ingroup\" [default = 33208 (Metazoa)]
+  -s|--support_threshold [FLOAT]  : \% support required to be counted as \"well-supported\" [default = 90\%; note all are printed regardless of support]
+  -b|--bitscore_column   [INT]    : define bitscore column for --in (first column = 1) [default: 12]
+  -c|--taxid_column      [INT]    : define taxid column for --in (first column = 1) [default: 13]
+  -d|--delimiter         [STRING] : define delimiter to split --in (specify \"diamond\" for Diamond files (\"\\s+\") or \"blast\" for BLAST files (\"\\t\")) [default: diamond]
+  -p|--prefix            [FILE]   : filename prefix for outfile [default = INFILE.HGT_decisions.txt]
+  -H|--header                     : don't print header [default: do print it]
+  -v|--verbose                    : say more things [default: be quiet]
+  -h|--help                       : prints this help message
 
 EXAMPLES:
 
 \n";
 
-my ($in,$nodesDB,$prefix,$outfile,$header,$verbose,$help);
-my $tax_threshold = 33208;
-my $tax_column = 13;
+my ($in,$nodesfile,$namesfile,$mergedfile,$nodesDBfile,$prefix,$outfile,$warningsfile,$header,$verbose,$debug,$help);
+my $taxid_threshold = 33208;
+my $support_threshold = 90;
+my $taxid_column = 13;
 my $bitscore_column = 12;
 my $delimiter = "diamond";
 
 GetOptions (
   'in|i=s'              => \$in,
-  'nodesDB|n=s'         => \$nodesDB,
-  'tax_threshold|t:i'   => \$tax_threshold,
-  'tax_column|c:i'      => \$tax_column,
+  'nodes|o:s'           => \$nodesfile,
+  'names|a:s'           => \$namesfile,
+  'merged|m:s'          => \$mergedfile,
+  'nodesDB|n:s'         => \$nodesDBfile,
+  'taxid_threshold|t:i' => \$taxid_threshold,
+  'support_threshold|s:f' => \$support_threshold,
+  'taxid_column|c:i'    => \$taxid_column,
   'bitscore_column|b:i' => \$bitscore_column,
   'delimiter|d:s'       => \$delimiter,
   'prefix|p:s'          => \$prefix,
-  'header|#'            => \$header,
+  'header|H'            => \$header,
   'verbose|v'           => \$verbose,
+  'debug'               => \$debug,
   'help|h'              => \$help,
 );
 
 die $usage if $help;
-die $usage unless ($in && $nodesDB);
+die $usage unless ($in);
+die $usage unless (($nodesfile && $namesfile) || $nodesDBfile);
 
-## define outfile:
+## define outfiles:
 if ($prefix) {
   $outfile = $prefix.".HGT_decisions.txt";
+  $warningsfile = $prefix.".warnings.txt";
 } else {
   $outfile = $in.".HGT_decisions.txt";
+  $warningsfile = $in.".warnings.txt";
 }
+
+## open outfiles:
+open (my $OUT, ">",$outfile) or die $!;
+open (my $WARN, ">",$warningsfile) or die $!;
+print $OUT "\#query\ttaxid\tbestsumBitscore\tsuperkingdom;kingdom;phylum\tingroupTaxname\tdecision\tsupport\n" unless $header;
 
 ## define delimiter:
 if ($delimiter eq "diamond") {
@@ -73,91 +92,150 @@ if ($delimiter eq "diamond") {
   die "[ERROR] Unknown delimiter, please choose \"diamond\" or \"blast\"\n";
 }
 
-## parse nodesDB:
-print STDOUT "[INFO] Building taxonomy databases from $nodesDB...";
-my (%nodes_hash, %names_hash, %rank_hash, %file_hash);
-open(my $NODES, $nodesDB) or die $!;
-while (<$NODES>) {
-  chomp;
-  next if /\#/;
-  my @F = split (/\t/, $_);
-  $nodes_hash{$F[0]} = $F[3]; ## key= child taxid; value= parent taxid
-  $names_hash{$F[0]} = $F[2]; ## key= taxid; value= species name
-  $rank_hash{$F[0]} = $F[1]; ## key= taxid; value= rank
+## parse nodes and names:
+my (%nodes_hash, %names_hash, %rank_hash);
+if ($nodesfile && $namesfile) {
+  print STDOUT "[INFO] Building taxonomy databases from \"$nodesfile\" and \"$namesfile\"...";
+  open(my $NODES, $nodesfile) or die $!;
+  while (<$NODES>) {
+    chomp;
+    next if /\#/;
+    my @F = map { s/^\s+|\s+$//gr } split (/\|/, $_); ## split nodes.dmp file on \s+|\s+ regex
+    $nodes_hash{$F[0]} = $F[1]; ## key= child taxid; value= parent taxid
+    $rank_hash{$F[0]} = $F[2]; ## key= taxid; value= rank
+  }
+  close $NODES;
+  open (my $NAMES, $namesfile) or die $!;
+  while (<$NAMES>) {
+    chomp;
+    next if /\#/;
+    my @F = map { s/^\s+|\s+$//gr } split (/\|/, $_);
+    $names_hash{$F[0]} = $F[1] if ($F[3] eq "scientific name"); ## key= taxid; value= species name
+  }
+  close $NAMES;
+  if ($mergedfile) {
+    open (my $MERGED, $mergedfile) or die $!;
+    while (<$MERGED>) {
+      chomp;
+      next if /\#/;
+      my @F = map { s/^\s+|\s+$//gr } split (/\|/, $_);
+      $nodes_hash{$F[0]} = $F[1]; ## key= old taxid; value= new taxid
+      ## this will behave as if old taxid is a child of the new one, which is OK I guess
+    }
+  }
+} elsif ($nodesDBfile) {
+  print STDOUT "[INFO] Building taxonomy databases from \"$nodesDBfile\"..."; $| = 1;
+  open(my $NODES, $nodesDBfile) or die $!;
+  while (<$NODES>) {
+    chomp;
+    next if /\#/;
+    my @F = split (/\t/, $_);
+    $nodes_hash{$F[0]} = $F[3]; ## key= child taxid; value= parent taxid
+    $names_hash{$F[0]} = $F[2]; ## key= taxid; value= species name
+    $rank_hash{$F[0]} = $F[1]; ## key= taxid; value= rank
+  }
+  close $NODES;
 }
-close $NODES;
+## print some info to STDOUT:
 print STDOUT " done\n";
 print STDOUT "[INFO] Nodes parsed: ".scalar(keys %nodes_hash)."\n";
-#foreach (nsort keys %tax_hash) { print "$_\t$tax_hash{$_}\n"; }
-
-## test recursive walk:
-#print "Testing...\n";
-#my $test=317; ## some taxid
-#print "Result is: ".tax_walk_to_get_rank($test)."\n";
+print STDOUT "[INFO] Threshold taxid set to \"$taxid_threshold\" ($names_hash{$taxid_threshold})\n";
+print STDOUT "[INFO] INGROUP set to \"$names_hash{$taxid_threshold}\"; OUTGROUP is therefore \"non-$names_hash{$taxid_threshold}\"\n";
 
 ## parse Diamond file:
-print STDOUT "[INFO] Parsing Diamond file: $in...";
-my (%bitscore_hash,%sum_bitscores_per_query_hash,%num_hits_per_query_hash);
+print STDOUT "[INFO] Parsing Diamond file \"$in\"...";
+my (%sum_bitscores_per_query_hash);
 my $skipped_entries = 0;
 open (my $DIAMOND, $in) or die $!;
 while (<$DIAMOND>) {
   chomp;
   next if /^\#/;
   my @F = split ($delimiter, $_);
-  if ($F[($tax_column-1)] !~ m/\d+/) {
-    print STDERR "[WARN] The taxid ".$F[($tax_column-1)]." on line $. of $in does not look like a valid NCBI taxid... Skipping this entry\n" if $verbose;
+  if ($F[($taxid_column-1)] !~ m/\d+/) {
+    print $WARN "[WARN] The taxid ".$F[($taxid_column-1)]." for query $F[0] on line $. of \"$in\" does not look like a valid NCBI taxid... Skipping this entry\n";
+    $skipped_entries++;
+    next;
+  } elsif (check_taxid_has_parent($F[($taxid_column-1)]) == 1) {
+    print $WARN "[WARN] The taxid ".$F[($taxid_column-1)]." for query $F[0] on line $. of \"$in\" does not appear to have a valid parent tax node... Skipping this entry\n";
     $skipped_entries++;
     next;
   }
-  $bitscore_hash{$F[($tax_column-1)]} += $F[($bitscore_column-1)]; ## sum bitscore per taxid; key= taxid, value= sumofbitscores
-  $sum_bitscores_per_query_hash{$F[0]} = \%bitscore_hash; ## key= query name; value= hash of {key= taxid; value= sum of bitscores per taxid}
-  $num_hits_per_query_hash{$F[0]}++; ## not sure if this is needed?
+
+  ## push all bitscores for every taxid into an array within a hash within a hash:
+  push @{ $sum_bitscores_per_query_hash{$F[0]}{$F[($taxid_column-1)]} }, $F[($bitscore_column-1)]; ## key= query; value = hash{ key= taxid; value= array[ bitscores ]}
 }
 close $DIAMOND;
 print STDOUT " done\n";
-print STDOUT "[WARN] There were $skipped_entries invalid taxids in \"$in\" (run with --verbose to see them); these entries were omitted from the analysis\n" if $skipped_entries > 0;
+print STDOUT "[WARN] There were $skipped_entries invalid taxids in \"$in\"; these entries were omitted from the analysis.\n" if $skipped_entries > 0;
 
-## open outfile:
-open (my $OUT, ">",$outfile) or die $!;
-print $OUT "\#query\ttaxid\tbestsumbitscore\tsuperkingdom;kingdom;phylum\tingrouptaxname\tdecision\tsupport\n" unless $header;
+############################################ DEBUG
+
+print Dumper \%sum_bitscores_per_query_hash if $debug;
 
 ############################################ MAIN CODE
 
 ## get winning bitscore and taxid; calculate congruence among all taxids for all hits per query:
-my $processed = 0;
-print STDOUT "[INFO] Calculating bestsum bitscore and hit support...";
+my ($processed,$ingroup_supported,$outgroup_supported) = (0,0,0);
+print STDOUT "[INFO] Calculating bestsum bitscore and hit support...\n";
+print STDOUT "\n" if $verbose;
 foreach my $query (nsort keys %sum_bitscores_per_query_hash) {
-  my %bitscore_hash = %{ $sum_bitscores_per_query_hash{$query} }; ## key= taxid; value= summed bitscore
-  my (%count_categories, %support_categories);
+  my %bitscore_hash = %{ $sum_bitscores_per_query_hash{$query} }; ## key= taxid; value= \@array of all bitscores for that taxid
 
-  ## get support for winning taxid from other hits:
-  foreach my $taxid (keys %bitscore_hash) {
-    $count_categories{tax_walk($taxid)}++; ## count categories; if each hit's taxid falls within/outwith the $tax_threshold
-    print join "\t", $query, $bitscore_hash{$taxid}, $taxid, $names_hash{$taxid}, tax_walk($taxid), "\n" if $verbose;
+  ## calculate bitscoresums per taxid; get taxid of highest bitscoresum; get support for winning taxid from other hits:
+  my (%bitscoresum_hash, %count_categories, %support_categories);
+  foreach my $taxid (nsort keys %bitscore_hash) {
+    my $bitscoresum = sum( @{ $bitscore_hash{$taxid} } );
+    $bitscoresum_hash{$taxid} = $bitscoresum; ## key= taxid; value= bitscoresum
+    $count_categories{tax_walk($taxid)}++; ## count categories; if each hit's taxid falls within/outwith the $taxid_threshold
   }
+  print "$query:\n" if $debug; ## debug
+  print Dumper \%bitscoresum_hash if $debug; ## debug
+
   foreach my $cat (keys %count_categories) {
     $support_categories{$cat} = percentage($count_categories{$cat}, scalar(keys %bitscore_hash)); ## calculate proportion of support for the category of the winner
-    print join "\t", $cat, percentage($count_categories{$cat}, scalar(keys %bitscore_hash))."\%", "\n" if $verbose;
   }
 
   ## get taxid with highest bitscore:
-  my $taxid_with_highest_bitscore = List::Util::reduce { $bitscore_hash{$b} > $bitscore_hash{$a} ? $b : $a } keys %bitscore_hash; ## winning taxid
+  my $taxid_with_highest_bitscore = List::Util::reduce { $bitscoresum_hash{$b} > $bitscoresum_hash{$a} ? $b : $a } keys %bitscoresum_hash; ## winning taxid
   my $taxid_with_highest_bitscore_category = tax_walk($taxid_with_highest_bitscore); ## category of winning taxid ("ingroup", "outgroup" or "unassigned")
   my $taxid_with_highest_bitscore_category_support = $support_categories{$taxid_with_highest_bitscore_category}; ## % support from other hits
+  print "[INFO] [$query] Taxid with highest bitscore: $taxid_with_highest_bitscore (bitscore = $bitscoresum_hash{$taxid_with_highest_bitscore}; taxonomy = ".tax_walk_to_get_rank($taxid_with_highest_bitscore).")\n" if $verbose;
+  print "[INFO] [$query] Decision of bestsum bitscore: $taxid_with_highest_bitscore_category (support = $taxid_with_highest_bitscore_category_support)\n" if $verbose;
 
   ## print to $out
-  print $OUT join "\t", $query, $taxid_with_highest_bitscore, $bitscore_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank($taxid_with_highest_bitscore), "ingroup=".$names_hash{$tax_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, "\n";
+  print $OUT join "\t", $query, $taxid_with_highest_bitscore, $bitscoresum_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank($taxid_with_highest_bitscore), "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, "\n";
+
+  ## calculate number of well-supported genes:
+  if ( ($taxid_with_highest_bitscore_category eq "ingroup") && ($taxid_with_highest_bitscore_category_support > $support_threshold) ) {
+    $ingroup_supported++;
+  } elsif ( ($taxid_with_highest_bitscore_category eq "outgroup") && ($taxid_with_highest_bitscore_category_support > $support_threshold) ) {
+    $outgroup_supported++;
+  }
 
   ## progress
   $processed++;
   if ($processed % 1000 == 0){
-    print "\r[PROGRESS] Processed ".commify($processed)." queries...";
+    print "\r[INFO] Processed ".commify($processed)." queries...";
     $| = 1;
   }
 }
 close $OUT;
+close $WARN;
+print STDOUT "\r[INFO] Processed ".commify($processed)." queries\n";
+print STDOUT "[INFO] Number of queries in category \"$names_hash{$taxid_threshold}\" with support > $support_threshold\%: ".commify($ingroup_supported)."\n";
+print STDOUT "[INFO] Number of queries in category \"non-$names_hash{$taxid_threshold}\" with support > $support_threshold\%: ".commify($outgroup_supported)."\n";
+print STDOUT "[INFO] Finished\n\n";
 
 ############################################ SUBS
+
+sub check_taxid_has_parent {
+  my $taxid = $_[0];
+  my $result = 0;
+  unless ($nodes_hash{$taxid}) {
+    $result = 1;
+  }
+  return $result; ## 0 = taxid exists; 1 = taxid does not exist
+}
 
 sub tax_walk {
     my $taxid = $_[0];
@@ -165,12 +243,11 @@ sub tax_walk {
     if (exists $_[1]) {
       $walk_to = $_[1];
     } else {
-      $walk_to = $tax_threshold; ## default is metazoa
+      $walk_to = $taxid_threshold; ## default is metazoa
     }
 
     ## first parent:
     my $parent = $nodes_hash{$taxid};
-    print STDOUT "First parent is: $parent\n";
     my $result;
 
     ## return "unassigned" if hit has no valid taxid
@@ -182,24 +259,16 @@ sub tax_walk {
     ## recurse the tree:
     while (1) {
       if ($parent == $walk_to) {
-        ## is ingroup
-        $result = "ingroup";
+        $result = "ingroup"; ## is ingroup
         last;
-
       } elsif ($parent == 1) {
-        ## root; i.e., the whole tree has been recursed without finding $threshold, therefore $taxid must reside in another part of the tax tree
-        $result = "outgroup";
+        $result = "outgroup"; ## root; i.e., the whole tree has been recursed without finding $threshold, therefore $taxid must reside in another part of the tax tree
         last;
-
       } elsif ($parent == 32644) {
-        ## taxid for "unidentified"
-        $result = "unassigned";
+        $result = "unassigned"; ## taxid for "unidentified"
         last;
-
-      } else {
-        ## walk up the tree!
+      } else { ## walk up the tree!
         $parent = $nodes_hash{$parent};
-#        print "  Parent is: $names_hash{$parent} ($nodes_hash{$parent})\n";
       }
     }
     return $result;
@@ -209,7 +278,6 @@ sub tax_walk_to_get_rank {
   my $taxid = $_[0];
   my $parent = $nodes_hash{$taxid};
   my $parent_rank = $rank_hash{$parent};
-  #print "$parent, $parent_rank\n";
   my ($phylum,$kingdom,$superkingdom) = ("undef","undef","undef");
   my $result;
 
