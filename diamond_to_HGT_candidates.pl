@@ -23,8 +23,8 @@ OPTIONS:
   -i|--in              [FILE]   : tab formatted Diamond output file [required]
   -n|--nodesDB         [FILE]   : nodesDB.txt file from blobtools [required]
   -t|--taxid_threshold [INT]    : NCBI taxid to recurse up to; i.e., threshold taxid to define \"ingroup\" [default = 33208 (metazoa)]
-  -c|--taxid_column    [INT]    : define taxid column for --in (first column = 1) [default: 13]
   -b|--bitscore_column [INT]    : define bitscore column for --in (first column = 1) [default: 12]
+  -c|--taxid_column    [INT]    : define taxid column for --in (first column = 1) [default: 13]
   -d|--delimiter       [STRING] : define delimiter to split --in (specify \"diamond\" for Diamond files (\"\\s+\") or \"blast\" for BLAST files (\"\\t\")) [default: diamond]
   -p|--prefix          [FILE]   : filename prefix for outfile [default = INFILE.HGT_decisions.txt]
   -#|--header                   : don't print header [default: do print it]
@@ -170,14 +170,14 @@ sub tax_walk {
 
     ## first parent:
     my $parent = $nodes_hash{$taxid};
+    print STDOUT "First parent is: $parent\n";
+    my $result;
 
     ## return "unassigned" if hit has no valid taxid
-    my $result;
     if ($parent !~ m/\d+/) {
       $result = "unassigned";
       return $result;
     }
-#    print "First parent is: $parent\n";
 
     ## recurse the tree:
     while (1) {
