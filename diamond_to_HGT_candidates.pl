@@ -239,6 +239,7 @@ print Dumper \%evalues_per_query_hash if $debug;
 ############################################ MAIN CODE
 
 ## get winning bitscore and taxid; calculate congruence among all taxids for all hits per query:
+my %count_categories_global;
 my ($processed,$ingroup_supported,$outgroup_supported,$alien_index_supported,$hgt_supported) = (0,0,0,0,0);
 print STDOUT "[INFO] Calculating bestsum bitscore and hit support...\n";
 print STDOUT "\n" if $verbose;
@@ -264,6 +265,7 @@ foreach my $query (nsort keys %bitscores_per_query_hash) {
     my $bitscoresum = sum( @{ $bitscore_hash{$taxid} } );
     $bitscoresum_hash{$taxid} = $bitscoresum; ## key= taxid; value= bitscoresum
     $count_categories{tax_walk($taxid)}++; ## count categories; if each hit's taxid falls within/outwith the $taxid_threshold
+    $count_categories_global{tax_walk($taxid)}++;
   }
   print "$query:\n" if $debug; ## debug
   print Dumper \%bitscoresum_hash if $debug; ## debug
@@ -311,8 +313,8 @@ close $OUT;
 close $HGT;
 close $WARN;
 print STDOUT "\r[INFO] Processed ".commify($processed)." queries\n";
-foreach my $cat (nsort keys %count_categories) {
-  print STDOUT "[INFO] Number of queries in category \"$cat\": ".commify($count_categories{$cat})."\n";
+foreach my $cat (nsort keys %count_categories_global) {
+  print STDOUT "[INFO] Number of queries in category \"$cat\": ".commify($count_categories_global{$cat})."\n";
 }
 print STDOUT "[INFO] Number of queries in category \"$names_hash{$taxid_threshold}\" with support > $support_threshold\%: ".commify($ingroup_supported)."\n";
 print STDOUT "[INFO] Number of queries in category \"non-$names_hash{$taxid_threshold}\" with support > $support_threshold\%: ".commify($outgroup_supported)."\n";
