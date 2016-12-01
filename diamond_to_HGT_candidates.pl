@@ -315,9 +315,6 @@ close $OUT;
 close $HGT;
 close $WARN;
 print STDOUT "\r[INFO] Processed ".commify($processed)." queries\n";
-foreach my $cat (nsort keys %count_categories_global) {
-  print STDOUT "[INFO] Number of queries in category \"$cat\": ".commify($count_categories_global{$cat})."\n";
-}
 print STDOUT "[INFO] Number of queries in category \"$names_hash{$taxid_threshold}\" with support > $support_threshold\%: ".commify($ingroup_supported)."\n";
 print STDOUT "[INFO] Number of queries in category \"non-$names_hash{$taxid_threshold}\" with support > $support_threshold\%: ".commify($outgroup_supported)."\n";
 print STDOUT "[INFO] Number of queries with Alien Index >= $alien_threshold: ".commify($alien_index_supported)."\n";
