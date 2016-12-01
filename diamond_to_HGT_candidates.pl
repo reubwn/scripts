@@ -311,6 +311,9 @@ close $OUT;
 close $HGT;
 close $WARN;
 print STDOUT "\r[INFO] Processed ".commify($processed)." queries\n";
+foreach my $cat (nsort keys %count_categories) {
+  print STDOUT "[INFO] Number of queries in category \"$cat\": ".commify($count_categories{$cat})."\n";
+}
 print STDOUT "[INFO] Number of queries in category \"$names_hash{$taxid_threshold}\" with support > $support_threshold\%: ".commify($ingroup_supported)."\n";
 print STDOUT "[INFO] Number of queries in category \"non-$names_hash{$taxid_threshold}\" with support > $support_threshold\%: ".commify($outgroup_supported)."\n";
 print STDOUT "[INFO] Number of queries with Alien Index >= $alien_threshold: ".commify($alien_index_supported)."\n";
@@ -358,7 +361,10 @@ sub tax_walk {
       } elsif ($parent == 32644) {
         $result = "unassigned"; ## taxid for "unidentified"
         last;
-      } else { ## walk up the tree!
+      } elsif ($parent == 12908) {
+        $result = "unassigned"; ## taxid for "unclassified sequences"
+        last;
+      }else { ## walk up the tree!
         $parent = $nodes_hash{$parent};
       }
     }
