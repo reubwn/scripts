@@ -343,7 +343,7 @@ print STDOUT "[INFO] Number of queries in INGROUP category (\"$names_hash{$taxid
 print STDOUT "[INFO] Number of queries in INGROUP category (\"$names_hash{$taxid_threshold}\") with support > $support_threshold\%: ".commify($ingroup_supported)."\n";
 print STDOUT "[INFO] Number of queries in OUTGROUP category (\"non-$names_hash{$taxid_threshold}\"): ".commify($outgroup)."\n";
 print STDOUT "[INFO] Number of queries in OUTGROUP category (\"non-$names_hash{$taxid_threshold}\") with support > $support_threshold\%: ".commify($outgroup_supported)."\n";
-print STDOUT "[INFO] Number of queries in unassigned/unclassified category: ".commify($unclassified)."\n";
+print STDOUT "[INFO] Number of queries in unassigned/unclassified category: ".commify($unassigned)."\n";
 print STDOUT "[INFO] Number of queries with Alien Index >= $alien_threshold: ".commify($alien_index_supported)."\n";
 print STDOUT "[INFO] Total number of queries with some HGT support: ".commify($hgt_supported)."\n";
 print STDOUT "[INFO] Finished\n\n";
