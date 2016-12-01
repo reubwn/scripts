@@ -56,7 +56,7 @@ EXAMPLES:
 
 \n";
 
-my ($in,$nodesfile,$path,$namesfile,$mergedfile,$nodesDBfile,$prefix,$outfile,$warningsfile,$header,$verbose,$debug,$help);
+my ($in,$nodesfile,$path,$namesfile,$mergedfile,$nodesDBfile,$prefix,$outfile,$hgtcandidatesfile,$warningsfile,$header,$verbose,$debug,$help);
 my $taxid_threshold = 33208;
 my $support_threshold = 90;
 my $taxid_column = 13;
@@ -181,9 +181,11 @@ print STDOUT "[INFO] INGROUP set to \"$names_hash{$taxid_threshold}\"; OUTGROUP 
 ## define outfiles:
 if ($prefix) {
   $outfile = "$prefix.HGT_decisions.$names_hash{$taxid_threshold}.txt";
+  $hgtcandidatesfile = "$prefix.HGT_candidates.$names_hash{$taxid_threshold}.$support_threshold.txt";
   $warningsfile = "$prefix.warnings.txt";
 } else {
   $outfile = "$in.HGT_decisions.$names_hash{$taxid_threshold}.txt";
+  $hgtcandidatesfile = "$in.HGT_candidates.$names_hash{$taxid_threshold}.$support_threshold.txt";
   $warningsfile = "$in.warnings.txt";
 }
 
