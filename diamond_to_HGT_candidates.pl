@@ -46,12 +46,13 @@ OPTIONS:
   -m|--merged            [FILE]   : path to merged.dmp
   -n|--nodesDB           [FILE]   : nodesDB.txt file from blobtools [required unless --nodes && --names]
   -t|--taxid_threshold   [INT]    : NCBI taxid to recurse up to; i.e., threshold taxid to define \"ingroup\" [default = 33208 (Metazoa)]
-  -s|--support_threshold [FLOAT]  : support required to be counted as \"well-supported\" [default = 90\%; note all are printed regardless of support]
-  -l|--alien_threshold   [INT]    : Alien Index threshold for considering HGT candidate (default >= 45)
+  -s|--support_threshold [FLOAT]  : Secondary Hits Support threshold for considering HGT candidates [default = 90\%]
+  -l|--alien_threshold   [INT]    : Alien Index threshold for considering HGT candidates (default >= 45)
+  -e|--evalue_column     [INT]    : define evalue column for --in (first column = 1) [default: 11]
   -b|--bitscore_column   [INT]    : define bitscore column for --in (first column = 1) [default: 12]
   -c|--taxid_column      [INT]    : define taxid column for --in (first column = 1) [default: 13]
   -d|--delimiter         [STRING] : define delimiter to split --in (specify \"diamond\" for Diamond files (\"\\s+\") or \"blast\" for BLAST files (\"\\t\")) [default: diamond]
-  -e|--prefix            [FILE]   : filename prefix for outfile [default = INFILE]
+  -x|--prefix            [FILE]   : filename prefix for outfile [default = INFILE]
   -H|--header                     : don't print header [default: do print it]
   -v|--verbose                    : say more things [default: be quiet]
   -h|--help                       : prints this help message
@@ -64,8 +65,9 @@ my ($in,$nodesfile,$path,$namesfile,$mergedfile,$nodesDBfile,$prefix,$outfile,$h
 my $taxid_threshold = 33208;
 my $support_threshold = 90;
 my $alien_threshold = 45;
-my $taxid_column = 13;
+my $evalue_column = 11;
 my $bitscore_column = 12;
+my $taxid_column = 13;
 my $delimiter = "diamond";
 
 GetOptions (
@@ -78,10 +80,11 @@ GetOptions (
   'taxid_threshold|t:i' => \$taxid_threshold,
   'support_threshold|s:f' => \$support_threshold,
   'alien_threshold|l:i' => \$alien_threshold,
+  'evalue_column|e:i'   => \$evalue_column,
   'taxid_column|c:i'    => \$taxid_column,
   'bitscore_column|b:i' => \$bitscore_column,
   'delimiter|d:s'       => \$delimiter,
-  'prefix|e:s'          => \$prefix,
+  'prefix|x:s'          => \$prefix,
   'header|H'            => \$header,
   'verbose|v'           => \$verbose,
   'debug'               => \$debug,
@@ -223,9 +226,9 @@ while (<$DIAMOND>) {
     next;
   }
 
-  ## push all bitscores for every taxid into an array within a hash within a hash:
+  ## push all bitscores and evalues for every taxid into an array within a hash within a hash:
   push @{ $bitscores_per_query_hash{$F[0]}{$F[($taxid_column-1)]} }, $F[($bitscore_column-1)]; ## key= query; value= hash{ key= taxid; value= array[ bitscores ]}
-  push @{ $evalues_per_query_hash{$F[0]}{$F[($taxid_column-1)]} }, $F[10]; ## key= query; value= hash{ key= taxid; value= array [ evalues ]}
+  push @{ $evalues_per_query_hash{$F[0]}{$F[($taxid_column-1)]} }, $F[$evalue_column-1]; ## key= query; value= hash{ key= taxid; value= array [ evalues ]}
 }
 close $DIAMOND;
 print STDOUT " done\n";
