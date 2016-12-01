@@ -187,11 +187,11 @@ print STDOUT "[INFO] INGROUP set to \"$names_hash{$taxid_threshold}\"; OUTGROUP 
 ## define outfiles:
 if ($prefix) {
   $outfile = "$prefix.HGT_decisions.$names_hash{$taxid_threshold}.txt";
-  $hgtcandidatesfile = "$prefix.HGT_candidates.$names_hash{$taxid_threshold}.$support_threshold.txt";
+  $hgtcandidatesfile = "$prefix.HGT_candidates.$names_hash{$taxid_threshold}.supp$support_threshold.AI$alien_threshold.txt";
   $warningsfile = "$prefix.warnings.txt";
 } else {
   $outfile = "$in.HGT_decisions.$names_hash{$taxid_threshold}.txt";
-  $hgtcandidatesfile = "$in.HGT_candidates.$names_hash{$taxid_threshold}.$support_threshold.txt";
+  $hgtcandidatesfile = "$in.HGT_candidates.$names_hash{$taxid_threshold}.supp$support_threshold.AI$alien_threshold.txt";
   $warningsfile = "$in.warnings.txt";
 }
 
@@ -229,7 +229,7 @@ while (<$DIAMOND>) {
 }
 close $DIAMOND;
 print STDOUT " done\n";
-print STDOUT "[WARN] There were $skipped_entries invalid taxids in \"$in\"; these entries were omitted from the analysis.\n" if $skipped_entries > 0;
+print STDOUT "[WARN] There were $skipped_entries invalid taxid entries in \"$in\"; these were omitted from the analysis.\n" if $skipped_entries > 0;
 
 ############################################ DEBUG
 
@@ -283,17 +283,17 @@ foreach my $query (nsort keys %bitscores_per_query_hash) {
   print STDOUT "[INFO] [$query] Alien Index = ".sprintf("%.2f",$alien_index)."\n[----]\n" if $verbose;
 
   ## print to $out
-  print $OUT join "\t", $query, $taxid_with_highest_bitscore, $bitscoresum_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank_to_phylum($taxid_with_highest_bitscore), "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, $alien_index, "\n";
+  print $OUT join "\t", $query, $taxid_with_highest_bitscore, $bitscoresum_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank_to_phylum($taxid_with_highest_bitscore), "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, sprintf("%.2f",$alien_index), "\n";
 
   ## calculate number of well-supported genes:
   if ( ($taxid_with_highest_bitscore_category eq "ingroup") && ($taxid_with_highest_bitscore_category_support >= $support_threshold) ) {
     $ingroup_supported++;
   } elsif ( ($taxid_with_highest_bitscore_category eq "outgroup") && ($taxid_with_highest_bitscore_category_support >= $support_threshold) ) {
-    print $HGT join "\t", $query, $taxid_with_highest_bitscore, $bitscoresum_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank_to_species($taxid_with_highest_bitscore), "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, $alien_index, "\n";
+    print $HGT join "\t", $query, $taxid_with_highest_bitscore, $bitscoresum_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank_to_species($taxid_with_highest_bitscore), "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, sprintf("%.2f",$alien_index), "\n";
     $outgroup_supported++;
     $hgt_supported++;
   } elsif ($alien_index >= $alien_threshold) {
-    print $HGT join "\t", $query, $taxid_with_highest_bitscore, $bitscoresum_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank_to_species($taxid_with_highest_bitscore), "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, $alien_index, "\n";
+    print $HGT join "\t", $query, $taxid_with_highest_bitscore, $bitscoresum_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank_to_species($taxid_with_highest_bitscore), "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, sprintf("%.2f",$alien_index), "\n";
     $hgt_supported++;
   }
   if ($alien_index >= $alien_threshold) {
