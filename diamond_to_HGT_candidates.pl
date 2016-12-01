@@ -8,7 +8,7 @@ use warnings;
 use Getopt::Long;
 use Sort::Naturally;
 use Data::Dumper qw(Dumper);
-use List::Util qw(reduce sum);
+use List::Util qw(reduce sum min max);
 
 my $usage = "
 SYNOPSIS:
@@ -31,6 +31,9 @@ SYNOPSIS:
     ___ and category is OUTGROUP as taxid ___ does not fall within Metazoa. The vast majority (>90\%)
     of other hits are also to bacteria, and thus support the OUTGROUP categorisation. This gene
     would be designated \"candidate HGT\" and would merit further investigation.
+
+    Alien Index = log((Best E-value for Metazoa) + e-200) - log((Best E-value for NonMetazoa) + e-200)
+    (Gladyshev et al., http://science.sciencemag.org/content/suppl/2008/05/29/320.5880.1210.DC1/Gladyshev.SOM.pdf)
 
 OUTPUTS:
   A \"\*.HGT_decisions.\" file with the headers:
@@ -200,7 +203,7 @@ print $HGT "\#query\ttaxid\tbestsumBitscore\tsuperkingdom;kingdom;phylum\tingrou
 
 ## parse Diamond file:
 print STDOUT "[INFO] Parsing Diamond file \"$in\"...";
-my (%sum_bitscores_per_query_hash);
+my (%bitscores_per_query_hash, %evalues_per_query_hash);
 my $skipped_entries = 0;
 open (my $DIAMOND, $in) or die $!;
 while (<$DIAMOND>) {
@@ -218,7 +221,8 @@ while (<$DIAMOND>) {
   }
 
   ## push all bitscores for every taxid into an array within a hash within a hash:
-  push @{ $sum_bitscores_per_query_hash{$F[0]}{$F[($taxid_column-1)]} }, $F[($bitscore_column-1)]; ## key= query; value = hash{ key= taxid; value= array[ bitscores ]}
+  push @{ $bitscores_per_query_hash{$F[0]}{$F[($taxid_column-1)]} }, $F[($bitscore_column-1)]; ## key= query; value= hash{ key= taxid; value= array[ bitscores ]}
+  push @{ $evalues_per_query_hash{$F[0]}{$F[($taxid_column-1)]} }, $F[10]; ## key= query; value= hash{ key= taxid; value= array [ evalues ]}
 }
 close $DIAMOND;
 print STDOUT " done\n";
@@ -226,7 +230,8 @@ print STDOUT "[WARN] There were $skipped_entries invalid taxids in \"$in\"; thes
 
 ############################################ DEBUG
 
-print Dumper \%sum_bitscores_per_query_hash if $debug;
+print Dumper \%bitscores_per_query_hash if $debug;
+print Dumper \%evalues_per_query_hash if $debug;
 
 ############################################ MAIN CODE
 
@@ -234,8 +239,24 @@ print Dumper \%sum_bitscores_per_query_hash if $debug;
 my ($processed,$ingroup_supported,$outgroup_supported) = (0,0,0);
 print STDOUT "[INFO] Calculating bestsum bitscore and hit support...\n";
 print STDOUT "\n" if $verbose;
-foreach my $query (nsort keys %sum_bitscores_per_query_hash) {
-  my %bitscore_hash = %{ $sum_bitscores_per_query_hash{$query} }; ## key= taxid; value= \@array of all bitscores for that taxid
+foreach my $query (nsort keys %bitscores_per_query_hash) {
+  my %bitscore_hash = %{ $bitscores_per_query_hash{$query} }; ## key= taxid; value= \@array of all bitscores for that taxid
+  my %evalue_hash = %{ $evalues_per_query_hash{$query} }; ## key= taxid; value= \@array of all evalues for that taxid
+
+  ## calculate alien index:
+  my ($ingroup_best_evalue, $outgroup_best_evalue) = (1,1);
+  foreach my $taxid (keys %evalue_hash) {
+    my $min_evalue = min( @{ $evalue_hash{$taxid} } );
+    if (tax_walk($taxid) eq "ingroup") {
+      $ingroup_best_evalue = $min_evalue if ($min_evalue < $ingroup_best_evalue); ## only accept it if it's lower (better) than current value
+    } elsif (tax_walk($taxid) eq "outgroup") {
+      $outgroup_best_evalue = $min_evalue if ($min_evalue < $outgroup_best_evalue);
+    }
+  }
+  my $alien_index = (log10($ingroup_best_evalue + 1e-200) - log10($outgroup_best_evalue + 1e-200));
+  print "[INFO] [$query] Best evalue for INGROUP ($names_hash{$taxid_threshold}): $ingroup_best_evalue\n" if $verbose;
+  print "[INFO] [$query] Best evalue for OUTGROUP (non-$names_hash{$taxid_threshold}): $outgroup_best_evalue\n" if $verbose;
+  print "[INFO] [$query] Alien Index = ".sprintf("%.2f",$alien_index)."\n" if $verbose;
 
   ## calculate bitscoresums per taxid; get taxid of highest bitscoresum; get support for winning taxid from other hits:
   my (%bitscoresum_hash, %count_categories, %support_categories);
@@ -422,6 +443,11 @@ sub tax_walk_to_get_rank_to_species {
   my $result = join (";",$superkingdom,$kingdom,$phylum,$class,$order,$family,$genus,$species);
   $result =~ s/\s+/\_/g; ## replace spaces with underscores
   return $result;
+}
+
+sub log10 {
+    my $n = shift;
+    return log($n)/log(10);
 }
 
 sub percentage {
