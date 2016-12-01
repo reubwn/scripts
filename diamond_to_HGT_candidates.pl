@@ -337,7 +337,6 @@ sub tax_walk_to_get_rank_to_phylum {
   my $parent = $nodes_hash{$taxid};
   my $parent_rank = $rank_hash{$parent};
   my ($phylum,$kingdom,$superkingdom) = ("undef","undef","undef");
-  my $result;
 
   while (1) {
     if ($parent_rank eq "phylum") {
@@ -363,7 +362,8 @@ sub tax_walk_to_get_rank_to_phylum {
       $parent_rank = $rank_hash{$parent};
     }
   }
-  $result = join (";",$superkingdom,$kingdom,$phylum);
+  my $result = join (";",$superkingdom,$kingdom,$phylum);
+  $result =~ s/\s+/\_/g; ## replace spaces with underscores
   return $result;
 }
 
@@ -372,7 +372,6 @@ sub tax_walk_to_get_rank_to_species {
   my $parent = $nodes_hash{$taxid};
   my $parent_rank = $rank_hash{$parent};
   my ($species,$genus,$family,$order,$class,$phylum,$kingdom,$superkingdom) = ("undef","undef","undef","undef","undef","undef","undef","undef");
-  my $result;
 
   while (1) {
     if ($parent_rank eq "species") {
@@ -420,7 +419,8 @@ sub tax_walk_to_get_rank_to_species {
       $parent_rank = $rank_hash{$parent};
     }
   }
-  $result = join (";",$superkingdom,$kingdom,$phylum,$class,$order,$family,$genus,$species);
+  my $result = join (";",$superkingdom,$kingdom,$phylum,$class,$order,$family,$genus,$species);
+  $result =~ s/\s+/\_/g; ## replace spaces with underscores
   return $result;
 }
 
