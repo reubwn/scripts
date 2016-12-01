@@ -291,24 +291,22 @@ foreach my $query (nsort keys %bitscores_per_query_hash) {
   ## calculate number of well-supported genes:
   if ( $taxid_with_highest_bitscore_category eq "unassigned" ) {
     $unassigned++;
-    $alien_index_supported++ if ($alien_index >= $alien_threshold); ## catch AI>=45 queries in this category
   } elsif ( $taxid_with_highest_bitscore_category eq "ingroup" ) {
     $ingroup++;
     $ingroup_supported++ if ($taxid_with_highest_bitscore_category_support >= $support_threshold);
-    $alien_index_supported++ if ($alien_index >= $alien_threshold); ## catch AI>=45 queries in this category
   } elsif ( $taxid_with_highest_bitscore_category eq "outgroup" ) {
     $outgroup++;
-    $alien_index_supported++ if ($alien_index >= $alien_threshold); ## catch AI>=45 queries in this category
     if ( $taxid_with_highest_bitscore_category_support >= $support_threshold ) { ## only consider those queries with SHsupport > 90
-      $hgt_supported++;
       $outgroup_supported++;
-      print $HGT join "\t", $query, $taxid_with_highest_bitscore, $bitscoresum_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank_to_species($taxid_with_highest_bitscore), "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, sprintf("%.2f",$alien_index), "\n";
     }
-  } elsif ( $alien_index >= $alien_threshold ) { ## this catches queries which may have an AI>45 but not enough outgroup support
+  }
+  ## only print to $HGT if "OUTGROUP" is well-supported OR AI >= alien_threshold:
+  if ( (($taxid_with_highest_bitscore_category eq "outgroup") and ($taxid_with_highest_bitscore_category_support >= $support_threshold)) or $alien_index >= $alien_threshold ) {
     $hgt_supported++;
-    $alien_index_supported++;
     print $HGT join "\t", $query, $taxid_with_highest_bitscore, $bitscoresum_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank_to_species($taxid_with_highest_bitscore), "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, sprintf("%.2f",$alien_index), "\n";
   }
+  ## catch all queries with AI>=alien_threshold:
+  $alien_index_supported++ if ($alien_index >= $alien_threshold);
 
   ## progress
   $processed++;
