@@ -191,8 +191,10 @@ if ($prefix) {
 
 ## open outfiles:
 open (my $OUT, ">",$outfile) or die $!;
+open (my $HGT, ">",$hgtcandidatesfile) or die $!;
 open (my $WARN, ">",$warningsfile) or die $!;
 print $OUT "\#query\ttaxid\tbestsumBitscore\tsuperkingdom;kingdom;phylum\tingroupTaxname\tdecision\tsupport\n" unless $header;
+print $HGT "\#query\ttaxid\tbestsumBitscore\tsuperkingdom;kingdom;phylum\tingroupTaxname\tdecision\tsupport\n" unless $header;
 
 ############################################## PARSE DIAMOND
 
@@ -253,16 +255,17 @@ foreach my $query (nsort keys %sum_bitscores_per_query_hash) {
   my $taxid_with_highest_bitscore = List::Util::reduce { $bitscoresum_hash{$b} > $bitscoresum_hash{$a} ? $b : $a } keys %bitscoresum_hash; ## winning taxid
   my $taxid_with_highest_bitscore_category = tax_walk($taxid_with_highest_bitscore); ## category of winning taxid ("ingroup", "outgroup" or "unassigned")
   my $taxid_with_highest_bitscore_category_support = $support_categories{$taxid_with_highest_bitscore_category}; ## % support from other hits
-  print "[INFO] [$query] Taxid with highest bitscore: $taxid_with_highest_bitscore (bitscore = $bitscoresum_hash{$taxid_with_highest_bitscore}; taxonomy = ".tax_walk_to_get_rank($taxid_with_highest_bitscore).")\n" if $verbose;
+  print "[INFO] [$query] Taxid with highest bitscore: $taxid_with_highest_bitscore (bitscore = $bitscoresum_hash{$taxid_with_highest_bitscore}; taxonomy = ".tax_walk_to_get_rank_to_phylum($taxid_with_highest_bitscore).")\n" if $verbose;
   print "[INFO] [$query] Decision of bestsum bitscore: $taxid_with_highest_bitscore_category (support = $taxid_with_highest_bitscore_category_support)\n" if $verbose;
 
   ## print to $out
-  print $OUT join "\t", $query, $taxid_with_highest_bitscore, $bitscoresum_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank($taxid_with_highest_bitscore), "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, "\n";
+  print $OUT join "\t", $query, $taxid_with_highest_bitscore, $bitscoresum_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank_to_phylum($taxid_with_highest_bitscore), "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, "\n";
 
   ## calculate number of well-supported genes:
-  if ( ($taxid_with_highest_bitscore_category =~ "ingroup") && ($taxid_with_highest_bitscore_category_support > $support_threshold) ) {
+  if ( ($taxid_with_highest_bitscore_category eq "ingroup") && ($taxid_with_highest_bitscore_category_support > $support_threshold) ) {
     $ingroup_supported++;
-  } elsif ( ($taxid_with_highest_bitscore_category =~ "outgroup") && ($taxid_with_highest_bitscore_category_support > $support_threshold) ) {
+  } elsif ( ($taxid_with_highest_bitscore_category eq "outgroup") && ($taxid_with_highest_bitscore_category_support > $support_threshold) ) {
+    print $HGT join "\t", $query, $taxid_with_highest_bitscore, $bitscoresum_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank_to_species($taxid_with_highest_bitscore), "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, "\n";
     $outgroup_supported++;
   }
 
@@ -274,6 +277,7 @@ foreach my $query (nsort keys %sum_bitscores_per_query_hash) {
   }
 }
 close $OUT;
+close $HGT;
 close $WARN;
 print STDOUT "\r[INFO] Processed ".commify($processed)." queries\n";
 print STDOUT "[INFO] Number of queries in category \"$names_hash{$taxid_threshold}\" with support > $support_threshold\%: ".commify($ingroup_supported)."\n";
@@ -328,7 +332,7 @@ sub tax_walk {
     return $result;
 }
 
-sub tax_walk_to_get_rank {
+sub tax_walk_to_get_rank_to_phylum {
   my $taxid = $_[0];
   my $parent = $nodes_hash{$taxid};
   my $parent_rank = $rank_hash{$parent};
@@ -360,6 +364,71 @@ sub tax_walk_to_get_rank {
     }
   }
   $result = join (";",$superkingdom,$kingdom,$phylum);
+  return $result;
+}
+
+sub tax_walk_to_get_rank_to_species {
+  my $taxid = $_[0];
+  my $parent = $nodes_hash{$taxid};
+  my $parent_rank = $rank_hash{$parent};
+  my ($species,$genus,$family,$order,$class,$phylum,$kingdom,$superkingdom) = ("undef","undef","undef","undef","undef","undef","undef","undef");
+  my $result;
+
+  while (1) {
+    if ($parent_rank eq "species") {
+      $phylum = $names_hash{$parent};
+      #print "Found phylum: $phylum\n";
+      $parent = $nodes_hash{$parent};
+      $parent_rank = $rank_hash{$parent};
+      next;
+    } elsif ($parent_rank eq "genus") {
+      $kingdom = $names_hash{$parent};
+      #print "Found phylum: $kingdom\n";
+      $parent = $nodes_hash{$parent};
+      $parent_rank = $rank_hash{$parent};
+      next;
+    } elsif ($parent_rank eq "family") {
+      $kingdom = $names_hash{$parent};
+      #print "Found phylum: $kingdom\n";
+      $parent = $nodes_hash{$parent};
+      $parent_rank = $rank_hash{$parent};
+      next;
+    } elsif ($parent_rank eq "order") {
+      $kingdom = $names_hash{$parent};
+      #print "Found phylum: $kingdom\n";
+      $parent = $nodes_hash{$parent};
+      $parent_rank = $rank_hash{$parent};
+      next;
+    } elsif ($parent_rank eq "class") {
+      $kingdom = $names_hash{$parent};
+      #print "Found phylum: $kingdom\n";
+      $parent = $nodes_hash{$parent};
+      $parent_rank = $rank_hash{$parent};
+      next;
+    } elsif ($parent_rank eq "phylum") {
+      $kingdom = $names_hash{$parent};
+      #print "Found phylum: $kingdom\n";
+      $parent = $nodes_hash{$parent};
+      $parent_rank = $rank_hash{$parent};
+      next;
+    } elsif ($parent_rank eq "kingdom") {
+      $kingdom = $names_hash{$parent};
+      #print "Found phylum: $kingdom\n";
+      $parent = $nodes_hash{$parent};
+      $parent_rank = $rank_hash{$parent};
+      next;
+    } elsif ($parent_rank eq "superkingdom") {
+      $superkingdom = $names_hash{$parent};
+      #print "Found phylum: $superkingdom\n";
+      last;
+    } elsif ($parent == 1) {
+      last;
+    } else {
+      $parent = $nodes_hash{$parent};
+      $parent_rank = $rank_hash{$parent};
+    }
+  }
+  $result = join (";",$superkingdom,$kingdom,$phylum,$class,$order,$family,$genus,$species);
   return $result;
 }
 
