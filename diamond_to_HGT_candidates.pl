@@ -242,7 +242,7 @@ print Dumper \%evalues_per_query_hash if $debug;
 ############################################ MAIN CODE
 
 ## get winning bitscore and taxid; calculate congruence among all taxids for all hits per query:
-my ($processed,$ingroup,$ingroup_supported,$outgroup,$outgroup_supported,$alien_index_supported,$hgt_supported,$unclassified) = (0,0,0,0,0,0,0,0);
+my ($processed,$ingroup,$ingroup_supported,$outgroup,$outgroup_supported,$alien_index_supported,$hgt_supported,$unassigned) = (0,0,0,0,0,0,0,0);
 print STDOUT "[INFO] Calculating bestsum bitscore and hit support...\n";
 print STDOUT "\n" if $verbose;
 foreach my $query (nsort keys %bitscores_per_query_hash) {
@@ -285,27 +285,48 @@ foreach my $query (nsort keys %bitscores_per_query_hash) {
   print STDOUT "[INFO] [$query] Best evalue for OUTGROUP (non-$names_hash{$taxid_threshold}): $outgroup_best_evalue\n" if $verbose;
   print STDOUT "[INFO] [$query] Alien Index = ".sprintf("%.2f",$alien_index)."\n[----]\n" if $verbose;
 
-  ## print to $out
+  ## print all queries to $OUT:
   print $OUT join "\t", $query, $taxid_with_highest_bitscore, $bitscoresum_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank_to_phylum($taxid_with_highest_bitscore), "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, sprintf("%.2f",$alien_index), "\n";
 
   ## calculate number of well-supported genes:
-  if ( ($taxid_with_highest_bitscore_category eq "ingroup") ) {
+  if ( $taxid_with_highest_bitscore_category eq "unassigned" ) {
+    $unassigned++;
+    $alien_index_supported++ if ($alien_index >= $alien_threshold); ## catch AI>=45 queries in this category
+  } elsif ( $taxid_with_highest_bitscore_category eq "ingroup" ) {
     $ingroup++;
     $ingroup_supported++ if ($taxid_with_highest_bitscore_category_support >= $support_threshold);
-  } elsif ( ($taxid_with_highest_bitscore_category eq "outgroup") ) {
+    $alien_index_supported++ if ($alien_index >= $alien_threshold); ## catch AI>=45 queries in this category
+  } elsif ( $taxid_with_highest_bitscore_category eq "outgroup" ) {
     $outgroup++;
-    $outgroup_supported++ if ($taxid_with_highest_bitscore_category_support >= $support_threshold);
-    $hgt_supported++ if ($taxid_with_highest_bitscore_category_support >= $support_threshold);
-    print $HGT join "\t", $query, $taxid_with_highest_bitscore, $bitscoresum_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank_to_species($taxid_with_highest_bitscore), "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, sprintf("%.2f",$alien_index), "\n";
-  } elsif ( ($taxid_with_highest_bitscore_category eq "unassigned") || ($taxid_with_highest_bitscore_category eq "unclassified") ) {
-    $unclassified++;
-  } elsif ($alien_index >= $alien_threshold) {
-    print $HGT join "\t", $query, $taxid_with_highest_bitscore, $bitscoresum_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank_to_species($taxid_with_highest_bitscore), "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, sprintf("%.2f",$alien_index), "\n";
+    $alien_index_supported++ if ($alien_index >= $alien_threshold); ## catch AI>=45 queries in this category
+    if ( $taxid_with_highest_bitscore_category_support >= $support_threshold ) { ## only consider those queries with SHsupport > 90
+      $hgt_supported++;
+      $outgroup_supported++;
+      print $HGT join "\t", $query, $taxid_with_highest_bitscore, $bitscoresum_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank_to_species($taxid_with_highest_bitscore), "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, sprintf("%.2f",$alien_index), "\n";
+    }
+  } elsif ( $alien_index >= $alien_threshold ) { ## this catches queries which may have an AI>45 but not enough outgroup support
     $hgt_supported++;
-  }
-  if ($alien_index >= $alien_threshold) {
     $alien_index_supported++;
+    print $HGT join "\t", $query, $taxid_with_highest_bitscore, $bitscoresum_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank_to_species($taxid_with_highest_bitscore), "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, sprintf("%.2f",$alien_index), "\n";
   }
+
+  # if ( ($taxid_with_highest_bitscore_category eq "ingroup") ) {
+  #   $ingroup++;
+  #   $ingroup_supported++ if ($taxid_with_highest_bitscore_category_support >= $support_threshold);
+  # } elsif ( ($taxid_with_highest_bitscore_category eq "outgroup") ) {
+  #   $outgroup++;
+  #   $outgroup_supported++ if ($taxid_with_highest_bitscore_category_support >= $support_threshold);
+  #   $hgt_supported++ if ($taxid_with_highest_bitscore_category_support >= $support_threshold);
+  #   print $HGT join "\t", $query, $taxid_with_highest_bitscore, $bitscoresum_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank_to_species($taxid_with_highest_bitscore), "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, sprintf("%.2f",$alien_index), "\n";
+  # } elsif ( ($taxid_with_highest_bitscore_category eq "unassigned") || ($taxid_with_highest_bitscore_category eq "unclassified") ) {
+  #   $unclassified++;
+  # } elsif ($alien_index >= $alien_threshold) {
+  #   print $HGT join "\t", $query, $taxid_with_highest_bitscore, $bitscoresum_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank_to_species($taxid_with_highest_bitscore), "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, sprintf("%.2f",$alien_index), "\n";
+  #   $hgt_supported++;
+  # }
+  # if ($alien_index >= $alien_threshold) {
+  #   $alien_index_supported++;
+  # }
 
   ## progress
   $processed++;
