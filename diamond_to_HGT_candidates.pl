@@ -12,27 +12,42 @@ use List::Util qw(reduce sum);
 
 my $usage = "
 SYNOPSIS:
-  Goal is to take a taxified Diamond BLAST file, and for each hit recurse up the
+  Goal is to take a taxified Diamond or BLAST file, and for each hit recurse up the
   tax tree until that hit can be categorised into \"ingroup\" versus \"outgroup\"
-  (e.g., \"metazoan\" or \"non-metazoan\" etc.) Sum the bitscores across all hits to calculate
-  the winner, but only accept the winner if there is a high degree of congruence
-  across all hits (e.g., >=90% of all hits agree on the winner).
+  (e.g., \"metazoan\" vs \"non-metazoan\" etc.).
+    (a) Get Query Taxid: For each query, calculate the sum of bitscores per taxid;
+        the taxid with the highest bitscoresum is the \"winner\" and assumed taxonomy of the query
+    (b) Determine Category: Assess the placement of the winning taxid in the NCBI
+        taxonomy tree: if the taxid falls within the --taxid_threshold (default = Metazoa)
+        then the query is determined to be INGROUP; if the taxid does not fall within the
+        taxid_threshold then the query is OUTGROUP
+    (c) Get Support: Assess support for the winning query taxid from secondary hits;
+        winning taxid is well-supported if the rest of the hits agree with the INGROUP/OUTGROUP
+        categorisation above --support_threshold (default = 90%)
+    (d) Print: INGROUP/OUTGROUP decisions and support values are printed to file for all
+        queries, regardless of support
+
+    Eg: The bestsum bitscore for a given query protein is to a Pseudomonad species; thus taxid is
+    ___ and category is OUTGROUP as taxid ___ does not fall within Metazoa. The vast majority (>90\%)
+    of other hits are also to bacteria, and thus support the OUTGROUP categorisation. This gene
+    would be designated \"candidate HGT\" and would merit further investigation.
 
 OUTPUTS:
+  A \"\*.HGT_decisions.\" file with the headers:
 
 OPTIONS:
   -i|--in                [FILE]   : tab formatted Diamond output file [required]
-  -P|--path              [STRING] : path to dir/ containing nodes.dmp, names.dmp and merged.dmp
+  -p|--path              [STRING] : path to dir/ containing nodes.dmp, names.dmp and merged.dmp
   -o|--nodes             [FILE]   : path to nodes.dmp [required unless --nodesDB]
   -a|--names             [FILE]   : path to names.dmp [required unless --nodesDB]
   -m|--merged            [FILE]   : path to merged.dmp
   -n|--nodesDB           [FILE]   : nodesDB.txt file from blobtools [required unless --nodes && --names]
   -t|--taxid_threshold   [INT]    : NCBI taxid to recurse up to; i.e., threshold taxid to define \"ingroup\" [default = 33208 (Metazoa)]
-  -s|--support_threshold [FLOAT]  : \% support required to be counted as \"well-supported\" [default = 90\%; note all are printed regardless of support]
+  -s|--support_threshold [FLOAT]  : support required to be counted as \"well-supported\" [default = 90\%; note all are printed regardless of support]
   -b|--bitscore_column   [INT]    : define bitscore column for --in (first column = 1) [default: 12]
   -c|--taxid_column      [INT]    : define taxid column for --in (first column = 1) [default: 13]
   -d|--delimiter         [STRING] : define delimiter to split --in (specify \"diamond\" for Diamond files (\"\\s+\") or \"blast\" for BLAST files (\"\\t\")) [default: diamond]
-  -p|--prefix            [FILE]   : filename prefix for outfile [default = INFILE.HGT_decisions.txt]
+  -e|--prefix            [FILE]   : filename prefix for outfile [default = INFILE]
   -H|--header                     : don't print header [default: do print it]
   -v|--verbose                    : say more things [default: be quiet]
   -h|--help                       : prints this help message
@@ -50,7 +65,7 @@ my $delimiter = "diamond";
 
 GetOptions (
   'in|i=s'              => \$in,
-  'path|P:s'            => \$path,
+  'path|p:s'            => \$path,
   'nodes|o:s'           => \$nodesfile,
   'names|a:s'           => \$namesfile,
   'merged|m:s'          => \$mergedfile,
@@ -60,7 +75,7 @@ GetOptions (
   'taxid_column|c:i'    => \$taxid_column,
   'bitscore_column|b:i' => \$bitscore_column,
   'delimiter|d:s'       => \$delimiter,
-  'prefix|p:s'          => \$prefix,
+  'prefix|e:s'          => \$prefix,
   'header|H'            => \$header,
   'verbose|v'           => \$verbose,
   'debug'               => \$debug,
@@ -243,9 +258,9 @@ foreach my $query (nsort keys %sum_bitscores_per_query_hash) {
   print $OUT join "\t", $query, $taxid_with_highest_bitscore, $bitscoresum_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank($taxid_with_highest_bitscore), "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, "\n";
 
   ## calculate number of well-supported genes:
-  if ( ($taxid_with_highest_bitscore_category eq "ingroup") && ($taxid_with_highest_bitscore_category_support > $support_threshold) ) {
+  if ( ($taxid_with_highest_bitscore_category =~ "ingroup") && ($taxid_with_highest_bitscore_category_support > $support_threshold) ) {
     $ingroup_supported++;
-  } elsif ( ($taxid_with_highest_bitscore_category eq "outgroup") && ($taxid_with_highest_bitscore_category_support > $support_threshold) ) {
+  } elsif ( ($taxid_with_highest_bitscore_category =~ "outgroup") && ($taxid_with_highest_bitscore_category_support > $support_threshold) ) {
     $outgroup_supported++;
   }
 
