@@ -69,7 +69,7 @@ GetOptions (
 
 die $usage if $help;
 die $usage unless ($in);
-die $usage unless (($nodesfile && $namesfile) || $nodesDBfile || $path);
+#die $usage unless (($nodesfile && $namesfile) || $nodesDBfile || $path);
 
 ## define delimiter:
 if ($delimiter eq "diamond") {
