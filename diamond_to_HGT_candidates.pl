@@ -22,6 +22,7 @@ OUTPUTS:
 
 OPTIONS:
   -i|--in                [FILE]   : tab formatted Diamond output file [required]
+  -P|--path              [STRING] : path to dir/ containing nodes.dmp, names.dmp and merged.dmp
   -o|--nodes             [FILE]   : path to nodes.dmp [required unless --nodesDB]
   -a|--names             [FILE]   : path to names.dmp [required unless --nodesDB]
   -m|--merged            [FILE]   : path to merged.dmp
@@ -40,7 +41,7 @@ EXAMPLES:
 
 \n";
 
-my ($in,$nodesfile,$namesfile,$mergedfile,$nodesDBfile,$prefix,$outfile,$warningsfile,$header,$verbose,$debug,$help);
+my ($in,$nodesfile,$path,$namesfile,$mergedfile,$nodesDBfile,$prefix,$outfile,$warningsfile,$header,$verbose,$debug,$help);
 my $taxid_threshold = 33208;
 my $support_threshold = 90;
 my $taxid_column = 13;
@@ -49,6 +50,7 @@ my $delimiter = "diamond";
 
 GetOptions (
   'in|i=s'              => \$in,
+  'path|P:s'            => \$path,
   'nodes|o:s'           => \$nodesfile,
   'names|a:s'           => \$namesfile,
   'merged|m:s'          => \$mergedfile,
@@ -67,7 +69,7 @@ GetOptions (
 
 die $usage if $help;
 die $usage unless ($in);
-die $usage unless (($nodesfile && $namesfile) || $nodesDBfile);
+die $usage unless (($nodesfile && $namesfile) || $nodesDBfile || $path);
 
 ## define delimiter:
 if ($delimiter eq "diamond") {
@@ -82,7 +84,36 @@ if ($delimiter eq "diamond") {
 
 ## parse nodes and names:
 my (%nodes_hash, %names_hash, %rank_hash);
-if ($nodesfile && $namesfile) {
+if ($path) {
+  print STDOUT "[INFO] Building taxonomy databases from tax files in \"$path\"...";
+  open(my $NODES, "$path/nodes.dmp") or die $!;
+  while (<$NODES>) {
+    chomp;
+    next if /\#/;
+    my @F = map { s/^\s+|\s+$//gr } split (/\|/, $_); ## split nodes.dmp file on \s+|\s+ regex
+    $nodes_hash{$F[0]} = $F[1]; ## key= child taxid; value= parent taxid
+    $rank_hash{$F[0]} = $F[2]; ## key= taxid; value= rank
+  }
+  close $NODES;
+  open (my $NAMES, "$path/names.dmp") or die $!;
+  while (<$NAMES>) {
+    chomp;
+    next if /\#/;
+    my @F = map { s/^\s+|\s+$//gr } split (/\|/, $_);
+    $names_hash{$F[0]} = $F[1] if ($F[3] eq "scientific name"); ## key= taxid; value= species name
+  }
+  close $NAMES;
+  if (-e "$path/merged.dmp") {
+    open (my $MERGED, "$path/merged.dmp") or die $!;
+    while (<$MERGED>) {
+      chomp;
+      next if /\#/;
+      my @F = map { s/^\s+|\s+$//gr } split (/\|/, $_);
+      $nodes_hash{$F[0]} = $F[1]; ## key= old taxid; value= new taxid
+      ## this will behave as if old taxid is a child of the new one, which is OK I guess
+    }
+  }
+} elsif ($nodesfile && $namesfile) {
   print STDOUT "[INFO] Building taxonomy databases from \"$nodesfile\" and \"$namesfile\"...";
   open(my $NODES, $nodesfile) or die $!;
   while (<$NODES>) {
