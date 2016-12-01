@@ -376,50 +376,42 @@ sub tax_walk_to_get_rank_to_species {
 
   while (1) {
     if ($parent_rank eq "species") {
-      $phylum = $names_hash{$parent};
-      #print "Found phylum: $phylum\n";
+      $species = $names_hash{$parent};
       $parent = $nodes_hash{$parent};
       $parent_rank = $rank_hash{$parent};
       next;
     } elsif ($parent_rank eq "genus") {
-      $kingdom = $names_hash{$parent};
-      #print "Found phylum: $kingdom\n";
+      $genus = $names_hash{$parent};
       $parent = $nodes_hash{$parent};
       $parent_rank = $rank_hash{$parent};
       next;
     } elsif ($parent_rank eq "family") {
-      $kingdom = $names_hash{$parent};
-      #print "Found phylum: $kingdom\n";
+      $family = $names_hash{$parent};
       $parent = $nodes_hash{$parent};
       $parent_rank = $rank_hash{$parent};
       next;
     } elsif ($parent_rank eq "order") {
-      $kingdom = $names_hash{$parent};
-      #print "Found phylum: $kingdom\n";
+      $order = $names_hash{$parent};
       $parent = $nodes_hash{$parent};
       $parent_rank = $rank_hash{$parent};
       next;
     } elsif ($parent_rank eq "class") {
-      $kingdom = $names_hash{$parent};
-      #print "Found phylum: $kingdom\n";
+      $class = $names_hash{$parent};
       $parent = $nodes_hash{$parent};
       $parent_rank = $rank_hash{$parent};
       next;
     } elsif ($parent_rank eq "phylum") {
-      $kingdom = $names_hash{$parent};
-      #print "Found phylum: $kingdom\n";
+      $phylum = $names_hash{$parent};
       $parent = $nodes_hash{$parent};
       $parent_rank = $rank_hash{$parent};
       next;
     } elsif ($parent_rank eq "kingdom") {
       $kingdom = $names_hash{$parent};
-      #print "Found phylum: $kingdom\n";
       $parent = $nodes_hash{$parent};
       $parent_rank = $rank_hash{$parent};
       next;
     } elsif ($parent_rank eq "superkingdom") {
       $superkingdom = $names_hash{$parent};
-      #print "Found phylum: $superkingdom\n";
       last;
     } elsif ($parent == 1) {
       last;
