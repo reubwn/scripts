@@ -36,13 +36,14 @@ SYNOPSIS:
     (see Gladyshev et al., http://science.sciencemag.org/content/suppl/2008/05/29/320.5880.1210.DC1/Gladyshev.SOM.pdf)
 
 OUTPUTS:
-  A \"\*.HGT_decisions.\" file with the headers:
+  A \"\*.HGT_results.txt\" file with the support values for each query; a \"\*.HGT_candidates.txt\" file with queries
+  showing support over the specified thresholds.
 
 OPTIONS:
   -i|--in                [FILE]   : tab formatted Diamond output file [required]
-  -p|--path              [STRING] : path to dir/ containing nodes.dmp, names.dmp and merged.dmp
-  -o|--nodes             [FILE]   : path to nodes.dmp [required unless --nodesDB]
-  -a|--names             [FILE]   : path to names.dmp [required unless --nodesDB]
+  -p|--path              [STRING] : path to dir/ containing tax files [one of -p || (-o && -a) || -n is required]
+  -o|--nodes             [FILE]   : path to nodes.dmp
+  -a|--names             [FILE]   : path to names.dmp
   -m|--merged            [FILE]   : path to merged.dmp
   -n|--nodesDB           [FILE]   : nodesDB.txt file from blobtools [required unless --nodes && --names]
   -t|--taxid_threshold   [INT]    : NCBI taxid to recurse up to; i.e., threshold taxid to define \"ingroup\" [default = 33208 (Metazoa)]
@@ -259,7 +260,7 @@ foreach my $query (nsort keys %bitscores_per_query_hash) {
       $outgroup_best_evalue = $min_evalue if ($min_evalue < $outgroup_best_evalue);
     }
   }
-  my $alien_index = (log10($ingroup_best_evalue + 1e-200) - log10($outgroup_best_evalue + 1e-200));
+  my $alien_index = sprintf ( "%.2f", (log10($ingroup_best_evalue + 1e-200) - log10($outgroup_best_evalue + 1e-200)) );
 
   ## calculate bitscoresums per taxid; get taxid of highest bitscoresum; get support for winning taxid from other hits:
   my (%bitscoresum_hash, %count_categories, %support_categories);
@@ -283,10 +284,10 @@ foreach my $query (nsort keys %bitscores_per_query_hash) {
   print STDOUT "[INFO] [$query] Decision of bestsum bitscore: $taxid_with_highest_bitscore_category (support = $taxid_with_highest_bitscore_category_support)\n" if $verbose;
   print STDOUT "[INFO] [$query] Best evalue for INGROUP ($names_hash{$taxid_threshold}): $ingroup_best_evalue\n" if $verbose;
   print STDOUT "[INFO] [$query] Best evalue for OUTGROUP (non-$names_hash{$taxid_threshold}): $outgroup_best_evalue\n" if $verbose;
-  print STDOUT "[INFO] [$query] Alien Index = ".sprintf("%.2f",$alien_index)."\n[----]\n" if $verbose;
+  print STDOUT "[INFO] [$query] Alien Index = $alien_index\n[----]\n" if $verbose;
 
   ## print all queries to $OUT:
-  print $OUT join "\t", $query, $taxid_with_highest_bitscore, $bitscoresum_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank_to_phylum($taxid_with_highest_bitscore), "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, sprintf("%.2f",$alien_index), "\n";
+  print $OUT join "\t", $query, $taxid_with_highest_bitscore, $bitscoresum_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank_to_phylum($taxid_with_highest_bitscore), "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, $alien_index, "\n";
 
   ## calculate number of well-supported genes:
   if ( $taxid_with_highest_bitscore_category eq "unassigned" ) {
@@ -303,7 +304,7 @@ foreach my $query (nsort keys %bitscores_per_query_hash) {
   ## only print to $HGT if "OUTGROUP" is well-supported OR AI >= alien_threshold:
   if ( (($taxid_with_highest_bitscore_category eq "outgroup") and ($taxid_with_highest_bitscore_category_support >= $support_threshold)) or $alien_index >= $alien_threshold ) {
     $hgt_supported++;
-    print $HGT join "\t", $query, $taxid_with_highest_bitscore, $bitscoresum_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank_to_species($taxid_with_highest_bitscore), "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, sprintf("%.2f",$alien_index), "\n";
+    print $HGT join "\t", $query, $taxid_with_highest_bitscore, $bitscoresum_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank_to_species($taxid_with_highest_bitscore), "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, $alien_index, "\n";
   }
   ## catch all queries with AI>=alien_threshold:
   $alien_index_supported++ if ($alien_index >= $alien_threshold);
