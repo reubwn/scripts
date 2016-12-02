@@ -233,7 +233,7 @@ while (<$DIAMOND>) {
 }
 close $DIAMOND;
 print STDOUT " done\n";
-print STDOUT "[WARN] There were $skipped_entries invalid taxid entries in \"$in\"; these were omitted from the analysis.\n" if $skipped_entries > 0;
+print STDERR "[WARN] There were $skipped_entries invalid taxid entries in \"$in\"; these were omitted from the analysis.\n" if $skipped_entries > 0;
 
 ############################################ DEBUG
 
@@ -312,7 +312,7 @@ foreach my $query (nsort keys %bitscores_per_query_hash) {
   ## progress
   $processed++;
   if ($processed % 1000 == 0){
-    print "\r[INFO] Processed ".commify($processed)." queries...";
+    print STDERR "\r[INFO] Processed ".commify($processed)." queries...";
     $| = 1;
   }
 }
