@@ -189,13 +189,13 @@ print STDOUT "[INFO] INGROUP set to \"$names_hash{$taxid_threshold}\"; OUTGROUP 
 
 ## define outfiles:
 if ($prefix) {
-  $outfile = "$prefix.HGT_decisions.$names_hash{$taxid_threshold}.txt";
+  $outfile = "$prefix.HGT_results.$names_hash{$taxid_threshold}.txt";
   $hgtcandidatesfile = "$prefix.HGT_candidates.$names_hash{$taxid_threshold}.supp$support_threshold.AI$alien_threshold.txt";
-  $warningsfile = "$prefix.warnings.txt";
+  $warningsfile = "$prefix.HGT_warnings.txt";
 } else {
-  $outfile = "$in.HGT_decisions.$names_hash{$taxid_threshold}.txt";
+  $outfile = "$in.HGT_results.$names_hash{$taxid_threshold}.txt";
   $hgtcandidatesfile = "$in.HGT_candidates.$names_hash{$taxid_threshold}.supp$support_threshold.AI$alien_threshold.txt";
-  $warningsfile = "$in.warnings.txt";
+  $warningsfile = "$in.HGT_warnings.txt";
 }
 
 ## open outfiles:
