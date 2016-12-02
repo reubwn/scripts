@@ -203,8 +203,8 @@ if ($prefix) {
 open (my $OUT, ">",$outfile) or die $!;
 open (my $HGT, ">",$hgtcandidatesfile) or die $!;
 open (my $WARN, ">",$warningsfile) or die $!;
-print $OUT "\#query\ttaxid\tbestsumBitscore\tsuperkingdom;kingdom;phylum\tingroupTaxname\tdecision\tsupport\talienIndex\n" unless $header;
-print $HGT "\#query\ttaxid\tbestsumBitscore\tsuperkingdom;kingdom;phylum;class;order;family;genus;species\tingroupTaxname\tdecision\tsupport\talienIndex\n" unless $header;
+print $OUT "\#query\ttaxid\tbestsum_bitscore\tsuperkingdom;kingdom;phylum\tingroup_taxname\tdecision\tsupport\talien_index\n" unless $header;
+print $HGT "\#query\ttaxid\tbestsum_bitscore\tsuperkingdom;kingdom;phylum;class;order;family;genus;species\tingroup_taxname\tdecision\thit_support\talien_index\n" unless $header;
 
 ############################################## PARSE DIAMOND
 
