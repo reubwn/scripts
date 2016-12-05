@@ -190,8 +190,8 @@ if ($path) {
 print STDERR " done\n";
 print STDERR "[INFO] Nodes parsed: ".scalar(keys %nodes_hash)."\n";
 print STDERR "[INFO] Threshold taxid set to \"$taxid_threshold\" ($names_hash{$taxid_threshold})\n";
-print STDERR "[INFO] INGROUP set to \"$names_hash{$taxid_threshold}\"; OUTGROUP is therefore \"non-$names_hash{$taxid_threshold}\"\n";
-print STDERR "[INFO] Skipping any hits to taxid \"$taxid_skip\" ($names_hash{$taxid_skip})\n";
+print STDERR "[INFO] INGROUP set to '$names_hash{$taxid_threshold}'; OUTGROUP is therefore 'non-$names_hash{$taxid_threshold}'\n";
+print STDERR "[INFO] Skipping any hits to taxid '$taxid_skip' ($names_hash{$taxid_skip})\n";
 print STDERR "[INFO] Scoring method set to '$scoring'\n";
 
 ############################################ OUTFILES
@@ -245,8 +245,8 @@ while (<$DIAMOND>) {
 }
 close $DIAMOND;
 print STDERR " done\n";
-print STDERR "[WARN] There were $skipped_entries_because_bad_taxid invalid taxid entries in \"$in\"; these were omitted from the analysis.\n" if $skipped_entries_because_bad_taxid > 0;
-print STDERR "[WARN] There were $skipped_entries_because_skipped_taxid skipped taxid entries in \"$in\"; these were omitted from the analysis.\n" if $skipped_entries_because_skipped_taxid > 0;
+print STDERR "[WARN] There were $skipped_entries_because_bad_taxid invalid taxid entries in '$in'; these were omitted from the analysis.\n" if $skipped_entries_because_bad_taxid > 0;
+print STDERR "[WARN] There were $skipped_entries_because_skipped_taxid skipped taxid entries in '$in'; these were omitted from the analysis.\n" if $skipped_entries_because_skipped_taxid > 0;
 
 ############################################ DEBUG
 
@@ -281,8 +281,10 @@ foreach my $query (nsort keys %bitscores_per_query_hash) {
   foreach my $taxid (nsort keys %bitscore_hash) {
     if ($scoring eq "sum") {
       if (tax_walk($taxid) eq "ingroup") {
+        print join "\t", $query, $taxid, tax_walk($taxid), "\n";
         $ingroup_bitscoresum += sum( @{ $bitscore_hash{$taxid} } );
       } elsif (tax_walk($taxid) eq "outgroup") {
+        print join "\t", $query, $taxid, tax_walk($taxid), "\n";
         $outgroup_bitscoresum += sum( @{ $bitscore_hash{$taxid} } );
       }
     } elsif ($scoring eq "individual") {
@@ -350,12 +352,12 @@ close $WARN;
 print STDERR "\r[INFO] Processed ".commify($processed)." queries\n";
 #print STDERR "[INFO] Number of queries in INGROUP category (\"$names_hash{$taxid_threshold}\"): ".commify($ingroup)."\n";
 #print STDERR "[INFO] Number of queries in INGROUP category (\"$names_hash{$taxid_threshold}\") with support > $support_threshold\%: ".commify($ingroup_supported)."\n";
-print STDERR "[INFO] Number of queries in OUTGROUP category (\"non-$names_hash{$taxid_threshold}\"): ".commify($outgroup)."\n";
-print STDERR "[INFO] Number of queries in OUTGROUP category (\"non-$names_hash{$taxid_threshold}\") with support > $support_threshold\%: ".commify($outgroup_supported)."\n";
+print STDERR "[INFO] Number of queries in OUTGROUP category ('non-$names_hash{$taxid_threshold}'): ".commify($outgroup)."\n";
+print STDERR "[INFO] Number of queries in OUTGROUP category ('non-$names_hash{$taxid_threshold}') with support > $support_threshold\%: ".commify($outgroup_supported)."\n";
 print STDERR "[INFO] Number of queries in unassigned/unclassified category: ".commify($unassigned)."\n";
 print STDERR "[INFO] Number of queries with Alien Index >= $alien_threshold: ".commify($alien_index_supported)."\n";
 print STDERR "[INFO] Total number of queries with some HGT support: ".commify($hgt_supported)."\n";
-print STDERR "[INFO] Finished\n\n";
+print STDERR "[INFO] Finished.\n\n";
 
 ############################################ SUBS
 
