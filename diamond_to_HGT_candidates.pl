@@ -187,6 +187,7 @@ print STDOUT " done\n";
 print STDOUT "[INFO] Nodes parsed: ".scalar(keys %nodes_hash)."\n";
 print STDOUT "[INFO] Threshold taxid set to \"$taxid_threshold\" ($names_hash{$taxid_threshold})\n";
 print STDOUT "[INFO] INGROUP set to \"$names_hash{$taxid_threshold}\"; OUTGROUP is therefore \"non-$names_hash{$taxid_threshold}\"\n";
+print STDOUT "[INFO] Skipping any hits to taxid $taxid_skip ($names_hash{$taxid_skip})\n";
 
 ############################################ OUTFILES
 
@@ -227,7 +228,7 @@ while (<$DIAMOND>) {
     print $WARN "[WARN] The taxid ".$F[($taxid_column-1)]." for query $F[0] on line $. of \"$in\" does not appear to have a valid parent tax node\n";
     $skipped_entries_because_bad_taxid++;
     next;
-  } elsif ($F[($taxid_column-1)] == $taxid_skip) {
+  } elsif ( tax_walk($F[($taxid_column-1)], $taxid_skip) eq "ingroup" ) { ## do not include any hits to within taxid $taxid_skip
     print $WARN "[WARN] The taxid ".$F[($taxid_column-1)]." for query $F[0] on line $. of \"$in\" was purposfully skipped because it fell within -k $taxid_skip\n";
     $skipped_entries_because_skipped_taxid++;
     next;
@@ -240,6 +241,7 @@ while (<$DIAMOND>) {
 close $DIAMOND;
 print STDOUT " done\n";
 print STDERR "[WARN] There were $skipped_entries_because_bad_taxid invalid taxid entries in \"$in\"; these were omitted from the analysis.\n" if $skipped_entries_because_bad_taxid > 0;
+print STDERR "[WARN] There were $skipped_entries_because_skipped_taxid skipped taxid entries in \"$in\"; these were omitted from the analysis.\n" if $skipped_entries_because_skipped_taxid > 0;
 
 ############################################ DEBUG
 
