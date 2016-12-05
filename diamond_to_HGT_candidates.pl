@@ -279,8 +279,9 @@ foreach my $query (nsort keys %bitscores_per_query_hash) {
   my (%bitscoresum_hash, %count_categories, %support_categories);
   my ($ingroup_bitscoresum, $outgroup_bitscoresum) = (0,0);
   foreach my $taxid (nsort keys %bitscore_hash) {
-    if ($scoring eq "sum") {
-      if (tax_walk($taxid) eq "ingroup") {
+    if (chomp($scoring) eq "sum") {
+      print "I am $scoring\n";
+      if (chomp(tax_walk($taxid)) eq "ingroup") {
         print join "\t", $query, $taxid, tax_walk($taxid), "\n";
         $ingroup_bitscoresum += sum( @{ $bitscore_hash{$taxid} } );
       } elsif (tax_walk($taxid) eq "outgroup") {
