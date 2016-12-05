@@ -32,7 +32,7 @@ SYNOPSIS:
     of other hits are also to bacteria, and thus support the OUTGROUP categorisation. This gene
     would be designated \"candidate HGT\" and would merit further investigation.
 
-    Alien Index = log((Best E-value for Metazoa) + e-200) - log((Best E-value for NonMetazoa) + e-200)
+    Alien Index = log((Best E-value for Metazoa) + 1e-200) - log((Best E-value for NonMetazoa) + 1e-200)
     (see Gladyshev et al., http://science.sciencemag.org/content/suppl/2008/05/29/320.5880.1210.DC1/Gladyshev.SOM.pdf)
 
 OUTPUTS:
@@ -47,6 +47,7 @@ OPTIONS:
   -m|--merged            [FILE]   : path to merged.dmp
   -n|--nodesDB           [FILE]   : nodesDB.txt file from blobtools [required unless --nodes && --names]
   -t|--taxid_threshold   [INT]    : NCBI taxid to recurse up to; i.e., threshold taxid to define \"ingroup\" [default = 33208 (Metazoa)]
+  -k|--taxid_skip        [INT]    : NCBI taxid to skip; hits to this taxid will not be considered in any calculations of support
   -s|--support_threshold [FLOAT]  : Secondary Hits Support threshold for considering HGT candidates [default = 90\%]
   -l|--alien_threshold   [INT]    : Alien Index threshold for considering HGT candidates (default >= 45)
   -e|--evalue_column     [INT]    : define evalue column for --in (first column = 1) [default: 11]
@@ -62,7 +63,7 @@ EXAMPLES:
 
 \n";
 
-my ($in,$nodesfile,$path,$namesfile,$mergedfile,$nodesDBfile,$prefix,$outfile,$hgtcandidatesfile,$warningsfile,$header,$verbose,$debug,$help);
+my ($in,$nodesfile,$path,$namesfile,$mergedfile,$nodesDBfile,$taxid_skip,$prefix,$outfile,$hgtcandidatesfile,$warningsfile,$header,$verbose,$debug,$help);
 my $taxid_threshold = 33208;
 my $support_threshold = 90;
 my $alien_threshold = 45;
@@ -79,6 +80,7 @@ GetOptions (
   'merged|m:s'          => \$mergedfile,
   'nodesDB|n:s'         => \$nodesDBfile,
   'taxid_threshold|t:i' => \$taxid_threshold,
+  'taxid_skip|k:i'      => \$taxid_skip,
   'support_threshold|s:f' => \$support_threshold,
   'alien_threshold|l:i' => \$alien_threshold,
   'evalue_column|e:i'   => \$evalue_column,
@@ -211,29 +213,33 @@ print $HGT "\#query\ttaxid\tbestsum_bitscore\tsuperkingdom;kingdom;phylum;class;
 ## parse Diamond file:
 print STDOUT "[INFO] Parsing Diamond file \"$in\"...";
 my (%bitscores_per_query_hash, %evalues_per_query_hash);
-my $skipped_entries = 0;
+my ($skipped_entries_because_bad_taxid,$skipped_entries_because_skipped_taxid) = (0,0);
 open (my $DIAMOND, $in) or die $!;
 while (<$DIAMOND>) {
   chomp;
   next if /^\#/;
   my @F = split ($delimiter, $_);
   if ($F[($taxid_column-1)] !~ m/\d+/) {
-    print $WARN "[WARN] The taxid ".$F[($taxid_column-1)]." for query $F[0] on line $. of \"$in\" does not look like a valid NCBI taxid... Skipping this entry\n";
-    $skipped_entries++;
+    print $WARN "[WARN] The taxid ".$F[($taxid_column-1)]." for query $F[0] on line $. of \"$in\" does not look like a valid NCBI taxid\n";
+    $skipped_entries_because_bad_taxid++;
     next;
   } elsif (check_taxid_has_parent($F[($taxid_column-1)]) == 1) {
-    print $WARN "[WARN] The taxid ".$F[($taxid_column-1)]." for query $F[0] on line $. of \"$in\" does not appear to have a valid parent tax node... Skipping this entry\n";
-    $skipped_entries++;
+    print $WARN "[WARN] The taxid ".$F[($taxid_column-1)]." for query $F[0] on line $. of \"$in\" does not appear to have a valid parent tax node\n";
+    $skipped_entries_because_bad_taxid++;
     next;
+  } elsif ($F[($taxid_column-1)] == $taxid_skip) {
+    print $WARN "[WARN] The taxid ".$F[($taxid_column-1)]." for query $F[0] on line $. of \"$in\" was purposfully skipped because it fell within -k $taxid_skip\n";
+    $skipped_entries_because_skipped_taxid++;
+    next;
+  } else {
+    ## push all bitscores and evalues for every taxid into an array within a hash within a hash:
+    push @{ $bitscores_per_query_hash{$F[0]}{$F[($taxid_column-1)]} }, $F[($bitscore_column-1)]; ## key= query; value= hash{ key= taxid; value= array[ bitscores ]}
+    push @{ $evalues_per_query_hash{$F[0]}{$F[($taxid_column-1)]} }, $F[$evalue_column-1]; ## key= query; value= hash{ key= taxid; value= array [ evalues ]}
   }
-
-  ## push all bitscores and evalues for every taxid into an array within a hash within a hash:
-  push @{ $bitscores_per_query_hash{$F[0]}{$F[($taxid_column-1)]} }, $F[($bitscore_column-1)]; ## key= query; value= hash{ key= taxid; value= array[ bitscores ]}
-  push @{ $evalues_per_query_hash{$F[0]}{$F[($taxid_column-1)]} }, $F[$evalue_column-1]; ## key= query; value= hash{ key= taxid; value= array [ evalues ]}
 }
 close $DIAMOND;
 print STDOUT " done\n";
-print STDERR "[WARN] There were $skipped_entries invalid taxid entries in \"$in\"; these were omitted from the analysis.\n" if $skipped_entries > 0;
+print STDERR "[WARN] There were $skipped_entries_because_bad_taxid invalid taxid entries in \"$in\"; these were omitted from the analysis.\n" if $skipped_entries_because_bad_taxid > 0;
 
 ############################################ DEBUG
 
@@ -319,7 +325,7 @@ foreach my $query (nsort keys %bitscores_per_query_hash) {
 close $OUT;
 close $HGT;
 close $WARN;
-print STDOUT "\r[INFO] Processed ".commify($processed)." queries\n";
+print STDERR "\r[INFO] Processed ".commify($processed)." queries\n";
 print STDOUT "[INFO] Number of queries in INGROUP category (\"$names_hash{$taxid_threshold}\"): ".commify($ingroup)."\n";
 print STDOUT "[INFO] Number of queries in INGROUP category (\"$names_hash{$taxid_threshold}\") with support > $support_threshold\%: ".commify($ingroup_supported)."\n";
 print STDOUT "[INFO] Number of queries in OUTGROUP category (\"non-$names_hash{$taxid_threshold}\"): ".commify($outgroup)."\n";
