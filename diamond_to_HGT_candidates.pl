@@ -278,15 +278,15 @@ foreach my $query (nsort keys %bitscores_per_query_hash) {
   ## calculate bitscoresums per taxid; get taxid of highest bitscoresum; get support for winning taxid from other hits:
   my (%bitscoresum_hash, %count_categories, %support_categories);
   my ($ingroup_bitscoresum, $outgroup_bitscoresum) = (0,0);
-  foreach my $taxid (nsort keys %bitscore_hash) {
-    "I am $taxid (".tax_walk($taxid)."\n";
+  foreach my $taxid (keys %bitscore_hash) {
+    #print "I am $taxid (".tax_walk($taxid).")\n";
     if (chomp($scoring) eq "sum") {
-      print "I am $scoring\n";
+      #print "I am $scoring\n";
       if (chomp(tax_walk($taxid)) eq "ingroup") {
-        print join "\t", $query, $taxid, tax_walk($taxid), "\n";
+        #print join "\t", $query, $taxid, tax_walk($taxid), "\n";
         $ingroup_bitscoresum += sum( @{ $bitscore_hash{$taxid} } );
       } elsif (tax_walk($taxid) eq "outgroup") {
-        print join "\t", $query, $taxid, tax_walk($taxid), "\n";
+        #print join "\t", $query, $taxid, tax_walk($taxid), "\n";
         $outgroup_bitscoresum += sum( @{ $bitscore_hash{$taxid} } );
       }
     } elsif ($scoring eq "individual") {
@@ -303,16 +303,18 @@ foreach my $query (nsort keys %bitscores_per_query_hash) {
   }
 
   ## get taxid with highest bitscore:
-  my $taxid_with_highest_bitscore;
+  my ($taxid_with_highest_bitscore,$taxid_with_highest_bitscore_category);
   if ($scoring eq "sum") {
-    $taxid_with_highest_bitscore = $ingroup_bitscoresum > $outgroup_bitscoresum ? $ingroup_bitscoresum : $outgroup_bitscoresum;
+    $taxid_with_highest_bitscore_category = $ingroup_bitscoresum > $outgroup_bitscoresum ? "ingroup" : "outgroup"; ## define query category based on bitscoresums of ingroup vs outgroup
+    print STDERR "[INFO] Bitscoresum for INGROUP ($names_hash{$taxid_threshold}): $ingroup_bitscoresum\n" if $verbose;
+    print STDERR "[INFO] Bitscoresum for OUTGROUP (non-$names_hash{$taxid_threshold}): $outgroup_bitscoresum\n" if $verbose;
   } elsif ($scoring eq "individual") {
     $taxid_with_highest_bitscore = List::Util::reduce { $bitscoresum_hash{$b} > $bitscoresum_hash{$a} ? $b : $a } keys %bitscoresum_hash; ## winning taxid
+    $taxid_with_highest_bitscore_category = tax_walk($taxid_with_highest_bitscore); ## category of winning taxid ("ingroup", "outgroup" or "unassigned")
+    print STDERR "[INFO] [$query] Taxid with highest bitscore: $taxid_with_highest_bitscore (bitscore = $bitscoresum_hash{$taxid_with_highest_bitscore}; taxonomy = ".tax_walk_to_get_rank_to_phylum($taxid_with_highest_bitscore).")\n" if $verbose;
   }
 
-  my $taxid_with_highest_bitscore_category = tax_walk($taxid_with_highest_bitscore); ## category of winning taxid ("ingroup", "outgroup" or "unassigned")
   my $taxid_with_highest_bitscore_category_support = $support_categories{$taxid_with_highest_bitscore_category}; ## % support from other hits
-  print STDERR "[INFO] [$query] Taxid with highest bitscore: $taxid_with_highest_bitscore (bitscore = $bitscoresum_hash{$taxid_with_highest_bitscore}; taxonomy = ".tax_walk_to_get_rank_to_phylum($taxid_with_highest_bitscore).")\n" if $verbose;
   print STDERR "[INFO] [$query] Decision of bestsum bitscore: $taxid_with_highest_bitscore_category (support = $taxid_with_highest_bitscore_category_support)\n" if $verbose;
   print STDERR "[INFO] [$query] Best evalue for INGROUP ($names_hash{$taxid_threshold}): $ingroup_best_evalue\n" if $verbose;
   print STDERR "[INFO] [$query] Best evalue for OUTGROUP (non-$names_hash{$taxid_threshold}): $outgroup_best_evalue\n" if $verbose;
@@ -380,6 +382,7 @@ sub tax_walk {
     } else {
       $walk_to = $taxid_threshold; ## default is metazoa
     }
+    print "Walk to is: $walk_to\n";
 
     ## first parent:
     my $parent = $nodes_hash{$taxid};
@@ -405,7 +408,7 @@ sub tax_walk {
       } elsif ($parent == 12908) {
         $result = "unassigned"; ## taxid for "unclassified sequences"
         last;
-      }else { ## walk up the tree!
+      } else { ## walk up the tree!
         $parent = $nodes_hash{$parent};
       }
     }
