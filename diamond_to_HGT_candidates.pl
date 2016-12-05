@@ -141,6 +141,7 @@ if ($path) {
     }
   }
 } elsif ($nodesfile && $namesfile) {
+  select((select(STDOUT), $|=1)[0]);
   print STDOUT "[INFO] Building taxonomy databases from \"$nodesfile\" and \"$namesfile\"...";
   open(my $NODES, $nodesfile) or die $!;
   while (<$NODES>) {
@@ -170,7 +171,7 @@ if ($path) {
     }
   }
 } elsif ($nodesDBfile) {
-  print STDOUT "[INFO] Building taxonomy databases from \"$nodesDBfile\"..."; $| = 1;
+  print STDOUT "[INFO] Building taxonomy databases from \"$nodesDBfile\"...";
   open(my $NODES, $nodesDBfile) or die $!;
   while (<$NODES>) {
     chomp;
