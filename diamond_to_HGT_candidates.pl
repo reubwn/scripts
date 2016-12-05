@@ -233,11 +233,11 @@ while (<$DIAMOND>) {
     print $WARN "[WARN] The taxid ".$F[($taxid_column-1)]." for query $F[0] on line $. of \"$in\" was purposfully skipped because it fell within -k $taxid_skip\n" if $verbose;
     $skipped_entries_because_skipped_taxid++;
     next;
-  }# else {
+  } else {
     ## push all bitscores and evalues for every taxid into an array within a hash within a hash:
     push @{ $bitscores_per_query_hash{$F[0]}{$F[($taxid_column-1)]} }, $F[($bitscore_column-1)]; ## key= query; value= hash{ key= taxid; value= array[ bitscores ]}
     push @{ $evalues_per_query_hash{$F[0]}{$F[($taxid_column-1)]} }, $F[$evalue_column-1]; ## key= query; value= hash{ key= taxid; value= array [ evalues ]}
-  #}
+  }
 }
 close $DIAMOND;
 print STDERR " done\n";
