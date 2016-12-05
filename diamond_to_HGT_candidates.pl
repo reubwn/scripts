@@ -188,7 +188,7 @@ print STDERR " done\n";
 print STDERR "[INFO] Nodes parsed: ".scalar(keys %nodes_hash)."\n";
 print STDERR "[INFO] Threshold taxid set to \"$taxid_threshold\" ($names_hash{$taxid_threshold})\n";
 print STDERR "[INFO] INGROUP set to \"$names_hash{$taxid_threshold}\"; OUTGROUP is therefore \"non-$names_hash{$taxid_threshold}\"\n";
-print STDERR "[INFO] Skipping any hits to taxid $taxid_skip ($names_hash{$taxid_skip})\n";
+print STDERR "[INFO] Skipping any hits to taxid \"$taxid_skip\" ($names_hash{$taxid_skip})\n";
 
 ############################################ OUTFILES
 
@@ -230,14 +230,14 @@ while (<$DIAMOND>) {
     $skipped_entries_because_bad_taxid++;
     next;
   } elsif ( tax_walk($F[($taxid_column-1)], $taxid_skip) eq "ingroup" ) { ## do not include any hits to within taxid $taxid_skip
-    print $WARN "[WARN] The taxid ".$F[($taxid_column-1)]." for query $F[0] on line $. of \"$in\" was purposfully skipped because it fell within -k $taxid_skip\n";
+    print $WARN "[WARN] The taxid ".$F[($taxid_column-1)]." for query $F[0] on line $. of \"$in\" was purposfully skipped because it fell within -k $taxid_skip\n" if $verbose;
     $skipped_entries_because_skipped_taxid++;
     next;
-  } else {
+  #} else {
     ## push all bitscores and evalues for every taxid into an array within a hash within a hash:
     push @{ $bitscores_per_query_hash{$F[0]}{$F[($taxid_column-1)]} }, $F[($bitscore_column-1)]; ## key= query; value= hash{ key= taxid; value= array[ bitscores ]}
     push @{ $evalues_per_query_hash{$F[0]}{$F[($taxid_column-1)]} }, $F[$evalue_column-1]; ## key= query; value= hash{ key= taxid; value= array [ evalues ]}
-  }
+  #}
 }
 close $DIAMOND;
 print STDERR " done\n";
@@ -329,8 +329,8 @@ close $OUT;
 close $HGT;
 close $WARN;
 print STDERR "\r[INFO] Processed ".commify($processed)." queries\n";
-print STDERR "[INFO] Number of queries in INGROUP category (\"$names_hash{$taxid_threshold}\"): ".commify($ingroup)."\n";
-print STDERR "[INFO] Number of queries in INGROUP category (\"$names_hash{$taxid_threshold}\") with support > $support_threshold\%: ".commify($ingroup_supported)."\n";
+#print STDERR "[INFO] Number of queries in INGROUP category (\"$names_hash{$taxid_threshold}\"): ".commify($ingroup)."\n";
+#print STDERR "[INFO] Number of queries in INGROUP category (\"$names_hash{$taxid_threshold}\") with support > $support_threshold\%: ".commify($ingroup_supported)."\n";
 print STDERR "[INFO] Number of queries in OUTGROUP category (\"non-$names_hash{$taxid_threshold}\"): ".commify($outgroup)."\n";
 print STDERR "[INFO] Number of queries in OUTGROUP category (\"non-$names_hash{$taxid_threshold}\") with support > $support_threshold\%: ".commify($outgroup_supported)."\n";
 print STDERR "[INFO] Number of queries in unassigned/unclassified category: ".commify($unassigned)."\n";
