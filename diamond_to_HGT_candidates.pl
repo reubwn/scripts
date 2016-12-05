@@ -303,25 +303,30 @@ foreach my $query (nsort keys %bitscores_per_query_hash) {
   }
 
   ## get taxid with highest bitscore:
-  my ($taxid_with_highest_bitscore,$taxid_with_highest_bitscore_category);
+  my ($taxid_with_highest_bitscore,$taxid_with_highest_bitscore_category,$taxid_with_highest_bitscore_category_support);
   if ($scoring eq "sum") {
     $taxid_with_highest_bitscore_category = $ingroup_bitscoresum > $outgroup_bitscoresum ? "ingroup" : "outgroup"; ## define query category based on bitscoresums of ingroup vs outgroup
+    $taxid_with_highest_bitscore_category_support = $support_categories{$taxid_with_highest_bitscore_category}; ## % support from other hits
     print STDERR "[INFO] Bitscoresum for INGROUP ($names_hash{$taxid_threshold}): $ingroup_bitscoresum\n" if $verbose;
     print STDERR "[INFO] Bitscoresum for OUTGROUP (non-$names_hash{$taxid_threshold}): $outgroup_bitscoresum\n" if $verbose;
+    print $OUT join "\t", $query, ($ingroup_bitscoresum > $outgroup_bitscoresum ? "INGROUP" : "OUTGROUP"), ($ingroup_bitscoresum > $outgroup_bitscoresum ? $ingroup_bitscoresum : $outgroup_bitscoresum), "NA", "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, $alien_index, "\n";
+
   } elsif ($scoring eq "individual") {
     $taxid_with_highest_bitscore = List::Util::reduce { $bitscoresum_hash{$b} > $bitscoresum_hash{$a} ? $b : $a } keys %bitscoresum_hash; ## winning taxid
     $taxid_with_highest_bitscore_category = tax_walk($taxid_with_highest_bitscore); ## category of winning taxid ("ingroup", "outgroup" or "unassigned")
+    $taxid_with_highest_bitscore_category_support = $support_categories{$taxid_with_highest_bitscore_category}; ## % support from other hits
     print STDERR "[INFO] [$query] Taxid with highest bitscore: $taxid_with_highest_bitscore (bitscore = $bitscoresum_hash{$taxid_with_highest_bitscore}; taxonomy = ".tax_walk_to_get_rank_to_phylum($taxid_with_highest_bitscore).")\n" if $verbose;
+    print $OUT join "\t", $query, $taxid_with_highest_bitscore, $bitscoresum_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank_to_phylum($taxid_with_highest_bitscore), "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, $alien_index, "\n";
+
   }
 
-  my $taxid_with_highest_bitscore_category_support = $support_categories{$taxid_with_highest_bitscore_category}; ## % support from other hits
   print STDERR "[INFO] [$query] Decision of bestsum bitscore: $taxid_with_highest_bitscore_category (support = $taxid_with_highest_bitscore_category_support)\n" if $verbose;
   print STDERR "[INFO] [$query] Best evalue for INGROUP ($names_hash{$taxid_threshold}): $ingroup_best_evalue\n" if $verbose;
   print STDERR "[INFO] [$query] Best evalue for OUTGROUP (non-$names_hash{$taxid_threshold}): $outgroup_best_evalue\n" if $verbose;
   print STDERR "[INFO] [$query] Alien Index = $alien_index\n[----]\n" if $verbose;
 
   ## print all queries to $OUT:
-  print $OUT join "\t", $query, $taxid_with_highest_bitscore, $bitscoresum_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank_to_phylum($taxid_with_highest_bitscore), "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, $alien_index, "\n";
+  #print $OUT join "\t", $query, $taxid_with_highest_bitscore, $bitscoresum_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank_to_phylum($taxid_with_highest_bitscore), "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, $alien_index, "\n";
 
   ## calculate number of well-supported genes:
   if ( $taxid_with_highest_bitscore_category eq "unassigned" ) {
@@ -336,10 +341,10 @@ foreach my $query (nsort keys %bitscores_per_query_hash) {
     }
   }
   ## only print to $HGT if "OUTGROUP" is well-supported OR AI >= alien_threshold:
-  if ( (($taxid_with_highest_bitscore_category eq "outgroup") and ($taxid_with_highest_bitscore_category_support >= $support_threshold)) or $alien_index >= $alien_threshold ) {
-    $hgt_supported++;
-    print $HGT join "\t", $query, $taxid_with_highest_bitscore, $bitscoresum_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank_to_species($taxid_with_highest_bitscore), "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, $alien_index, "\n";
-  }
+  #if ( (($taxid_with_highest_bitscore_category eq "outgroup") and ($taxid_with_highest_bitscore_category_support >= $support_threshold)) or $alien_index >= $alien_threshold ) {
+  #  $hgt_supported++;
+  #  print $HGT join "\t", $query, $taxid_with_highest_bitscore, $bitscoresum_hash{$taxid_with_highest_bitscore}, tax_walk_to_get_rank_to_species($taxid_with_highest_bitscore), "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, $alien_index, "\n";
+  #}
   ## catch all queries with AI>=alien_threshold:
   $alien_index_supported++ if ($alien_index >= $alien_threshold);
 
@@ -382,7 +387,6 @@ sub tax_walk {
     } else {
       $walk_to = $taxid_threshold; ## default is metazoa
     }
-    print "Walk to is: $walk_to\n";
 
     ## first parent:
     my $parent = $nodes_hash{$taxid};
