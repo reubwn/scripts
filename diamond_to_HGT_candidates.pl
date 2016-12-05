@@ -46,14 +46,15 @@ OPTIONS:
   -a|--names             [FILE]   : path to names.dmp
   -m|--merged            [FILE]   : path to merged.dmp
   -n|--nodesDB           [FILE]   : nodesDB.txt file from blobtools [required unless --nodes && --names]
-  -t|--taxid_threshold   [INT]    : NCBI taxid to recurse up to; i.e., threshold taxid to define \"ingroup\" [default = 33208 (Metazoa)]
+  -t|--taxid_threshold   [INT]    : NCBI taxid to recurse up to; i.e., threshold taxid to define 'ingroup' [default = 33208 (Metazoa)]
   -k|--taxid_skip        [INT]    : NCBI taxid to skip; hits to this taxid will not be considered in any calculations of support
+  -g|--scoring           [STRING] : scoring strategy for calculating bestsum bitscore: 'sum' or 'individual' [default = 'sum']
   -s|--support_threshold [FLOAT]  : Secondary Hits Support threshold for considering HGT candidates [default = 90\%]
   -l|--alien_threshold   [INT]    : Alien Index threshold for considering HGT candidates (default >= 45)
   -e|--evalue_column     [INT]    : define evalue column for --in (first column = 1) [default: 11]
   -b|--bitscore_column   [INT]    : define bitscore column for --in (first column = 1) [default: 12]
   -c|--taxid_column      [INT]    : define taxid column for --in (first column = 1) [default: 13]
-  -d|--delimiter         [STRING] : define delimiter to split --in (specify \"diamond\" for Diamond files (\"\\s+\") or \"blast\" for BLAST files (\"\\t\")) [default: diamond]
+  -d|--delimiter         [STRING] : define delimiter to split --in (specify 'diamond' for Diamond files (\"\\s+\") or 'blast' for BLAST files (\"\\t\")) [default: diamond]
   -x|--prefix            [FILE]   : filename prefix for outfile [default = INFILE]
   -H|--header                     : don't print header [default: do print it]
   -v|--verbose                    : say more things [default: be quiet]
@@ -66,6 +67,7 @@ EXAMPLES:
 my ($in,$nodesfile,$path,$namesfile,$mergedfile,$nodesDBfile,$taxid_skip,$prefix,$outfile,$hgtcandidatesfile,$warningsfile,$header,$verbose,$debug,$help);
 my $taxid_threshold = 33208;
 my $support_threshold = 90;
+my $scoring = "sum";
 my $alien_threshold = 45;
 my $evalue_column = 11;
 my $bitscore_column = 12;
@@ -81,6 +83,7 @@ GetOptions (
   'nodesDB|n:s'         => \$nodesDBfile,
   'taxid_threshold|t:i' => \$taxid_threshold,
   'taxid_skip|k:i'      => \$taxid_skip,
+  'scoring|g:s'         => \$scoring,
   'support_threshold|s:f' => \$support_threshold,
   'alien_threshold|l:i' => \$alien_threshold,
   'evalue_column|e:i'   => \$evalue_column,
@@ -189,6 +192,7 @@ print STDERR "[INFO] Nodes parsed: ".scalar(keys %nodes_hash)."\n";
 print STDERR "[INFO] Threshold taxid set to \"$taxid_threshold\" ($names_hash{$taxid_threshold})\n";
 print STDERR "[INFO] INGROUP set to \"$names_hash{$taxid_threshold}\"; OUTGROUP is therefore \"non-$names_hash{$taxid_threshold}\"\n";
 print STDERR "[INFO] Skipping any hits to taxid \"$taxid_skip\" ($names_hash{$taxid_skip})\n";
+print STDERR "[INFO] Scoring method set to '$scoring'\n";
 
 ############################################ OUTFILES
 
@@ -249,7 +253,7 @@ print STDERR "[WARN] There were $skipped_entries_because_skipped_taxid skipped t
 print Dumper \%bitscores_per_query_hash if $debug;
 print Dumper \%evalues_per_query_hash if $debug;
 
-############################################ MAIN CODE
+############################################ MAIN
 
 ## get winning bitscore and taxid; calculate congruence among all taxids for all hits per query:
 my ($processed,$ingroup,$ingroup_supported,$outgroup,$outgroup_supported,$alien_index_supported,$hgt_supported,$unassigned) = (0,0,0,0,0,0,0,0);
@@ -273,9 +277,18 @@ foreach my $query (nsort keys %bitscores_per_query_hash) {
 
   ## calculate bitscoresums per taxid; get taxid of highest bitscoresum; get support for winning taxid from other hits:
   my (%bitscoresum_hash, %count_categories, %support_categories);
+  my ($ingroup_bitscoresum, $outgroup_bitscoresum) = (0,0);
   foreach my $taxid (nsort keys %bitscore_hash) {
-    my $bitscoresum = sum( @{ $bitscore_hash{$taxid} } );
-    $bitscoresum_hash{$taxid} = $bitscoresum; ## key= taxid; value= bitscoresum
+    if ($scoring eq "sum") {
+      if (tax_walk($taxid) eq "ingroup") {
+        $ingroup_bitscoresum += sum( @{ $bitscore_hash{$taxid} } );
+      } elsif (tax_walk($taxid) eq "outgroup") {
+        $outgroup_bitscoresum += sum( @{ $bitscore_hash{$taxid} } );
+      }
+    } elsif ($scoring eq "individual") {
+      my $bitscoresum = sum( @{ $bitscore_hash{$taxid} } );
+      $bitscoresum_hash{$taxid} = $bitscoresum; ## key= taxid; value= bitscoresum
+    }
     $count_categories{tax_walk($taxid)}++; ## count categories; if each hit's taxid falls within/outwith the $taxid_threshold
   }
   print "$query:\n" if $debug; ## debug
@@ -286,7 +299,13 @@ foreach my $query (nsort keys %bitscores_per_query_hash) {
   }
 
   ## get taxid with highest bitscore:
-  my $taxid_with_highest_bitscore = List::Util::reduce { $bitscoresum_hash{$b} > $bitscoresum_hash{$a} ? $b : $a } keys %bitscoresum_hash; ## winning taxid
+  my $taxid_with_highest_bitscore;
+  if ($scoring eq "sum") {
+    $taxid_with_highest_bitscore = $ingroup_bitscoresum > $outgroup_bitscoresum ? $ingroup_bitscoresum : $outgroup_bitscoresum;
+  } elsif ($scoring eq "individual") {
+    $taxid_with_highest_bitscore = List::Util::reduce { $bitscoresum_hash{$b} > $bitscoresum_hash{$a} ? $b : $a } keys %bitscoresum_hash; ## winning taxid
+  }
+
   my $taxid_with_highest_bitscore_category = tax_walk($taxid_with_highest_bitscore); ## category of winning taxid ("ingroup", "outgroup" or "unassigned")
   my $taxid_with_highest_bitscore_category_support = $support_categories{$taxid_with_highest_bitscore_category}; ## % support from other hits
   print STDERR "[INFO] [$query] Taxid with highest bitscore: $taxid_with_highest_bitscore (bitscore = $bitscoresum_hash{$taxid_with_highest_bitscore}; taxonomy = ".tax_walk_to_get_rank_to_phylum($taxid_with_highest_bitscore).")\n" if $verbose;
