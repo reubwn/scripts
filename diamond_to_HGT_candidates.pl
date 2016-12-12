@@ -285,9 +285,11 @@ foreach my $query (nsort keys %bitscores_per_query_hash) {
       if (chomp(tax_walk($taxid)) eq "ingroup") {
         #print join "\t", $query, $taxid, tax_walk($taxid), "\n";
         $ingroup_bitscoresum += sum( @{ $bitscore_hash{$taxid} } );
+        print join "\t", "Ingroup:::", $query, $taxid, tax_walk($taxid), sum( @{ $bitscore_hash{$taxid} } )"\n";
       } elsif (tax_walk($taxid) eq "outgroup") {
         #print join "\t", $query, $taxid, tax_walk($taxid), "\n";
         $outgroup_bitscoresum += sum( @{ $bitscore_hash{$taxid} } );
+        print join "\t", "Outgroup:::", $query, $taxid, tax_walk($taxid), sum( @{ $bitscore_hash{$taxid} } )"\n";
       }
     } elsif ($scoring eq "individual") {
       my $bitscoresum = sum( @{ $bitscore_hash{$taxid} } );
@@ -307,8 +309,8 @@ foreach my $query (nsort keys %bitscores_per_query_hash) {
   if ($scoring eq "sum") {
     $taxid_with_highest_bitscore_category = $ingroup_bitscoresum > $outgroup_bitscoresum ? "ingroup" : "outgroup"; ## define query category based on bitscoresums of ingroup vs outgroup
     $taxid_with_highest_bitscore_category_support = $support_categories{$taxid_with_highest_bitscore_category}; ## % support from other hits
-    print STDERR "[INFO] Bitscoresum for INGROUP ($names_hash{$taxid_threshold}): $ingroup_bitscoresum\n" if $verbose;
-    print STDERR "[INFO] Bitscoresum for OUTGROUP (non-$names_hash{$taxid_threshold}): $outgroup_bitscoresum\n" if $verbose;
+    print STDERR "[INFO] [$query] Bitscoresum for INGROUP ($names_hash{$taxid_threshold}): $ingroup_bitscoresum\n" if $verbose;
+    print STDERR "[INFO] [$query] Bitscoresum for OUTGROUP (non-$names_hash{$taxid_threshold}): $outgroup_bitscoresum\n" if $verbose;
     print $OUT join "\t", $query, ($ingroup_bitscoresum > $outgroup_bitscoresum ? "INGROUP" : "OUTGROUP"), ($ingroup_bitscoresum > $outgroup_bitscoresum ? $ingroup_bitscoresum : $outgroup_bitscoresum), "NA", "ingroup=".$names_hash{$taxid_threshold}, $taxid_with_highest_bitscore_category, $taxid_with_highest_bitscore_category_support, $alien_index, "\n";
 
   } elsif ($scoring eq "individual") {
