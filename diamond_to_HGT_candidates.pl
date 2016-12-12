@@ -357,8 +357,6 @@ foreach my $query (nsort keys %bitscores_per_query_hash) {
   } elsif ( $taxid_with_highest_bitscore_category eq "outgroup" ) {
     $outgroup++;
     if ( $taxid_with_highest_bitscore_category_support >= $support_threshold ) {
-      $outgroup_supported++;
-      $hgt_supported{$query}++;
       print $HGT join "\t",
         $query,
         ($ingroup_bitscoresum > $outgroup_bitscoresum ? $ingroup_bitscoresum : $outgroup_bitscoresum),
@@ -370,13 +368,14 @@ foreach my $query (nsort keys %bitscores_per_query_hash) {
         $outgroup_best_evalue,
         $alien_index,
         tax_walk_to_get_rank_to_species($taxid_with_highest_bitscore), "\n";
+
+        $outgroup_supported++;
+        $hgt_supported{$query}++;
     }
   }
 
   ## catch all queries with AI>=alien_threshold:
   if ($alien_index >= $alien_threshold) {
-    $alien_index_supported++;
-    $hgt_supported{$query}++;
     print $HGT join "\t",
       $query,
       ($ingroup_bitscoresum > $outgroup_bitscoresum ? $ingroup_bitscoresum : $outgroup_bitscoresum),
@@ -387,7 +386,10 @@ foreach my $query (nsort keys %bitscores_per_query_hash) {
       $ingroup_best_evalue,
       $outgroup_best_evalue,
       $alien_index,
-      tax_walk_to_get_rank_to_species($taxid_with_highest_bitscore), "\n";
+      tax_walk_to_get_rank_to_species($taxid_with_highest_bitscore), "\n" unless $hgt_supported{$query};
+
+      $alien_index_supported++;
+      $hgt_supported{$query}++;
   }
 
   ## progress
