@@ -10,8 +10,12 @@ SYNOPSIS:
   Calculates 'collinearity' score based on the number of collinear genes divided by the total number of genes within that defined block.
   Takes the collinearity file and the 'gff' file used in MCScanX analyses.
 
+  If ka/ks values are present, eg by running the MCScanX 'add_ka_and_ks_to_collinearity.pl' program first, script will also print average
+  ka and ks values per block if -k option is set.
+
 OUTPUT:
   Prints to a file 'xyz.collinearity.score'; prints score for each block plus an average.
+  Also prints a file 'xyz.collinearity.reformatted', which (hopefully) removes some of the irritating formatting issues in the original MCScanX 'xyz.collinearity' file.
 
 OPTIONS:
   -c|--collinearity [FILE] : collinearity file from MCScanX
@@ -21,6 +25,7 @@ OPTIONS:
 
 USAGE:
   >> calculate_collinarity_metric.pl -c xyz.collinearity -g xyz.gff
+  >> calculate_collinarity_metric.pl --kaks -c xyz.collinearity.kaks -g xyz.gff
 \n";
 
 my ($collinearity, $gff, $kaks, $help);
@@ -37,10 +42,11 @@ die $usage unless ($collinearity && $gff);
 
 my (%blocks,$orientation);
 open (my $COL, $collinearity) or die $!;
+open (my $REFORMAT, ">$collinearity.refomatted") or die $!;
 while (<$COL>) {
   chomp;
-  my ($aln_number);
   if ($_ =~ m/^#/) {
+    print $REFORMAT "$_\n";
     if ($_ =~ m/(plus|minus)$/) { ## get strand orientation of block 2
       $orientation = $1;
       next;
@@ -51,22 +57,26 @@ while (<$COL>) {
   $_ =~ s/^\s+|\s+$//g; ##remove leading and trailing whitespaces
 
   my @F = split (m/\s+/, $_);
-  if ($F[0]=~m/^\d+\-\d+\:$/) { ## sometimes columns not formatted properly... :/
+  my $aln_number;
+  if ($F[0]=~m/\d+\-\d+\:/) { ## sometimes columns not formatted properly... :/
     my @a = split (m/\-/, $F[0]);
     push @{ $blocks{$a[0]}{'block1'} }, $F[1];
     push @{ $blocks{$a[0]}{'block2'} }, $F[2];
     $aln_number = $a[0];
+    ## print to $REFORMAT; this should be easier to use for downstream analyses
+    $a[1] =~ s/\://;
+    my @N = @F;
+    print $REFORMAT join "\t", @a, splice (@N,1), "\n";
   } else {
     $F[0] =~ s/\-//;
     push @{ $blocks{$F[0]}{'block1'} }, $F[2];
     push @{ $blocks{$F[0]}{'block2'} }, $F[3];
     $aln_number = $F[0];
-    #$aln_number =~ s/\-//;
+    $F[1] =~ s/\://;
+    print $REFORMAT join "\t", @F, "\n";
   }
 
   ## dump genes and plus/minus info into %blocks
-  #push @{ $blocks{$aln_number}{'block1'} }, $F[2];
-  #push @{ $blocks{$aln_number}{'block2'} }, $F[3];
   $blocks{$aln_number}{ 'orientation'} = $orientation;
 
   if ($kaks) {
@@ -75,6 +85,7 @@ while (<$COL>) {
   }
 }
 close $COL;
+close $REFORMAT;
 
 open (my $OUT, ">$collinearity.score") or die $!;
 if ($kaks) {
@@ -110,7 +121,7 @@ foreach (sort {$a<=>$b} keys %blocks) {
     die "\nUnknown strand orientation for block 2: $orientation\n\n";
   }
   chomp ($bl2_length);
-  print STDOUT "\rCalculating scores for block: $_";
+  print STDOUT "\r[INFO] Calculating scores for block: $_";
   my $score_block2 = sprintf("%.5f",(scalar(@block2_genes)/$bl2_length));
 
   ## get kaks values if present
@@ -144,6 +155,7 @@ foreach (sort {$a<=>$b} keys %blocks) {
   }
 }
 close $OUT;
+print STDOUT "\n";
 
 sub avg {
   return sum(@_)/@_;
