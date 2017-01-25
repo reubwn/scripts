@@ -98,3 +98,27 @@ Script for calculating G+C proportion in sliding windows across a fasta file. Om
   -n|--noheader          : omit header from output [default: print header]
   -h|--help              : prints this help message
 ```
+
+## calculate_collinarity_metric.pl
+Calculates 'collinearity' score based on the number of collinear genes divided by the total number of genes within that defined block. Takes the collinearity file and the 'gff' file used in MCScanX analyses. If Ka/Ks values are present, eg by running the MCScanX 'add_ka_and_ks_to_collinearity.pl' program first, script will also print average Ka and Ks values per block if -k option is set.
+
+### Usage
+```
+  -c|--collinearity [FILE] : collinearity file from MCScanX
+  -g|--gff          [FILE] : modified gff file from MCScanX
+  -k|--kaks                : parse collinearity file to get average ka & ks per block
+  -h|--help                : print this message
+```
+
+### Outputs
+Prints to a file 'xyz.collinearity.score'; prints score for each block plus an average. Also prints a file 'xyz.collinearity.reformatted', which (hopefully) removes some of the irritating formatting issues in the original MCScanX 'xyz.collinearity' file.
+
+## get_all_connections_from_collinarity.pl
+Fetches and prints all downstream connections for an initial input scaffold name. The complete connective path is recursed, so any connections to scaffolds connected to the input scaffold are also returned. This script is useful for building the control files for plotting conntections between scaffolds from MCScanX analyses.
+
+### Options
+```
+  -c|--collinearity [FILE]   : collinearity file from MCScanX
+  -s|--search       [STRING] : chromosome / scaffold name to get connections for
+  -h|--help                  : print this message
+```
