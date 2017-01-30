@@ -8,23 +8,25 @@ use List::MoreUtils qw(uniq);
 
 my $usage = "
 SYNOPSIS:
-  Fetches and prints all downstream connections for an initial input scaffold name.
-  I.e., also finds any connections to scaffolds connected to the input scaffold, so the whole connection path is returned.
+  Fetches and prints all connections for an initial input scaffold name.
+  Use --all flag to also print all downstream subconnections.
 
 OPTIONS:
   -c|--collinearity [FILE]   : collinearity file from MCScanX
   -s|--search       [STRING] : chromosome / scaffold name to get connections for
+  -a|--all                   : fetch all downstream connections as well
   -h|--help                  : print this message
 
 USAGE:
-  >> get_all_connections_from_collinarity.pl -c xyz.collinearity -s Ar1
+  >> get_all_connections_from_collinarity.pl -c xyz.collinearity -s Ar1 --all
 \n";
 
-my ($collinearity, $search, $help);
+my ($collinearity, $search, $all, $help);
 
 GetOptions (
   'collinearity|c=s' => \$collinearity,
   'search|s=s'       => \$search,
+  'all|a'            => \$all,
   'help|h'           => \$help,
 );
 
@@ -42,12 +44,17 @@ while (<$IN>) {
 }
 
 chomp $search;
-my @all = @{$connections{$search}};
-foreach ( nsort @{$connections{$search}} ) {
-  push @all, @{$connections{$_}};
+my @result = @{$connections{$search}};
+push @result, $search; ## include the focal chromosome!
+
+## fetch all downstream subconnections; ie any scaffold that shares a collinear region with a scaffold in original @result
+if ($all) {
+  foreach ( nsort @{$connections{$search}} ) {
+    push @result, @{$connections{$_}};
+  }
 }
 
-my @result = uniq(@all);
-print join (",", (nsort @result)), "\n";
+my @uniq_result = uniq(@result);
+print join (",", (nsort @uniq_result)), "\n";
 
 __END__

@@ -18,20 +18,20 @@ OUTPUT:
   Also prints a file 'xyz.collinearity.reformatted', which (hopefully) removes some of the irritating formatting issues in the original MCScanX 'xyz.collinearity' file.
 
 OPTIONS:
-  -c|--collinearity [FILE] : collinearity file from MCScanX
+  -i|--collinearity [FILE] : collinearity file from MCScanX
   -g|--gff          [FILE] : modified gff file from MCScanX
   -k|--kaks                : parse collinearity file to get average ka & ks per block
   -h|--help                : print this message
 
 USAGE:
-  >> calculate_collinarity_metric.pl -c xyz.collinearity -g xyz.gff
-  >> calculate_collinarity_metric.pl --kaks -c xyz.collinearity.kaks -g xyz.gff
+  >> calculate_collinarity_metric.pl -i xyz.collinearity -g xyz.gff
+  >> calculate_collinarity_metric.pl -i xyz.collinearity.kaks -g xyz.gff -k
 \n";
 
 my ($collinearity, $gff, $kaks, $help);
 
 GetOptions (
-  'collinearity|c=s' => \$collinearity,
+  'collinearity|i=s' => \$collinearity,
   'gff|g=s'          => \$gff,
   'kaks|k'           => \$kaks,
   'help|h'           => \$help,
