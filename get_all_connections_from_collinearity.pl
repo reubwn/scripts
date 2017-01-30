@@ -12,19 +12,19 @@ SYNOPSIS:
   Use --all flag to also print all downstream subconnections.
 
 OPTIONS:
-  -c|--collinearity [FILE]   : collinearity file from MCScanX
+  -i|--collinearity [FILE]   : collinearity file from MCScanX
   -s|--search       [STRING] : chromosome / scaffold name to get connections for
   -a|--all                   : fetch all downstream connections as well
   -h|--help                  : print this message
 
 USAGE:
-  >> get_all_connections_from_collinarity.pl -c xyz.collinearity -s Ar1 --all
+  >> get_all_connections_from_collinarity.pl -i xyz.collinearity -s Ar1 --all
 \n";
 
 my ($collinearity, $search, $all, $help);
 
 GetOptions (
-  'collinearity|c=s' => \$collinearity,
+  'collinearity|i=s' => \$collinearity,
   'search|s=s'       => \$search,
   'all|a'            => \$all,
   'help|h'           => \$help,
