@@ -28,7 +28,7 @@ OPTIONS:
   -d|--delim  [STR]  : delimiter used in the protein naming structure [assumes an OrthoMCL-style schema of \"SPECIES_ID|PROTEIN_ID\"]
   -s|--select [STR]  : select string, eg. \"ID1=1,ID2=1,IDN=1\" would return 1:1 orthologous groups
   -n|--noseqs        : Don't print sequences; just count the groups
-  -o|--out    [STR]  : output prefix [default: selectGroups_output]
+  -o|--out    [STR]  : output prefix [default: orthofinder_selectGroups]
   -h|--help          : prints this help message
 
 EXAMPLES:
@@ -54,7 +54,7 @@ die $usage if $help;
 die $usage unless ($in && $fastas && $select);
 
 ## construct outfiles
-open (my $GROUPS, ">".$prefix."Groups.txt") or die "$!\n";
+open (my $GROUPS, ">".$prefix.".selected.txt") or die "$!\n";
 
 ## parse select string
 my %select_hash;
@@ -105,11 +105,11 @@ while (my $line = <$IN>){
     if (($select_hash{$_}) && ($g{$_} == $select_hash{$_})) {
       $flags++;
     }
-    ## only print if all SPECIES_ID criteria are met
-    if ($flags == scalar(keys %select_hash)) {
-      $groups_hash{$a[0]} = \@b;
-      print $GROUPS "$line\n"; ## print selected groups to new groups file
-    }
+  }
+  ## only print if all SPECIES_ID criteria are met
+  if ($flags == scalar(keys %select_hash)) {
+    $groups_hash{$a[0]} = \@b;
+    print $GROUPS "$line\n"; ## print selected groups to new groups file
   }
 }
 close $GROUPS;
