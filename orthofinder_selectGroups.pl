@@ -89,7 +89,7 @@ unless ($noseqsplease){ ## skip if just counting
 
 ## parse OrthologousGroups.txt
 my %groups_hash;
-open(my $IN, $in) or die "$!\n";
+open(my $IN, $in) or die "Error! Could not open $in: $!\n";
 while (my $line = <$IN>){
   chomp $line;
   my @a = split(/\:\s+/,$line);
