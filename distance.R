@@ -8,9 +8,10 @@ aric<-"#cd7058"
 avag<-"#f9a65a"
 rmac<-"#599ad3"
 rmag<-"#79c36a"
+rtar<-"#6e7f8f"
 
 ## glob all nt alignments
-files<-Sys.glob("2nnn/nt_aln/*nt_ali.fasta")
+files<-Sys.glob("nt_aln/*nt_ali.fasta")
 cat('Number of nt aln files:',length(files),'\n')
 
 if (file.exists("distances_nt.tab")) file.remove("distances_nt.tab")
@@ -32,6 +33,9 @@ for (file in files){
 	write.table(df,file="distances_nt.tab",append=T,sep="\t",quote=F,row.names=F,col.names=F)
   
 }
+
+distances.nt<-read.table("distances_nt.tab",head=F)
+hist(distances.nt$V3,breaks=100)
 
 ## do the same for aa alignments
 files<-Sys.glob("aa_aln/*fasta")

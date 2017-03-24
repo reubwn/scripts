@@ -27,7 +27,8 @@ OPTIONS:
   -f|--fasta  [FILE] : path to directory of fasta files used to construct OrthologousGroups.txt [required]
   -d|--delim  [STR]  : delimiter used in the protein naming structure [assumes an OrthoMCL-style schema of \"SPECIES_ID|PROTEIN_ID\"]
   -s|--select [STR]  : select string, eg. \"ID1=1,ID2=1,IDN=1\" would return 1:1 orthologous groups
-  -n|--noseqs        : Don't print sequences; just count the groups
+  -n|--noseqs        : don't print sequences; just count the groups
+  -y|--only          : only print those sequences represented in the --select string (ignores anything else in selected OGs)
   -o|--out    [STR]  : output prefix [default: orthofinder_selectGroups]
   -h|--help          : prints this help message
 
@@ -36,7 +37,7 @@ EXAMPLES:
     >> ./orthofinder_selectGroups.pl -i OrthologousGroups.txt -f fastas/ -s \"ARIC=4,AVAG=4,RMAG=2,RMAC=2\"
 \n";
 
-my ($in,$fastas,$select,$noseqsplease,$out,$help);
+my ($in,$fastas,$select,$noseqsplease,$only,$out,$help);
 my $prefix = "selectGroups_output";
 my $delim = "|";
 
@@ -46,6 +47,7 @@ GetOptions (
   'delim|d:s'  => \$delim,
   'select|s=s' => \$select,
   'noseqs|n'   => \$noseqsplease, ## :-)
+  'only|y'     => \$only,
   'out|o:s'    => \$prefix,
   'help|h'     => \$help,
 );
@@ -117,7 +119,7 @@ print "Found ".commify(scalar(keys %groups_hash))." groups satisfying select cri
 
 unless ($noseqsplease) {
   ## mkdir for OG fastas
-  my $dir = $prefix."Dir";
+  my $dir = $prefix."_fasta";
   if (-e $dir && -d $dir) {
     rmtree([ "$dir" ]);
     mkdir $dir;
@@ -129,11 +131,21 @@ unless ($noseqsplease) {
 
   ## fetch sequence data for selected groups
   print "Printing sequence data per selected group in $dir/\n";
+  print "Only printing sequences for species containing ".join(" ",keys %select_hash)."\n" if $only;
   foreach (nsort keys %groups_hash) {
     open (my $SEQS, ">$_.fasta") or die "$!\n";
     my @seqs = @{$groups_hash{$_}};
-    foreach (@seqs) {
-      print $SEQS "\>$_\n$seq_hash{$_}\n";
+    if ($only) {
+      ## only print the seqs from the species represented in the select string
+      foreach my $seqid (@seqs) {
+        foreach my $wanted (keys %select_hash) {
+          print $SEQS "\>$seqid\n$seq_hash{$seqid}\n" if ($seqid =~ /$wanted/);
+        }
+      }
+    } else {
+      foreach my $seqid (@seqs) {
+        print $SEQS "\>$seqid\n$seq_hash{$seqid}\n";
+      }
     }
     close $SEQS;
   }

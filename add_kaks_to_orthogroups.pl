@@ -46,7 +46,7 @@ GetOptions (
 die $usage if $help;
 die $usage unless ($orthogroups && $sp1 && $proteinfile && $cdsfile);
 
-$outfile = $orthogroups."kaks" unless ($outfile);
+$outfile = $orthogroups.".kaks" unless ($outfile);
 
 ## parse proteins and CDSs
 my (%protein_hash, %cds_hash);
@@ -54,12 +54,12 @@ my $in_p = Bio::SeqIO->new( -file => $proteinfile, -format => 'fasta' );
 while (my $seq = $in_p->next_seq() ) {
   $protein_hash{$seq->display_id()} = $seq->seq();
 }
-print "[INFO] Fetched ".(scalar(keys %protein_hash))." protein seqs from $proteinfile\n";
+print "[INFO] Fetched ".commify(scalar(keys %protein_hash))." protein seqs from $proteinfile\n";
 my $in_c = Bio::SeqIO->new( -file => $cdsfile, -format => 'fasta' );
 while (my $seq = $in_c->next_seq() ) {
   $cds_hash{$seq->display_id()} = $seq->seq();
 }
-print "[INFO] Fetched ".(scalar(keys %cds_hash))." CDS seqs from $cdsfile\n";
+print "[INFO] Fetched ".commify(scalar(keys %cds_hash))." CDS seqs from $cdsfile\n";
 die "[ERROR] No sequences found in $proteinfile or $cdsfile!\n" if ((scalar(keys %protein_hash) == 0) || (scalar(keys %cds_hash) == 0));
 
 open (my $OUT, ">$outfile") or die $!;
@@ -137,5 +137,14 @@ while (<$GROUPS>) {
 close $GROUPS;
 close $OUT;
 system ("rm clustal*");
+print "[INFO] Finished on ".`date`."\n\n";
+
+######################## SUBS
+
+sub commify {
+  my $text = reverse $_[0];
+  $text =~ s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/g;
+  return scalar reverse $text;
+}
 
 __END__
