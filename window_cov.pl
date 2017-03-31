@@ -37,7 +37,7 @@ while (<$IN>) {
   push (@string, $_); ##for later printing
   my @F = split(/\s+/, $_);
   $scaff_lengths{$F[0]}++; ##get length of each scaffold
-  print STDERR "\r[INFO] Scaffold $F[0]...";
+  print STDERR "\r[INFO] Scaffold $F[0]..." if ($. % 1000 == 0); $|=1;
 
   if ($scaff_lengths{$F[0]} % $window == 0) { ## push if window is reached
     $sum += $F[2]; ##add last coverage
