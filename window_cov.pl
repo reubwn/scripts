@@ -24,6 +24,8 @@ GetOptions (
 
 die $usage if $help;
 die $usage unless ($infile && $window);
+$outfile = $infile."freqs" unless $outfile;
+print STDERR "[INFO] Window size: $window\n";
 
 my $sum;
 my (%scaff_lengths, %seen);
@@ -35,6 +37,7 @@ while (<$IN>) {
   push (@string, $_); ##for later printing
   my @F = split(/\s+/, $_);
   $scaff_lengths{$F[0]}++; ##get length of each scaffold
+  print STDERR "\r[INFO] Scaffold $F[0]...";
 
   if ($scaff_lengths{$F[0]} % $window == 0) { ## push if window is reached
     $sum += $F[2]; ##add last coverage
@@ -65,8 +68,14 @@ while (<$IN>) {
   $seen{$F[0]}=();
 }
 close $IN;
+print STDERR "\n[INFO] Finished averaging...\n[INFO] Printing to $outfile\n"
 
 ##print to reannotated file, each site will get average coverage across the specified window
+open (my $OUT, ">$outfile") or die "Cannot open $outfile: $!\n";
 for my $j (0..$#string) {
-  print join("\t", $string[$j], $averages[$j], "\n");
+  print $OUT join("\t", $string[$j], $averages[$j], "\n");
 }
+close $OUT;
+print STDERR "[INFO] Finished\n\n";
+
+__END__
