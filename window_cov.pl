@@ -12,8 +12,9 @@ USAGE
   window_cov.pl -i genomeCov.txt -w 1000 -o genomeCov.1kb.txt
 \n";
 
-my ($infile, $outfile, $help);
+my ($infile, $help);
 my $window = 1000;
+my $outfile = "$infile.$window.txt";
 
 GetOptions (
   'in|i=s'     => \$infile,
@@ -24,7 +25,6 @@ GetOptions (
 
 die $usage if $help;
 die $usage unless ($infile && $window);
-$outfile = $infile."freqs" unless $outfile;
 print STDERR "[INFO] Window size: $window\n";
 
 my $sum;
@@ -68,7 +68,7 @@ while (<$IN>) {
   $seen{$F[0]}=();
 }
 close $IN;
-print STDERR "\n[INFO] Finished averaging...\n[INFO] Printing to $outfile\n"
+print STDERR "\n[INFO] Finished averaging...\n[INFO] Printing to $outfile\n";
 
 ##print to reannotated file, each site will get average coverage across the specified window
 open (my $OUT, ">$outfile") or die "Cannot open $outfile: $!\n";
