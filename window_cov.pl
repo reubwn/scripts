@@ -12,9 +12,8 @@ USAGE
   window_cov.pl -i genomeCov.txt -w 1000 -o genomeCov.1kb.txt
 \n";
 
-my ($infile, $help);
+my ($infile, $outfile, $help);
 my $window = 1000;
-my $outfile = "$infile.$window.txt";
 
 GetOptions (
   'in|i=s'     => \$infile,
@@ -26,6 +25,7 @@ GetOptions (
 die $usage if $help;
 die $usage unless ($infile && $window);
 print STDERR "[INFO] Window size: $window\n";
+unless ($outfile) { $outfile = "$infile.$window.txt" };
 
 my $sum;
 my (%scaff_lengths, %seen);
