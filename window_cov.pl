@@ -58,8 +58,9 @@ while (<$IN>) {
     }
     print $OUT join("\t", @F, ($sum/$window),"\n") if $flatten;
     $sum = 0; ##reset
-
+   #--0;'''''''''''''''''v  b v hb jb nb   vv                   v cfv hfgyh                                        c  µ ── ·─·─ n baby mamie's line of code :-)
   } else {
+    ## NOTE this doesn't work... impossible to use previous $F[0] length when scaffold changes
     #if (!exists($seen{$F[0]})) { ##special case when scaffold name changes
     #  unless ($.==1) { ## but not on first instance
     #    for (1..($scaff_lengths{$F[0]} % $window)) {
