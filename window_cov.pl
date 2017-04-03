@@ -35,6 +35,7 @@ GetOptions (
 die $usage if $help;
 die $usage unless ($infile && $window);
 print STDERR "[INFO] Window size: $window\n";
+print STDERR "[INFO] Flatten set to TRUE\n" if $flatten;
 unless ($outfile) { $outfile = "$infile.$window.txt" };
 
 my $sum;
@@ -59,8 +60,8 @@ while (<$IN>) {
   } else {
     if (!exists($seen{$F[0]})) { ##special case when scaffold name changes
       unless ($.==1) { ## but not on first instance
-        for (1..($scaff_lengths{"RMAC00001"} % $window)) {
-          push (@averages, ($sum/($scaff_lengths{"RMAC00001"} % $window)));
+        for (1..($scaff_lengths{$F[0]} % $window)) {
+          push (@averages, ($sum/($scaff_lengths{$F[0]} % $window)));
         }
         $sum = 0;
       }
