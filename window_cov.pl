@@ -37,6 +37,7 @@ die $usage unless ($infile && $window);
 print STDERR "[INFO] Window size: $window\n";
 print STDERR "[INFO] Flatten set to TRUE\n" if $flatten;
 unless ($outfile) { $outfile = "$infile.$window.txt" };
+open (my $OUT, ">$outfile") or die "Cannot open $outfile: $!\n";
 
 my $sum;
 my (%scaff_lengths, %seen);
@@ -50,11 +51,12 @@ while (<$IN>) {
   $scaff_lengths{$F[0]}++; ##get length of each scaffold
   print STDERR "\r[INFO] Analysing scaffold $F[0]..." if ($. % 1000 == 0); $|=1;
 
-  if ($scaff_lengths{$F[0]} % $window == 0) { ## push if window is reached
+  if ($scaff_lengths{$F[0]} % $window == 0) { ##push if window is reached
     $sum += $F[2]; ##add last coverage
     for (1..$window) {
-      push (@averages, ($sum/$window)) ## push to array of windowsize, so each base gets the average value
+      push (@averages, ($sum/$window)) ##push to array of windowsize, so each base gets the average value
     }
+    print $OUT join("\t", @F, ($sum/$window),"\n") if $flatten;
     $sum = 0; ##reset
 
   } else {
@@ -63,6 +65,7 @@ while (<$IN>) {
         for (1..($scaff_lengths{$F[0]} % $window)) {
           push (@averages, ($sum/($scaff_lengths{$F[0]} % $window)));
         }
+        print $OUT join("\t", @F, ($sum/$window),"\n") if $flatten;
         $sum = 0;
       }
     }
@@ -72,6 +75,7 @@ while (<$IN>) {
       for (1..($scaff_lengths{$F[0]} % $window)) {
         push (@averages, ($sum/($scaff_lengths{$F[0]} % $window)));
       }
+      print $OUT join("\t", @F, ($sum/$window),"\n") if $flatten;
     }
 
     $sum += $F[2];
@@ -82,15 +86,8 @@ close $IN;
 print STDERR "\n[INFO] Finished averaging...\n[INFO] Printing to $outfile\n";
 
 ##print to reannotated file, each site will get average coverage across the specified window
-open (my $OUT, ">$outfile") or die "Cannot open $outfile: $!\n";
 my $n = 1;
-if ($flatten) {
-  my %h; @h{@averages} = (); my @flatten = keys %h; ## retain one entry per window only
-  for my $j (0..$#flatten) {
-    print $OUT join("\t", $string[$j], $n, $flatten[$j], "\n");
-    $n += 1000;
-  }
-} else {
+unless ($flatten) {
   for my $j (0..$#string) {
     if ($pseudochr) {
       print $OUT join("\t", $string[$j], $n, $averages[$j], "\n");
