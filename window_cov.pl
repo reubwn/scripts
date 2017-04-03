@@ -65,6 +65,8 @@ while (<$IN>) {
         for (1..($scaff_lengths{$F[0]} % $window)) {
           push (@averages, ($sum/($scaff_lengths{$F[0]} % $window)));
         }
+        print STDERR "$sum\n$scaff_lengths{$F[0]}\n";
+        print STDERR ($scaff_lengths{$F[0]} % $window)."\n";
         my $av = $sum/($scaff_lengths{$F[0]} % $window);
         print $OUT join("\t", @F, $av, "\n") if $flatten;
         $sum = 0;
