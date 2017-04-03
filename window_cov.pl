@@ -60,18 +60,18 @@ while (<$IN>) {
     $sum = 0; ##reset
 
   } else {
-    if (!exists($seen{$F[0]})) { ##special case when scaffold name changes
-      unless ($.==1) { ## but not on first instance
-        for (1..($scaff_lengths{$F[0]} % $window)) {
-          push (@averages, ($sum/($scaff_lengths{$F[0]} % $window)));
-        }
-        print STDERR "$sum\n$scaff_lengths{$F[0]}\n";
-        print STDERR ($scaff_lengths{$F[0]} % $window)."\n";
-        my $av = $sum/($scaff_lengths{$F[0]} % $window);
-        print $OUT join("\t", @F, $av, "\n") if $flatten;
-        $sum = 0;
-      }
-    }
+    #if (!exists($seen{$F[0]})) { ##special case when scaffold name changes
+    #  unless ($.==1) { ## but not on first instance
+    #    for (1..($scaff_lengths{$F[0]} % $window)) {
+    #      push (@averages, ($sum/($scaff_lengths{$F[0]} % $window)));
+    #    }
+    #    print STDERR "\n$sum\n$scaff_lengths{$F[0]}\n";
+    #    print STDERR ($scaff_lengths{$F[0]} % $window)."\n";
+    #    my $av = $sum/($scaff_lengths{$F[0]} % $window);
+    #    print $OUT join("\t", @F, $av, "\n") if $flatten;
+    #    $sum = 0;
+    #  }
+    #}
 
     if (eof) { ## special case for eof
       $sum += $F[2];
