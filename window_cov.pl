@@ -103,7 +103,9 @@ while (<$IN>) {
     }
     if ($flatten) {
       if ($vcffile) {
-        print $OUT join("\t", $F[0], $F[1], ($sum/$window), $v{$F[0]}{$F[1]}, ($v{$F[0]}{$F[1]}/$window), "\n")
+        my $nsnps;
+        if (exists($v{$F[0]}{$F[1]})) { $nsnps = $v{$F[0]}{$F[1]} } else { $nsnps = 0 };
+        print $OUT join("\t", $F[0], $F[1], ($sum/$window), $nsnps, ($nsnps/$window), "\n")
       } else {
         print $OUT join("\t", $F[0], $F[1], ($sum/$window),"\n");
       }
@@ -118,7 +120,9 @@ while (<$IN>) {
       }
       if ($flatten) {
         if ($vcffile) {
-          print $OUT join("\t", $F[0], $F[1], ($sum/($scaff_lengths{$F[0]} % $window)), $v{$F[0]}{$F[1]}, ($v{$F[0]}{$F[1]}/($scaff_lengths{$F[0]} % $window)), "\n")
+          my $nsnps;
+          if (exists($v{$F[0]}{$F[1]})) { $nsnps = $v{$F[0]}{$F[1]} } else { $nsnps = 0 };
+          print $OUT join("\t", $F[0], $F[1], ($sum/($scaff_lengths{$F[0]} % $window)), $nsnps, ($nsnps/($scaff_lengths{$F[0]} % $window)), "\n")
         } else {
           print $OUT join("\t", $F[0], $F[1], ($sum/($scaff_lengths{$F[0]} % $window)),"\n");
         }
