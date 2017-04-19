@@ -12,6 +12,7 @@ OPTIONS
   -i|--in        [FILE]: infile
   -o|--out       [FILE]: outfile (default = <infile>.<windowsize>.txt)
   -w|--window    [INT] : window size to average across (default=1000)
+  -v|--vcf       [FILE]: VCF file input to calculate SNP density across the same window
   -z|--gzip            : input file is gzipped (default=F)
   -f|--flatten         : condense output to one line per window (default=F)
   -p|--pseudochr       : also print 1..n across all scaffolds (default=F)
@@ -21,13 +22,14 @@ USAGE
   window_cov.pl -i genomeCov.txt -w 1000 -o genomeCov.1000.txt
 \n";
 
-my ($infile, $outfile, $gzip, $flatten, $pseudochr, $help);
+my ($infile, $outfile, $vcffile, $gzip, $flatten, $pseudochr, $help);
 my $window = 1000;
 
 GetOptions (
   'in|i=s'      => \$infile,
   'out|o:s'     => \$outfile,
   'window|w:i'  => \$window,
+  'vcf|v:s'     => \$vcffile,
   'z|gzip'      => \$gzip,
   'flatten|f'   => \$flatten,
   'pseudochr|p' => \$pseudochr,
@@ -38,18 +40,55 @@ die $usage if $help;
 die $usage unless ($infile && $window);
 print STDERR "[INFO] Window size: $window\n";
 print STDERR "[INFO] Flatten set to TRUE\n" if $flatten;
+print STDERR "[INFO] Input is gzipped\n" if $gzip;
 unless ($outfile) { $outfile = "$infile.$window.txt" };
-open (my $OUT, ">$outfile") or die "Cannot open $outfile: $!\n";
-
-my $sum;
-my ($IN, %scaff_lengths, %seen);
-my (@string,@averages);
+my ($IN, $sum);
+my (%scaff_lengths, %seen, %v);
+my (@string, @averages);
 if ($gzip) {
   open ($IN, "zcat $infile |") or die "Cannot open $infile: $!\n";
+  $outfile =~ s/\.gz//;
 } else {
   open ($IN, $infile) or die "Cannot open $infile: $!\n";
 }
+open (my $OUT, ">$outfile") or die "Cannot open $outfile: $!\n";
+if ($vcf) {
+  print STDERR "[INFO] Analysing VCF file: $vcffile\n";
+  my (%e, $cwin);
+  open (my $VCF, $vcffile) or die "Cannot open file $vcf: $!\n";
+  while (<$VCF>) {
+    chomp;
+    my @F = split(/\s+/, $_);
+    unless ((/^#/) or (length($F[3])>1)) { ##skip comment lines and any variant that is len>1 (ie not a SNP)
+      if (exists($e{$F[0]})){ ##has scaffold been seen before
+        if ($F[1] <= ($cwin+$window)) { ##if SNP is in current window range
+          $v{$F[0]}{($cwin+$window)}++; ## increment N observed SNPs in that window for that scaffold as HoH
+        } else {
+          $cwin += $window; ##otherwise add $window to curr window
+          if ($F[1] <= ($cwin+$win)) { ##then analyse first SNP of new window
+            $v{$F[0]}{($cwin+$win)}++;
+          } else {
+            $v{$F[0]}{($cwin+$win)} = 0; ##windows with no SNPs get 0
+          }
+        }
+      } else { ##if next scaffold
+        $cwin = 0; ##current window is reset
+        if ($F[1] <= ($cwin+$win)) { ##and test again
+          $v{$F[0]}{($cwin+$win)}++;
+        } else {
+          $v{$F[0]}{($cwin+$win)} = 0;
+        }
+        $e{$F[0]}=(); ##seen
+      }
+    }
+  }
+  print $OUT "CHROM\tWINDOW\tCOV\tNSNPS\tDENSITY\n";
+  close $VCF;
+} else {
+  print $OUT "CHROM\tWINDOW\tCOV\n";
+}
 
+## process genomeCov file
 while (<$IN>) {
   chomp;
   push (@string, $_); ##for later printing
@@ -62,32 +101,29 @@ while (<$IN>) {
     for (1..$window) {
       push (@averages, ($sum/$window)) ##push to array of windowsize, so each base gets the average value
     }
-    print $OUT join("\t", @F, ($sum/$window),"\n") if $flatten;
+    if ($flatten) {
+      if ($vcf) {
+        print $OUT join("\t", $F[0], $F[1], ($sum/$window), $v{$F[0]}{$F[1]}, ($v{$F[0]}{$F[1]}/$window), "\n")
+      } else {
+        print $OUT join("\t", $F[0], $F[1], ($sum/$window),"\n");
+      }
+    }
     $sum = 0; ##reset
    #--0;'''''''''''''''''v  b v hb jb nb   vv                   v cfv hfgyh                                        c  µ ── ·─·─ n baby mamie's line of code :-)
   } else {
-    ## NOTE this doesn't work... impossible to use previous $F[0] length when scaffold changes
-    #if (!exists($seen{$F[0]})) { ##special case when scaffold name changes
-    #  unless ($.==1) { ## but not on first instance
-    #    for (1..($scaff_lengths{$F[0]} % $window)) {
-    #      push (@averages, ($sum/($scaff_lengths{$F[0]} % $window)));
-    #    }
-    #    print STDERR "\n$sum\n$scaff_lengths{$F[0]}\n";
-    #    print STDERR ($scaff_lengths{$F[0]} % $window)."\n";
-    #    my $av = $sum/($scaff_lengths{$F[0]} % $window);
-    #    print $OUT join("\t", @F, $av, "\n") if $flatten;
-    #    $sum = 0;
-    #  }
-    #}
-
     if (eof) { ## special case for eof
       $sum += $F[2];
       for (1..($scaff_lengths{$F[0]} % $window)) {
         push (@averages, ($sum/($scaff_lengths{$F[0]} % $window)));
       }
-      print $OUT join("\t", @F, ($sum/($scaff_lengths{$F[0]} % $window)),"\n") if $flatten;
+      if ($flatten) {
+        if ($vcf) {
+          print $OUT join("\t", $F[0], $F[1], ($sum/($scaff_lengths{$F[0]} % $window)), $v{$F[0]}{$F[1]}, ($v{$F[0]}{$F[1]}/($scaff_lengths{$F[0]} % $window)), "\n")
+        } else {
+          print $OUT join("\t", $F[0], $F[1], ($sum/($scaff_lengths{$F[0]} % $window)),"\n");
+        }
+      }
     }
-
     $sum += $F[2];
   }
   $seen{$F[0]}=();
