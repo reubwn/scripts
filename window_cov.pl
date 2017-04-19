@@ -11,22 +11,24 @@ SYNOPSIS
 OPTIONS
   -i|--in        [FILE]: infile
   -o|--out       [FILE]: outfile (default = <infile>.<windowsize>.txt)
-  -w|--window    [INT] : window size to average across (default = 1000)
-  -f|--flatten         : condense output to one line per window
-  -p|--pseudochr       : also print 1..n across all scaffolds
-  -h|--help            : this
+  -w|--window    [INT] : window size to average across (default=1000)
+  -z|--gzip            : input file is gzipped (default=F)
+  -f|--flatten         : condense output to one line per window (default=F)
+  -p|--pseudochr       : also print 1..n across all scaffolds (default=F)
+  -h|--help            : this message
 
 USAGE
   window_cov.pl -i genomeCov.txt -w 1000 -o genomeCov.1000.txt
 \n";
 
-my ($infile, $outfile, $flatten, $pseudochr, $help);
+my ($infile, $outfile, $gzip, $flatten, $pseudochr, $help);
 my $window = 1000;
 
 GetOptions (
   'in|i=s'      => \$infile,
   'out|o:s'     => \$outfile,
   'window|w:i'  => \$window,
+  'z|gzip'      => \$gzip,
   'flatten|f'   => \$flatten,
   'pseudochr|p' => \$pseudochr,
   'help|h'      => \$help
@@ -40,9 +42,13 @@ unless ($outfile) { $outfile = "$infile.$window.txt" };
 open (my $OUT, ">$outfile") or die "Cannot open $outfile: $!\n";
 
 my $sum;
-my (%scaff_lengths, %seen);
+my ($IN, %scaff_lengths, %seen);
 my (@string,@averages);
-open (my $IN, $infile) or die "Cannot open $infile: $!\n";
+if ($gzip) {
+  open ($IN, "zcat $infile |") or die "Cannot open $infile: $!\n";
+} else {
+  open ($IN, $infile) or die "Cannot open $infile: $!\n";
+}
 
 while (<$IN>) {
   chomp;
