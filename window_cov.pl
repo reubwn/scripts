@@ -52,10 +52,10 @@ if ($gzip) {
   open ($IN, $infile) or die "Cannot open $infile: $!\n";
 }
 open (my $OUT, ">$outfile") or die "Cannot open $outfile: $!\n";
-if ($vcf) {
+if ($vcffile) {
   print STDERR "[INFO] Analysing VCF file: $vcffile\n";
   my (%e, $cwin);
-  open (my $VCF, $vcffile) or die "Cannot open file $vcf: $!\n";
+  open (my $VCF, $vcffile) or die "Cannot open file $vcffile: $!\n";
   while (<$VCF>) {
     chomp;
     my @F = split(/\s+/, $_);
@@ -65,18 +65,18 @@ if ($vcf) {
           $v{$F[0]}{($cwin+$window)}++; ## increment N observed SNPs in that window for that scaffold as HoH
         } else {
           $cwin += $window; ##otherwise add $window to curr window
-          if ($F[1] <= ($cwin+$win)) { ##then analyse first SNP of new window
-            $v{$F[0]}{($cwin+$win)}++;
+          if ($F[1] <= ($cwin+$window)) { ##then analyse first SNP of new window
+            $v{$F[0]}{($cwin+$window)}++;
           } else {
-            $v{$F[0]}{($cwin+$win)} = 0; ##windows with no SNPs get 0
+            $v{$F[0]}{($cwin+$window)} = 0; ##windows with no SNPs get 0
           }
         }
       } else { ##if next scaffold
         $cwin = 0; ##current window is reset
-        if ($F[1] <= ($cwin+$win)) { ##and test again
-          $v{$F[0]}{($cwin+$win)}++;
+        if ($F[1] <= ($cwin+$window)) { ##and test again
+          $v{$F[0]}{($cwin+$window)}++;
         } else {
-          $v{$F[0]}{($cwin+$win)} = 0;
+          $v{$F[0]}{($cwin+$window)} = 0;
         }
         $e{$F[0]}=(); ##seen
       }
@@ -102,7 +102,7 @@ while (<$IN>) {
       push (@averages, ($sum/$window)) ##push to array of windowsize, so each base gets the average value
     }
     if ($flatten) {
-      if ($vcf) {
+      if ($vcffile) {
         print $OUT join("\t", $F[0], $F[1], ($sum/$window), $v{$F[0]}{$F[1]}, ($v{$F[0]}{$F[1]}/$window), "\n")
       } else {
         print $OUT join("\t", $F[0], $F[1], ($sum/$window),"\n");
@@ -117,7 +117,7 @@ while (<$IN>) {
         push (@averages, ($sum/($scaff_lengths{$F[0]} % $window)));
       }
       if ($flatten) {
-        if ($vcf) {
+        if ($vcffile) {
           print $OUT join("\t", $F[0], $F[1], ($sum/($scaff_lengths{$F[0]} % $window)), $v{$F[0]}{$F[1]}, ($v{$F[0]}{$F[1]}/($scaff_lengths{$F[0]} % $window)), "\n")
         } else {
           print $OUT join("\t", $F[0], $F[1], ($sum/($scaff_lengths{$F[0]} % $window)),"\n");
