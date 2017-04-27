@@ -7,11 +7,17 @@ use Getopt::Long;
 my $usage = "
 SYNOPSIS
   Calculates average of a window, e.g. for averaging coverage across a per-site (-d) genomeCov file.
+  Generate a per-site coverage file using bedtools:
+    >> genomeCoverageBed -ibam <BAMFILE> -g <GENOMEFILE> -d > <BAMFILE>.genomeCov.d
+
+  Can also count the number of SNPs falling within each window if a VCF is provided via the -v flag;
+  scaffold names in genomeCov file and VCF file must match up, obviously.
 
 OPTIONS
   -i|--in        [FILE]: infile
   -o|--out       [FILE]: outfile (default = <infile>.<windowsize>.txt)
   -w|--window    [INT] : window size to average across (default=1000)
+  -m|--maxcov    [INT] : skip windows with a coverage > this value (default=5000)
   -v|--vcf       [FILE]: VCF file input to calculate SNP density across the same window
   -z|--gzip            : input file is gzipped (default=F)
   -f|--flatten         : condense output to one line per window (default=F)
@@ -24,11 +30,13 @@ USAGE
 
 my ($infile, $outfile, $vcffile, $gzip, $flatten, $pseudochr, $help);
 my $window = 1000;
+my $maxcov = 5000;
 
 GetOptions (
   'in|i=s'      => \$infile,
   'out|o:s'     => \$outfile,
   'window|w:i'  => \$window,
+  'maxcov|m:i'  => \$maxcov,
   'vcf|v:s'     => \$vcffile,
   'z|gzip'      => \$gzip,
   'flatten|f'   => \$flatten,
@@ -94,7 +102,7 @@ while (<$IN>) {
   push (@string, $_); ##for later printing
   my @F = split(/\s+/, $_);
   $scaff_lengths{$F[0]}++; ##get length of each scaffold
-  print STDERR "\r[INFO] Analysing scaffold $F[0]..." if ($. % 1000 == 0); $|=1;
+  print STDERR "\r[INFO] Analysing scaffold $F[0]..." if ($. % 5000 == 0); $|=1; ##just print info every 5000 bases
 
   if ($scaff_lengths{$F[0]} % $window == 0) { ##push if window is reached
     $sum += $F[2]; ##add last coverage
