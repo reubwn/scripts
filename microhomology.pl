@@ -3,49 +3,74 @@
 use strict;
 use warnings;
 use Getopt::Long;
+use Sort::Naturally;
+
+use Bio::Seq;
+use Bio::AlignIO;
 
 my $usage = "
 SYNOPSIS
+  Calculates the number of exactly identical windows of length -w <INT> that exist between two prealigned nucleotide sequences.
 
 OPTIONS
-  -i|--in        [FILE]: infile
-  -o|--out       [FILE]: outfile (default = STDOUT)
-  -w|--window    [INT] : window size (default = 10)
-  -h|--help            : this message
+  -d|--dir    [DIR] : dirname of directory containing alignments (fasta format)
+  -o|--out   [FILE] : outfile prefix (default = mhom.table)
+  -w|--window [INT] : window size range, comma delim, defined as: \"<SIZE>,<END>,<STEP>\" (default = 10,10,0)
+  -h|--help         : this message
 
 USAGE
 
 \n";
 
-my ($infile, $outfile, $help);
-my $window = 10;
+my ($dirname, $outfile, $outprefix, $help);
+my $windowrange = "10,10,1";
 
 GetOptions (
-  'in|i=s'      => \$infile,
-  'out|o:s'     => \$outfile,
-  'window|w:i'  => \$window,
+  'd|dir=s'     => \$dirname,
+  'out|o:s'     => \$outprefix,
+  'window|w:s'  => \$windowrange,
   'help|h'      => \$help
 );
 
 die $usage if $help;
-#die $usage unless $infile;
-print STDERR "[INFO] File: $infile\n";
-print STDERR "[INFO] Window size: $window\n";
-
-my $seq1 = "ATCGATCGATCGATCGATCG";
-my $seq2 = "AACGA-CGATCGANCGATCG";
-my $matches;
-my (%substr1,%substr2);
-
-my @bits1 = ( $seq1 =~ /.{1,$window}/gs );
-my @bits2 = ( $seq2 =~ /.{1,$window}/gs );
-print "@bits1\n";
-
-for my $i (0..$#bits1) {
-  if ((length($bits1[$i])==$window) && (length($bits2[$i])==$window)) {
-    print "1:$bits1[$i]\n2:$bits2[$i]\n";
-    print "Match!\n" if $bits1[$i] eq $bits2[$i];
-    $matches++ if $bits1[$i] eq $bits2[$i];
-  } else {print "Window too short!\n"}
+die $usage unless ($dirname);
+if ($outprefix){
+  $outfile = "$outprefix.mhom.table";
+} else {
+  $outfile = "mhom.table";
 }
-print "Total matches: $matches\n";
+open (my $OUT, ">$outfile") or die "[ERROR] Cannot open $outfile: $!\n\n";
+print STDERR "[INFO] Dirname: $dirname\n";
+my @W = split (/\,/, $windowrange); ##get window sizes from string
+print STDERR "[INFO] Window range: SIZE=$W[0],END=$W[1],STEP=$W[2]\n";
+
+my @files = <$dirname/*fasta>;
+print STDERR "[INFO] Number of files in $dirname: ".scalar(@files)."\n";
+
+for ( my $window=$W[0];$window<=$W[1];$window+=$W[2] ) {
+  print $OUT "$window";
+  my $n=1;
+  foreach my $file (nsort @files) {
+    print STDERR "\r[INFO] Window size: $window; file \#$n";$| = 1;
+    my $read_aln = Bio::AlignIO -> new(-file=>"$file", -format=>"fasta");
+    my $aln = $read_aln->next_aln(); ##read aln
+    my @seqs = $aln->each_seq(); ##get seqs from aln
+    my @bits1 = ( $seqs[0]->seq() =~ /.{1,$window}/gs ); ##chop seq1 into bits1
+    my @bits2 = ( $seqs[1]->seq() =~ /.{1,$window}/gs ); ##chop seq2 into bits2
+
+    my $matches = 0;
+    for my $i (0..$#bits1) {
+      if ((length($bits1[$i])==$window) && (length($bits2[$i])==$window)) { ##only test if length(bit)==window
+        $matches++ if $bits1[$i] eq $bits2[$i];
+      }
+    }
+    print $OUT "\t$matches";
+    $n++;
+  }
+  print $OUT "\n";
+  print STDERR "\n";
+}
+close $OUT;
+print "[INFO] Finished on ".`date`."\n";
+
+__END__
