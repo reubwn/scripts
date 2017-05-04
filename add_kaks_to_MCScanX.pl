@@ -67,7 +67,7 @@ print STDERR "[INFO] Parsing collinearity file...\n";
 ## parse collinearity file:
 open (my $OUT, ">$outfile") or die "Cannot open $outfile: $!\n\n";
 open (my $IN, $infile) or die "Cannot open $infile: $!\n\n";
-my ($trimmed_seqs,$Dn_notCalculated,$Ds_notCalculated) = (0,0,0);
+my ($trimmed_seqs,$na) = (0,0);
 my $n = 1;
 while (<$IN>) {
   if ($_ =~ m/^\#/) {
@@ -136,8 +136,7 @@ while (<$IN>) {
       }
       $Dn = -2 unless ($Dn); ##default values
       $Ds = -2 unless ($Ds);
-      $Dn_notCalculated++ if $Dn == -2;
-      $Ds_notCalculated++ if $Ds == -2;
+      $na++ if ( ($Dn == -2) || ($Ds == -2) );
 
       ## annotate input file
       print $OUT "$_\t$Dn\t$Ds\n";
@@ -150,9 +149,9 @@ close $OUT;
 system ("rm temp.*"); ##remove last temp files.
 
 print STDERR "\n";
-print STDERR "[INFO] Number of seqs trimmed because % 3 != 0: $trimmed_seqs\n";
 print STDERR "[INFO] Total number of pairs: $n\n";
-print STDERR "[INFO] Number of pairs for which Ka or Ks was not calculated:".($Dn_notCalculated+$Ds_notCalculated)."\n";
+print STDERR "[INFO] Number of seqs trimmed because % 3 != 0: $trimmed_seqs\n";
+print STDERR "[INFO] Number of pairs for which Ka or Ks was not calculated: $na\n";
 print STDERR "[INFO] Finished on ".`date`."\n";
 
 ######################## SUBS
