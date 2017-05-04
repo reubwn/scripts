@@ -15,15 +15,19 @@ local $SIG{__WARN__} = sub { warn $_[0] unless $_[0] =~ /WARNING/}; ##suppress W
 my $usage = "
 SYNOPSIS:
   Calculates Ka and Ks for pairs of genes from an MCScanX collinearity file.
+  Will detect CDS which are non-multiples of 3 and trim from 3' accordingly (script
+  which ships with MCScanX does not do this and can lead to errors..)
 
 OPTIONS
   -i|--in      [FILE] : MCScanX collinearity file
   -p|--prot    [FILE] : fasta file of protein sequences
   -c|--cds     [FILE] : fasta file of corresponding CDS (nucleotide)
-  -t|--threads  [INT] : number of aligner threads (default = 1)
+  -t|--threads [INT]  : number of aligner threads (default = 1)
   -h|--help           : this message
 
-USAGE
+OUTPUTS
+  Annotated MCScanX collinearity file, with Ka and Ks as final 2 columns for every gene pair.
+  Will write '-2' for cases where Ka/Ks cannot be calculated.
 \n";
 
 my ($infile, $proteinfile, $cdsfile, $help);
