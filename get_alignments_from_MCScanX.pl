@@ -16,9 +16,10 @@ SYNOPSIS
   Generates alignments for pairs of genes with a given minimum Ks from an MCScanX collinearity file (annotated with Ka/Ks).
   If protein and CDS files (-p & -c) are provided, will do protein alignment followed by backtranslation; if gff and genome files (-g & -f) are provided, will do alignment of whole gene region.
   Aligner (clustalo for proteins, mafft for nucleotides) must be executable and in \$PATH.
+  Assumes Ks values are in the final column of the collinearity file (default).
 
 OPTIONS
-  -i|--in      [FILE] : MCScanX collinearity file
+  -i|--in      [FILE] : MCScanX collinearity file, annotated with Ka/Ks values
   -p|--prot    [FILE] : fasta file of protein sequences
   -c|--cds     [FILE] : fasta file of corresponding CDS (nucleotide)
   -f|--fasta   [FILE] : fasta file of genome
@@ -30,6 +31,10 @@ OPTIONS
   -h|--help           : this message
 
 USAGE
+  (1) To generate codon alignments for CDS using Clustal-Omega:
+  >> get_alignments_from_MCScanX.pl -i <Xy.collinearity> -p </path/to/proteins/> -c </path/to/cds/> -d <dirname> -k <minKs> -t <threads>
+  (2) To generate whole gene (ie exonts + introns) alignments using MAFFT:
+  >> get_alignments_from_MCScanX.pl -i <Xy.collinearity> -f </path/to/fasta/> -c </path/to/gff/> -d <dirname> -k <minKs> -t <threads>
 
 \n";
 
@@ -37,7 +42,6 @@ my ($infile, $proteinfile, $cdsfile, $fastafile, $gfffile, $help);
 my $minKs = 0.5;
 my $out = "ALN";
 my $outdir = "alignments";
-my $aligner = "clustalo";
 my $threads = 1;
 
 GetOptions (
@@ -46,10 +50,9 @@ GetOptions (
   'cds|c:s'     => \$cdsfile,
   'fasta|f:s'   => \$fastafile,
   'gff|g:s'     => \$gfffile,
-  'o|out:s'     => \$out,
-  'd|outdir'    => \$outdir,
+  'out|o:s'     => \$out,
+  'outdir|d:s'  => \$outdir,
   'minks|k:f'   => \$minKs,
-  'aligner|a:s' => \$aligner,
   'threads|t:i' => \$threads,
   'help|h'      => \$help
 );

@@ -9,8 +9,9 @@ use Bio::AlignIO;
 use Bio::Seq::EncodedSeq;
 use Bio::Align::DNAStatistics;
 use Bio::Align::Utilities qw(aa_to_dna_aln);
+use Data::Dumper;
 
-my @files = <./g260*>;
+my @files = <./*$ARGV[0]>;
 foreach (@files) {
   print "$_\n";
   my $read_aln = Bio::AlignIO -> new(-file=>$_, -format=>"fasta");
@@ -20,7 +21,7 @@ foreach (@files) {
     print $seq->display_id()." not multiple of 3! (".$seq->length().")\n" if ($seq->length() % 3 != 0);
   }
 
-  eval {
+  #eval {
     my $stats = Bio::Align::DNAStatistics->new();
     my $result = $stats->calc_all_KaKs_pairs($aln);
     my ($Da, $Ds, $Dn, $N, $S, $S_d, $N_d);
@@ -35,6 +36,7 @@ foreach (@files) {
         if($_ eq "N"){$N = $an->{$_};}
       }
     }
-    print "Ka: $Dn\nKs: $Ds\n";
-  }
+    print Dumper($result);
+    #print "Ka: $Dn\nKs: $Ds\n";
+  #}
 }

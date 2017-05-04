@@ -67,7 +67,7 @@ print STDERR "[INFO] Parsing collinearity file...\n";
 ## parse collinearity file:
 open (my $OUT, ">$outfile") or die "Cannot open $outfile: $!\n\n";
 open (my $IN, $infile) or die "Cannot open $infile: $!\n\n";
-my $trimmed_seqs = 0;
+my ($trimmed_seqs,$Dn_notCalculated,$Ds_notCalculated) = (0,0,0);
 my $n = 1;
 while (<$IN>) {
   if ($_ =~ m/^\#/) {
@@ -134,12 +134,12 @@ while (<$IN>) {
           if($_ eq "N"){$N = $an->{$_};}
         }
       }
-      $Dn = -2 unless ($Dn); ## default values
+      $Dn = -2 unless ($Dn); ##default values
       $Ds = -2 unless ($Ds);
-      #if($Dn !~ /\d/){$Dn = -2;}
-      #if($Ds !~ /\d/){$Ds = -2;}
+      $Dn_notCalculated++ if $Dn == -2;
+      $Ds_notCalculated++ if $Ds == -2;
 
-      ## print to file
+      ## annotate input file
       print $OUT "$_\t$Dn\t$Ds\n";
     };
     $n++;
@@ -147,51 +147,12 @@ while (<$IN>) {
 }
 close $IN;
 close $OUT;
+system ("rm temp.*"); ##remove last temp files.
 
-# ## generate alignments for all pairs in %pairs:
-# my $n = 1;
-# foreach (nsort keys %pairs) {
-#   print STDERR "\r[INFO] Working on pair \#$n: $_, $pairs{$_}";$| = 1;
-#
-#   ## fetch proteins and print to temp file:
-#   open (my $PRO, ">temp.faa") or die $!;
-#   if ((exists($protein_hash{$_})) && (exists($protein_hash{$pairs{$_}}))) {
-#     print $PRO ">$_\n$protein_hash{$_}\n>$pairs{$_}\n$protein_hash{$pairs{$_}}";
-#     close $PRO;
-#   } else {
-#     die "[ERROR] Protein ID '$_' or '$pairs{$_}' not found in file $proteinfile!\n";
-#   }
-#
-#   ## make CDS hash of nucleotides:
-#   my %cds_seqs;
-#   if ((exists($cds_hash{$_})) && (exists($cds_hash{$pairs{$_}}))) {
-#     $cds_seqs{"$_"} = Bio::Seq->new( -display_id => "$_", -seq => $cds_hash{$_} );
-#     $cds_seqs{"$pairs{$_}"} = Bio::Seq->new( -display_id => "$pairs{$_}", -seq => $cds_hash{$pairs{$_}} );
-#   } else {
-#     die "[ERROR] CDS ID '$_' or '$pairs{$_}' not found in file $cdsfile!\n";
-#   }
-#   ## check if all CDS seqs are multiple of 3:
-#   foreach my $seqobj (keys %cds_seqs) {
-#     if ($seqobj->length() % 3 != 0) {
-#       print STDERR "[WARN] Seq ".$seq->display_id()." is not a multiple of 3; will trim ".($seqobj->length() % 3)." bases from 3' end\n";
-#       $seqobj = $seqobj->subseq(1,(($seqobj->length()) - ($seqobj->length() % 3))); ##trims remainder off 3' end
-#     }
-#   }
-#
-#   ## run alignment:
-#   if (system ("clustalo --infile=temp.faa --outfile=temp.aln --force --threads=$threads") != 0) { die "[ERROR] Problem with clustalo!\n"; }
-#
-#   ## fetch alignment, backtranslate to nucleotides:
-#   my $get_prot_aln = Bio::AlignIO -> new(-file=>"clustal.aln", -format=>"fasta");
-#   my $prot_aln = $get_prot_aln -> next_aln();
-#   my $dna_aln = aa_to_dna_aln($prot_aln, \%cds_seqs);
-#   ## test if all DNA seqs are multiple of 3:
-#
-#
-#   $n++;
-# }
-system ("rm temp.*");
-print STDERR "\n[INFO] Number of seqs trimmed because % 3 != 0: $trimmed_seqs\n";
+print STDERR "\n";
+print STDERR "[INFO] Number of seqs trimmed because % 3 != 0: $trimmed_seqs\n";
+print STDERR "[INFO] Total number of pairs: $n\n";
+print STDERR "[INFO] Number of pairs for which Ka or Ks was not calculated:".($Dn_notCalculated+$Ds_notCalculated)."\n";
 print STDERR "[INFO] Finished on ".`date`."\n";
 
 ######################## SUBS

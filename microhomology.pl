@@ -44,11 +44,12 @@ if ($outprefix){
 open (my $OUT, ">$outfile") or die "[ERROR] Cannot open $outfile: $!\n\n";
 print STDERR "[INFO] Dirname: $dirname\n";
 my @W = split (/\,/, $windowrange); ##get window sizes from string
-print STDERR "[INFO] Window range: SIZE=$W[0],END=$W[1],STEP=$W[2]\n";
+print STDERR "[INFO] Window range: MIN=$W[0],MAX=$W[1],STEP=$W[2]\n";
 
 my @files = <$dirname/*>;
 print STDERR "[INFO] Number of files in $dirname: ".scalar(@files)."\n";
 
+## iterate across window range; from MIN to MAX testing every STEP
 for ( my $window=$W[0];$window<=$W[1];$window+=$W[2] ) {
   print $OUT "$window";
   my $n=1;
@@ -58,20 +59,17 @@ for ( my $window=$W[0];$window<=$W[1];$window+=$W[2] ) {
     my $aln = $read_aln->next_aln(); ##read aln
     my $aln_length = $aln->length(); ##aln length for scaling
     my @seqs = $aln->each_seq(); ##get seqs from aln; this does print the gaps too
-    #print STDERR $seqs[0]->seq()."\n";
-    #print STDERR $seqs[1]->seq()."\n";
     my $matches = 0;
-    #print "Window: $window; Len: $aln_length; Num windows: ".($aln_length-$window+1)."\n";
+
+    ## implement sliding window, always incrementing by 1:
+    ## number of windows given sliding window +1 is given by: (aln length)-(window size)+1
     for ( my $j=1;$j<=($aln_length-$window+1);$j++ ) {
-      #print STDERR "Window start/end: $j/".($j+$window-1)."\n";
-      #print STDERR ($seqs[0]->subseq($j,($j+$window-1)))."\n";
-      #print STDERR ($seqs[1]->subseq($j,($j+$window-1)))."\n";
+      ## count if subseqs from start ($j) to end ($j+$window-1) are identical:
       if ( ($seqs[0]->subseq($j,($j+$window-1))) eq ($seqs[1]->subseq($j,($j+$window-1)))) {
         $matches++;
       }
     }
-    #print STDERR "Number matches: $matches\n";
-    #print STDERR "Length-scaled matches: ".($matches/$aln_length)."\n";
+    ## below code is how to chop sequences into discrete windows; obsoleted
     # my @bits1 = ( $seqs[0]->seq() =~ /.{1,$window}/gs ); ##chop seq1 into bits1
     # my @bits2 = ( $seqs[1]->seq() =~ /.{1,$window}/gs ); ##chop seq2 into bits2
     #
@@ -81,6 +79,8 @@ for ( my $window=$W[0];$window<=$W[1];$window+=$W[2] ) {
     #     $matches++ if $bits1[$i] eq $bits2[$i];
     #   }
     # }
+
+    ## print the number of matches / alignment length, as a scaling factor to account for length differences in genes:
     print $OUT "\t".($matches/$aln_length);
     $n++;
   }
