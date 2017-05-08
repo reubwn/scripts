@@ -123,14 +123,16 @@ while (<$IN>) {
     my $dna_aln = aa_to_dna_aln($prot_aln, \%cds_seqs);
 
     ## get Ka (Dn), Ks (Ds) values for the pair of genes:
-    my $stats = Bio::Align::DNAStatistics->new();
-    my @result = @{ $stats->calc_KaKs_pair($dna_aln,$gene1,$gene2) };
     my ($Ka,$Ks) = (-2,-2); ## default values
-    if (exists $result[0]{'D_n'}) {
-      $Ka = $result[0]{'D_n'};
-    }
-    if (exists $result[0]{'D_s'}) {
-      $Ks = $result[0]{'D_s'};
+    eval {
+      my $stats = Bio::Align::DNAStatistics->new();
+      my @result = @{ $stats->calc_KaKs_pair($dna_aln,$gene1,$gene2) };
+      if (exists $result[0]{'D_n'}) {
+        $Ka = $result[0]{'D_n'};
+      }
+      if (exists $result[0]{'D_s'}) {
+        $Ks = $result[0]{'D_s'};
+      }
     }
     $na++ if ( ($Ka == -2) || ($Ks == -2) );
     print $OUT "$_\t$Ka\t$Ks\n";
