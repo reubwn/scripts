@@ -133,7 +133,7 @@ while (<$IN>) {
       if (exists $result[0]{'D_s'}) {
         $Ks = $result[0]{'D_s'};
       }
-    }
+    };
     $na++ if ( ($Ka == -2) || ($Ks == -2) );
     print $OUT "$_\t$Ka\t$Ks\n";
 
