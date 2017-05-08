@@ -122,29 +122,42 @@ while (<$IN>) {
     my $prot_aln = $get_prot_aln -> next_aln();
     my $dna_aln = aa_to_dna_aln($prot_aln, \%cds_seqs);
 
-    ## get Ka (Dn), Ks (Ds) values:
-    eval {
-      my $stats = Bio::Align::DNAStatistics->new();
-      my $result = $stats->calc_all_KaKs_pairs($dna_aln);
-      my ($Da, $Ds, $Dn, $N, $S, $S_d, $N_d);
-      for my $an (@$result) {
-        for (sort keys %$an ) {
-          next if /Seq/;
-          if($_ eq "D_n"){$Dn = $an->{$_}};
-          if($_ eq "D_s"){$Ds = $an->{$_}};
-          if($_ eq "S_d"){$S_d = $an->{$_};}
-          if($_ eq "N_d"){$N_d = $an->{$_};}
-          if($_ eq "S"){$S = $an->{$_};}
-          if($_ eq "N"){$N = $an->{$_};}
-        }
-      }
-      $Dn = -2 unless ($Dn); ##default values
-      $Ds = -2 unless ($Ds);
-      $na++ if ( ($Dn == -2) || ($Ds == -2) );
+    ## get Ka (Dn), Ks (Ds) values for the pair of genes:
+    my $stats = Bio::Align::DNAStatistics->new();
+    my @result = @{ $stats->calc_KaKs_pair($dna_aln,$gene1,$gene2) };
+    my ($Ka,$Ks) = (-2,-2); ## default values
+    if (exists $result[0]{'D_n'}) {
+      $Ka = $result[0]{'D_n'};
+    }
+    if (exists $result[0]{'D_s'}) {
+      $Ks = $result[0]{'D_s'};
+    }
+    $na++ if ( ($Ka == -2) || ($Ks == -2) );
+    print $OUT "$_\t$Ka\t$Ks\n";
 
-      ## annotate input file
-      print $OUT "$_\t$Dn\t$Ds\n";
-    };
+
+    # eval {
+    #   my $stats = Bio::Align::DNAStatistics->new();
+    #   my $result = $stats->calc_all_KaKs_pairs($dna_aln);
+    #   my ($Da, $Ds, $Dn, $N, $S, $S_d, $N_d);
+    #   for my $an (@$result) {
+    #     for (sort keys %$an ) {
+    #       next if /Seq/;
+    #       if($_ eq "D_n"){$Dn = $an->{$_}};
+    #       if($_ eq "D_s"){$Ds = $an->{$_}};
+    #       if($_ eq "S_d"){$S_d = $an->{$_};}
+    #       if($_ eq "N_d"){$N_d = $an->{$_};}
+    #       if($_ eq "S"){$S = $an->{$_};}
+    #       if($_ eq "N"){$N = $an->{$_};}
+    #     }
+    #   }
+    #   $Dn = -2 unless ($Dn); ##default values
+    #   $Ds = -2 unless ($Ds);
+    #   $na++ if ( ($Dn == -2) || ($Ds == -2) );
+    #
+    #   ## annotate input file
+    #   print $OUT "$_\t$Dn\t$Ds\n";
+    # };
     $n++;
   }
 }
