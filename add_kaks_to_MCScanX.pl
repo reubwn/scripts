@@ -45,7 +45,7 @@ GetOptions (
 die $usage if $help;
 die $usage unless ($infile && $proteinfile && $cdsfile );
 my $outfile = "$infile.kaks";
-my $warningsfile = "$infile.warnings";
+my $warningsfile = "$infile.kaks.warnings";
 
 print STDERR "[INFO] Collinearity file: $infile\n";
 print STDERR "[INFO] Proteins file: $proteinfile\n";
@@ -73,9 +73,9 @@ print STDERR "[INFO] Parsing collinearity file...\n";
 open (my $OUT, ">$outfile") or die "Cannot open $outfile: $!\n\n";
 open (my $WARN, ">$warningsfile") or die "Cannot open $warningsfile: $!\n\n";
 open (my $IN, $infile) or die "Cannot open $infile: $!\n\n";
-my ($trimmed_seqs,$na) = (0,0);
+my ($ntrimmed,$na,$nskipped) = (0,0,0);
 my $n = 1;
-while (<$IN>) {
+PAIR: while (<$IN>) {
   if ($_ =~ m/^\#/) {
     print $OUT $_;
   } else {
@@ -112,7 +112,8 @@ while (<$IN>) {
     ## check if all CDS seqs are multiple of 3:
     foreach (keys %cds_seqs) {
       if ($cds_seqs{$_}->length() % 3 != 0) {
-        print $WARN "[WARN] Seq ".$cds_seqs{$_}->display_id()." is not a multiple of 3\n";## will trim ".($cds_seqs{$_}->length() % 3)." bases from 3' end\n";
+        print $WARN "[WARN] Seq ".$cds_seqs{$_}->display_id()." is not a multiple of 3\n";
+        print $WARN "[INFO] Length: ".$cds_seqs{$_}->length()."; Excess: ".($cds_seqs{$_}->length() % 3)."\n";
         print $WARN "[INFO] Translation in current frame: ".($cds_seqs{$_}->translate(-frame=>0, -complete=>1)->seq()."\n");
         ## determine frame of sequence:
         my ($frame, $trimmed);
@@ -129,11 +130,13 @@ while (<$IN>) {
           $trimmed = $cds_seqs{$_}->subseq(3,(($cds_seqs{$_}->length())));
           $frame = 2;
         } else {
-          print $WARN "[ERROR] Length of CDS: ".$cds_seqs{$_}->length()."\n";
+          ## there are stops in all 3 frames (?); some kind of error/pseudogene; just skip it
           print $WARN "[ERROR] Frame 0 Translation: ".$cds_seqs{$_}->translate(-frame=>0, -complete=>1)->seq()."\n";
           print $WARN "[ERROR] Frame 1 Translation: ".$cds_seqs{$_}->translate(-frame=>1, -complete=>1)->seq()."\n";
           print $WARN "[ERROR] Frame 2 Translation: ".$cds_seqs{$_}->translate(-frame=>2, -complete=>1)->seq()."\n";
-          die "\n[ERROR] Something funny with frame detection\n";
+          print $WARN "[ERROR] Stop codons detected in all 3 frames! Skipping this pair...\n";
+          $nskipped++;
+          next PAIR; ##skip to next pair
         }
         ## replace old seq with trimmed seq:
         $cds_seqs{$_} = Bio::Seq->new( -display_id => $_, -seq => $trimmed );
@@ -198,7 +201,8 @@ system ("rm temp.*"); ##remove last temp files.
 
 print STDERR "\n";
 print STDERR "[INFO] Total number of pairs: $n\n";
-print STDERR "[INFO] Number of seqs trimmed because % 3 != 0: $trimmed_seqs\n";
+print STDERR "[INFO] Number of seqs trimmed because length % 3 != 0: $ntrimmed\n";
+print STDERR "[INFO] Number of pairs skipped because stop codons detected in all 3 +frames: $nskipped\n";
 print STDERR "[INFO] Number of pairs for which Ka or Ks was not calculated: $na\n";
 print STDERR "[INFO] Finished on ".`date`."\n";
 
