@@ -124,10 +124,12 @@ while (<$IN>) {
           ## seq is OUT of frame (offset 1); therefore trim 1 base from 5' end:
           $trimmed = $cds_seqs{$_}->subseq(2,(($cds_seqs{$_}->length()))); ##NB subseq is coord inclusive
           $frame = 1;
-        } else ( $cds_seqs{$_}->translate(-frame=>2, -complete=>1) !~ m/\*/g ) {
+        } elsif ( $cds_seqs{$_}->translate(-frame=>2, -complete=>1) !~ m/\*/g ) {
           ## seq is OUT of frame (offset 2); therefore trim 2 base from 5' end:
           $trimmed = $cds_seqs{$_}->subseq(3,(($cds_seqs{$_}->length())));
           $frame = 2;
+        } else {
+          die "[ERROR] Something funny with frame detection\n";
         }
         ## replace old seq with trimmed seq:
         $cds_seqs{$_} = Bio::Seq->new( -display_id => $_, -seq => $trimmed );
