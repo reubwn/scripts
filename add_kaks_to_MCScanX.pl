@@ -113,7 +113,7 @@ while (<$IN>) {
     foreach (keys %cds_seqs) {
       if ($cds_seqs{$_}->length() % 3 != 0) {
         print $WARN "[WARN] Seq ".$cds_seqs{$_}->display_id()." is not a multiple of 3\n";## will trim ".($cds_seqs{$_}->length() % 3)." bases from 3' end\n";
-        print $WARN "[INFO] Translation in current frame: ".($cds_seqs{$_}->translate(-frame=>0, -complete=>1)."\n");
+        print $WARN "[INFO] Translation in current frame: ".($cds_seqs{$_}->translate(-frame=>0, -complete=>1)->seq()."\n");
         ## determine frame of sequence:
         my ($frame, $trimmed);
         if ( $cds_seqs{$_}->translate(-frame=>0, -complete=>1) !~ m/\*/g ) { ##look for INTERNAL stop codons; -complete should trim the terminal codon from all alignments, if present
@@ -137,7 +137,7 @@ while (<$IN>) {
 
         ## print some info to WARN:
         print $WARN "[INFO] Correct frame: $frame\n";
-        print $WARN "[INFO] Translation in correct frame: ".($cds_seqs{$_}->translate(-frame=>0, -complete=>1)."\n");
+        print $WARN "[INFO] Translation in correct frame: ".($cds_seqs{$_}->translate(-frame=>0, -complete=>1)->seq()."\n");
       }
     }
 
