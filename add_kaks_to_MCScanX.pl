@@ -116,15 +116,15 @@ while (<$IN>) {
         print $WARN "[INFO] Translation in current frame: ".($cds_seqs{$_}->translate(-frame=>0, -complete=>1)->seq()."\n");
         ## determine frame of sequence:
         my ($frame, $trimmed);
-        if ( $cds_seqs{$_}->translate(-frame=>0, -complete=>1) !~ m/\*/g ) { ##look for INTERNAL stop codons; -complete should trim the terminal codon from all alignments, if present
+        if ( $cds_seqs{$_}->translate(-frame=>0, -complete=>1)->seq() !~ m/\*/g ) { ##look for INTERNAL stop codons; -complete should trim the terminal codon from all alignments, if present
           ## seq is in frame, therefore errant codon must be at the 3' end:
           $trimmed = $cds_seqs{$_}->subseq(1,(($cds_seqs{$_}->length()) - ($cds_seqs{$_}->length() % 3))); ##trims remainder off 3' end; returns a STRING, annoyingly
           $frame = 0;
-        } elsif ( $cds_seqs{$_}->translate(-frame=>1, -complete=>1) !~ m/\*/g ) {
+        } elsif ( $cds_seqs{$_}->translate(-frame=>1, -complete=>1)->seq() !~ m/\*/g ) {
           ## seq is OUT of frame (offset 1); therefore trim 1 base from 5' end:
           $trimmed = $cds_seqs{$_}->subseq(2,(($cds_seqs{$_}->length()))); ##NB subseq is coord inclusive
           $frame = 1;
-        } elsif ( $cds_seqs{$_}->translate(-frame=>2, -complete=>1) !~ m/\*/g ) {
+        } elsif ( $cds_seqs{$_}->translate(-frame=>2, -complete=>1)->seq() !~ m/\*/g ) {
           ## seq is OUT of frame (offset 2); therefore trim 2 base from 5' end:
           $trimmed = $cds_seqs{$_}->subseq(3,(($cds_seqs{$_}->length())));
           $frame = 2;
