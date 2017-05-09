@@ -140,7 +140,7 @@ PAIR: while (<$IN>) {
         }
         ## replace old seq with trimmed seq:
         $cds_seqs{$_} = Bio::Seq->new( -display_id => $_, -seq => $trimmed );
-        $trimmed_seqs++;
+        $ntrimmed++;
 
         ## print some info to WARN:
         print $WARN "[INFO] Correct frame: $frame\n";
