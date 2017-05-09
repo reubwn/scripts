@@ -129,7 +129,11 @@ while (<$IN>) {
           $trimmed = $cds_seqs{$_}->subseq(3,(($cds_seqs{$_}->length())));
           $frame = 2;
         } else {
-          die "[ERROR] Something funny with frame detection\n";
+          print $WARN "[ERROR] Length of CDS: ".$cds_seqs{$_}->length()."\n";
+          print $WARN "[ERROR] Frame 0 Translation: ".$cds_seqs{$_}->translate(-frame=>0, -complete=>1)->seq()."\n";
+          print $WARN "[ERROR] Frame 1 Translation: ".$cds_seqs{$_}->translate(-frame=>1, -complete=>1)->seq()."\n";
+          print $WARN "[ERROR] Frame 2 Translation: ".$cds_seqs{$_}->translate(-frame=>2, -complete=>1)->seq()."\n";
+          die "\n[ERROR] Something funny with frame detection\n";
         }
         ## replace old seq with trimmed seq:
         $cds_seqs{$_} = Bio::Seq->new( -display_id => $_, -seq => $trimmed );
