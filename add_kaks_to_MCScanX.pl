@@ -45,6 +45,7 @@ GetOptions (
 die $usage if $help;
 die $usage unless ($infile && $proteinfile && $cdsfile );
 my $outfile = "$infile.kaks";
+my $warningsfile = "$infile.warnings";
 
 print STDERR "[INFO] Collinearity file: $infile\n";
 print STDERR "[INFO] Proteins file: $proteinfile\n";
@@ -53,14 +54,14 @@ print STDERR "[INFO] Parsing protein and CDS files...\n";
 
 ## parse proteins and CDS:
 my (%protein_hash, %cds_hash);
-my $in_p = Bio::SeqIO->new( -file => $proteinfile, -format => 'fasta' );
-while (my $seq = $in_p->next_seq() ) {
+my $in_prot = Bio::SeqIO->new( -file => $proteinfile, -format => 'fasta' );
+while (my $seq = $in_prot->next_seq() ) {
   $protein_hash{$seq->display_id()} = $seq->seq();
 }
 die "[ERROR] No sequences found in $proteinfile!\n" if (scalar(keys %protein_hash) == 0);
 print "[INFO] Fetched ".commify(scalar(keys %protein_hash))." proteins from $proteinfile\n";
-my $in_c = Bio::SeqIO->new( -file => $cdsfile, -format => 'fasta' );
-while (my $seq = $in_c->next_seq() ) {
+my $in_cds = Bio::SeqIO->new( -file => $cdsfile, -format => 'fasta' );
+while (my $seq = $in_cds->next_seq() ) {
   $cds_hash{$seq->display_id()} = $seq->seq();
 }
 die "[ERROR] No sequences found in $cdsfile!\n" if (scalar(keys %cds_hash) == 0);
@@ -70,6 +71,7 @@ print STDERR "[INFO] Parsing collinearity file...\n";
 
 ## parse collinearity file:
 open (my $OUT, ">$outfile") or die "Cannot open $outfile: $!\n\n";
+open (my $WARN, ">$warningsfile") or die "Cannot open $warningsfile: $!\n\n";
 open (my $IN, $infile) or die "Cannot open $infile: $!\n\n";
 my ($trimmed_seqs,$na) = (0,0);
 my $n = 1;
@@ -110,10 +112,30 @@ while (<$IN>) {
     ## check if all CDS seqs are multiple of 3:
     foreach (keys %cds_seqs) {
       if ($cds_seqs{$_}->length() % 3 != 0) {
-        print STDERR "\n[WARN] Seq ".$cds_seqs{$_}->display_id()." is not a multiple of 3; will trim ".($cds_seqs{$_}->length() % 3)." bases from 3' end\n";
-        my $trimmed = $cds_seqs{$_}->subseq(1,(($cds_seqs{$_}->length()) - ($cds_seqs{$_}->length() % 3))); ##trims remainder off 3' end; returns a STRING, annoyingly
-        $cds_seqs{$_} = Bio::Seq->new( -display_id => $_, -seq => $trimmed ); ##replace old seq with trimmed seq
+        print $WARN "[WARN] Seq ".$cds_seqs{$_}->display_id()." is not a multiple of 3\n";## will trim ".($cds_seqs{$_}->length() % 3)." bases from 3' end\n";
+        print $WARN "[INFO] Translation in current frame: ".($cds_seqs{$_}->translate(-frame=>0, -complete=>1)."\n");
+        ## determine frame of sequence:
+        my ($frame, $trimmed);
+        if ( $cds_seqs{$_}->translate(-frame=>0, -complete=>1) !~ m/\*/g ) { ##look for INTERNAL stop codons; -complete should trim the terminal codon from all alignments, if present
+          ## seq is in frame, therefore errant codon must be at the 3' end:
+          $trimmed = $cds_seqs{$_}->subseq(1,(($cds_seqs{$_}->length()) - ($cds_seqs{$_}->length() % 3))); ##trims remainder off 3' end; returns a STRING, annoyingly
+          $frame = 0;
+        } elsif ( $cds_seqs{$_}->translate(-frame=>1, -complete=>1) !~ m/\*/g ) {
+          ## seq is OUT of frame (offset 1); therefore trim 1 base from 5' end:
+          $trimmed = $cds_seqs{$_}->subseq(2,(($cds_seqs{$_}->length()))); ##NB subseq is coord inclusive
+          $frame = 1;
+        } else ( $cds_seqs{$_}->translate(-frame=>2, -complete=>1) !~ m/\*/g ) {
+          ## seq is OUT of frame (offset 2); therefore trim 2 base from 5' end:
+          $trimmed = $cds_seqs{$_}->subseq(3,(($cds_seqs{$_}->length())));
+          $frame = 2;
+        }
+        ## replace old seq with trimmed seq:
+        $cds_seqs{$_} = Bio::Seq->new( -display_id => $_, -seq => $trimmed );
         $trimmed_seqs++;
+
+        ## print some info to WARN:
+        print $WARN "[INFO] Correct frame: $frame\n";
+        print $WARN "[INFO] Translation in correct frame: ".($cds_seqs{$_}->translate(-frame=>0, -complete=>1)."\n");
       }
     }
 
@@ -165,6 +187,7 @@ while (<$IN>) {
 }
 close $IN;
 close $OUT;
+close $WARN;
 system ("rm temp.*"); ##remove last temp files.
 
 print STDERR "\n";
