@@ -47,7 +47,7 @@ my @W = split (/\,/, $windowrange); ##get window sizes from string
 print STDERR "[INFO] Window range: MIN=$W[0],MAX=$W[1],STEP=$W[2]\n";
 
 my @files = <$dirname/*>;
-my @filenames = map {$_ =~ s/.+\///} @files;
+my @filenames = map {$_ =~ s/.+\///r} @files;
 print $OUT join("\t", "WINDOW", (nsort @filenames), "\n");
 print STDERR "[INFO] Number of files in $dirname: ".scalar(@files)."\n";
 
