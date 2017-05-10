@@ -19,16 +19,16 @@ SYNOPSIS
   Assumes Ks values are in the final column of the collinearity file (default).
 
 OPTIONS
-  -i|--in      [FILE] : MCScanX collinearity file, annotated with Ka/Ks values
-  -p|--prot    [FILE] : fasta file of protein sequences
-  -c|--cds     [FILE] : fasta file of corresponding CDS (nucleotide)
-  -f|--fasta   [FILE] : fasta file of genome
-  -g|--gff     [FILE] : gff file of gene regions
-  -o|--out      [STR] : outfile prefix (default = 'ALN'); alignments will be written to ALN.<NUM>.fasta
-  -d|--outdir   [DIR] : dirname to save alignments (default = 'alignments')
-  -k|--minks  [FLOAT] : minimum Ks between genes (default >= 0.5)
-  -t|--threads  [INT] : number of aligner threads (default = 1)
-  -h|--help           : this message
+  -i|--in      [FILE]  : MCScanX collinearity file, annotated with Ka/Ks values
+  -p|--prot    [FILE]  : fasta file of protein sequences
+  -c|--cds     [FILE]  : fasta file of corresponding CDS (nucleotide)
+  -f|--fasta   [FILE]  : fasta file of genome
+  -g|--gff     [FILE]  : gff file of gene regions
+  -o|--out     [STR]   : outfile prefix (default = 'ALN'); alignments will be written to ALN.<NUM>.fasta
+  -d|--outdir  [DIR]   : dirname to save alignments (default = 'alignments')
+  -k|--minks   [FLOAT] : minimum Ks between genes (default >= 0.5)
+  -t|--threads [INT]   : number of aligner threads (default = 1)
+  -h|--help            : this message
 
 USAGE
   (1) To generate codon alignments for CDS using Clustal-Omega:
@@ -121,8 +121,8 @@ if ($proteinfile && $cdsfile) {
     ## make CDS hash of nucleotides
     my %cds_seqs;
     if ((exists($cds_hash{$_})) && (exists($cds_hash{$pairs{$_}}))) {
-      $cds_seqs{"$_"} = Bio::Seq->new( -display_id => "$_", -seq => $cds_hash{$_} );
-      $cds_seqs{"$pairs{$_}"} = Bio::Seq->new( -display_id => "$pairs{$_}", -seq => $cds_hash{$pairs{$_}} );
+      $cds_seqs{$_} = Bio::Seq->new( -display_id => "$_", -seq => $cds_hash{$_} );
+      $cds_seqs{$pairs{$_}} = Bio::Seq->new( -display_id => "$pairs{$_}", -seq => $cds_hash{$pairs{$_}} );
     } else {
       die "[ERROR] CDS ID '$_' or '$pairs{$_}' not found in file $cdsfile!\n";
     }
@@ -131,7 +131,7 @@ if ($proteinfile && $cdsfile) {
     if (system ("clustalo --infile=temp.faa --outfile=temp.aln --force --threads=$threads") != 0) { die "[ERROR] Problem with clustalo!\n"; }
 
     ## fetch alignment, backtranslate to nucleotides & write
-    my $get_prot_aln = Bio::AlignIO -> new(-file=>"clustal.aln", -format=>"fasta");
+    my $get_prot_aln = Bio::AlignIO -> new(-file=>"temp.faa", -format=>"fasta");
     my $prot_aln = $get_prot_aln -> next_aln();
     my $dna_aln = aa_to_dna_aln($prot_aln, \%cds_seqs);
     my $write_dna_aln = Bio::AlignIO -> new(-file=>">$out.$n.fna", -format=>"fasta");

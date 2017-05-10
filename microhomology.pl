@@ -14,10 +14,10 @@ SYNOPSIS
   Uses a sliding window incrementing by 1, and scales number of identical windows by the length of each alignment.
 
 OPTIONS
-  -d|--dir    [DIR] : dirname of directory containing alignments (fasta format)
-  -o|--out   [FILE] : outfile prefix (default = mhom.table)
-  -w|--window [INT] : window size range, comma delim, defined as: \"<SIZE>,<END>,<STEP>\" (default = 10,10,1)
-  -h|--help         : this message
+  -d|--dir    [DIR]  : dirname of directory containing alignments (fasta format)
+  -o|--out    [FILE] : outfile prefix (default = mhom.table)
+  -w|--window [INT]  : window size range, comma delim, defined as: \"<SIZE>,<END>,<STEP>\" (default = 10,10,1)
+  -h|--help          : this message
 
 USAGE
   (1) To calculate number of idenical windows from window size 1 to 40, increasing window size by 2 each round:

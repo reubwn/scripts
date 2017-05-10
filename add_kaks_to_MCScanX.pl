@@ -13,7 +13,7 @@ use Bio::Align::Utilities qw(aa_to_dna_aln);
 local $SIG{__WARN__} = sub { warn $_[0] unless $_[0] =~ /WARNING/}; ##suppress WARNINGs from BioPerl
 
 my $usage = "
-SYNOPSIS:
+SYNOPSIS
   Calculates Ka and Ks for pairs of genes from an MCScanX collinearity file.
   Will detect CDS which are non-multiples of 3 and trim from 3' accordingly (script
   which ships with MCScanX does not do this and can lead to errors..)
