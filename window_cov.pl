@@ -156,6 +156,6 @@ unless ($flatten) {
   }
 }
 close $OUT;
-print STDERR "[INFO] Finished\n\n";
+print STDERR "[INFO] Finished on ".`date`."\n\n";
 
 __END__

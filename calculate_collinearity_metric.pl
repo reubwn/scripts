@@ -1,29 +1,31 @@
 #!/usr/bin/env perl
 
+## author: reubwn May 2017
+
 use strict;
 use warnings;
 use Getopt::Long;
 use List::Util qw /sum/;
 
 my $usage = "
-SYNOPSIS:
+SYNOPSIS
   Calculates 'collinearity' score based on the number of collinear genes divided by the total number of genes within that defined block.
   Takes the collinearity file and the 'gff' file used in MCScanX analyses.
 
   If ka/ks values are present, eg by running the MCScanX 'add_ka_and_ks_to_collinearity.pl' program first, script will also print average
   ka and ks values per block if -k option is set.
 
-OUTPUT:
+OUTPUT
   Prints to a file 'xyz.collinearity.score'; prints score for each block plus an average.
   Also prints a file 'xyz.collinearity.reformatted', which (hopefully) removes some of the irritating formatting issues in the original MCScanX 'xyz.collinearity' file.
 
-OPTIONS:
+OPTIONS
   -i|--collinearity [FILE] : collinearity file from MCScanX
   -g|--gff          [FILE] : modified gff file from MCScanX
   -k|--kaks                : parse collinearity file to get average ka & ks per block
   -h|--help                : print this message
 
-USAGE:
+USAGE
   >> calculate_collinarity_metric.pl -i xyz.collinearity -g xyz.gff
   >> calculate_collinarity_metric.pl -i xyz.collinearity.kaks -g xyz.gff -k
 \n";
@@ -39,6 +41,9 @@ GetOptions (
 
 die $usage if $help;
 die $usage unless ($collinearity && $gff);
+
+print STDERR "[INFO] Collinearity file: $collinearity\n";
+print STDERR "[INFO] Add average Ka and Ks: TRUE\n" if ($kaks);
 
 my (%blocks,$orientation);
 open (my $COL, $collinearity) or die $!;
@@ -121,7 +126,7 @@ foreach (sort {$a<=>$b} keys %blocks) {
     die "\nUnknown strand orientation for block 2: $orientation\n\n";
   }
   chomp ($bl2_length);
-  print STDOUT "\r[INFO] Calculating scores for block: $_";
+  print STDERR "\r[INFO] Calculating scores for block: $_";
   my $score_block2 = sprintf("%.5f",(scalar(@block2_genes)/$bl2_length));
 
   ## get kaks values if present
@@ -155,7 +160,7 @@ foreach (sort {$a<=>$b} keys %blocks) {
   }
 }
 close $OUT;
-print STDOUT "\n";
+print STDERR "\n[INFO] Finished on ".`date`."\n";
 
 sub avg {
   return sum(@_)/@_;
