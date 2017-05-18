@@ -65,8 +65,8 @@ while (<$COL>) {
   my $aln_number;
   if ($F[0]=~m/\d+\-\d+\:/) { ## sometimes columns not formatted properly... :/
     my @a = split (m/\-/, $F[0]);
-    push @{ $blocks{$a[0]}{'block1'} }, $F[1];
-    push @{ $blocks{$a[0]}{'block2'} }, $F[2];
+    push @{ $blocks{$a[0]}{block1} }, $F[1];
+    push @{ $blocks{$a[0]}{block2} }, $F[2];
     $aln_number = $a[0];
     ## print to $REFORMAT; this should be easier to use for downstream analyses
     $a[1] =~ s/\://;
@@ -74,19 +74,19 @@ while (<$COL>) {
     print $REFORMAT join "\t", @a, splice (@N,1), "\n";
   } else {
     $F[0] =~ s/\-//;
-    push @{ $blocks{$F[0]}{'block1'} }, $F[2];
-    push @{ $blocks{$F[0]}{'block2'} }, $F[3];
+    push @{ $blocks{$F[0]}{block1} }, $F[2];
+    push @{ $blocks{$F[0]}{block2} }, $F[3];
     $aln_number = $F[0];
     $F[1] =~ s/\://;
     print $REFORMAT join "\t", @F, "\n";
   }
 
   ## dump genes and plus/minus info into %blocks
-  $blocks{$aln_number}{ 'orientation'} = $orientation;
+  $blocks{$aln_number}{orientation} = $orientation;
 
   if ($kaks) {
-    push @{ $blocks{$aln_number}{'ks'} }, $F[-1]; ## ks is in final column
-    push @{ $blocks{$aln_number}{'ka'} }, $F[-2]; ## ka is in second to last column
+    push @{ $blocks{$aln_number}{ks} }, $F[-1]; ## ks is in final column
+    push @{ $blocks{$aln_number}{ka} }, $F[-2]; ## ka is in second to last column
   }
 }
 close $COL;
@@ -94,18 +94,18 @@ close $REFORMAT;
 
 open (my $OUT, ">$collinearity.score") or die $!;
 if ($kaks) {
-  print $OUT join "\t", "block_num", "collinear_genes", "total_genes1", "total_genes2", "orientation", "score_block1", "score_block2", "score_avg", "ka_avg", "ks_avg", "\n";
+  print $OUT join "\t", "block_num","collinear_genes","total_genes1","total_genes2","orientation","score_block1","score_block2","score_avg","ka_avg","ks_avg","\n";
 } else {
-  print $OUT join "\t", "block_num", "collinear_genes", "total_genes1", "total_genes2", "orientation", "score_block1", "score_block2", "score_avg", "\n";
+  print $OUT join "\t", "block_num","collinear_genes","total_genes1","total_genes2","orientation","score_block1","score_block2","score_avg","\n";
 }
 
 foreach (sort {$a<=>$b} keys %blocks) {
 
   ## get orientation of block2
-  my $orientation = $blocks{$_}{'orientation'};
+  my $orientation = $blocks{$_}{orientation};
 
   ## get genes of block1
-  my @block1_genes = @{ $blocks{$_}{'block1'} };
+  my @block1_genes = @{ $blocks{$_}{block1} };
   my $bl1_start = shift @block1_genes;
   my $bl1_end   = pop @block1_genes;
   my $bl1_length = `perl -e 'while (<>){print if (/\t\Q$bl1_start\E\t/../\t\Q$bl1_end\E\t/);}' $gff | wc -l`;
@@ -113,7 +113,7 @@ foreach (sort {$a<=>$b} keys %blocks) {
   my $score_block1 = sprintf("%.5f",(scalar(@block1_genes)/$bl1_length));
 
   ## get genes of block2
-  my @block2_genes = @{ $blocks{$_}{'block2'} };
+  my @block2_genes = @{ $blocks{$_}{block2} };
   my $bl2_start = shift @block2_genes;
   my $bl2_end   = pop @block2_genes;
   my $bl2_length;
@@ -131,8 +131,8 @@ foreach (sort {$a<=>$b} keys %blocks) {
 
   ## get kaks values if present
   if ($kaks) {
-    my @ka = grep {$_ >= 0} @{ $blocks{$_}{'ka'} }; ## exclude negative values from calculation;
-    my @ks = grep {$_ >= 0} @{ $blocks{$_}{'ks'} }; ## these are "-2", output when ka/ks cannot be calulated for some reason
+    my @ka = grep {$_ >= 0} @{ $blocks{$_}{ka} }; ## exclude negative values from calculation;
+    my @ks = grep {$_ >= 0} @{ $blocks{$_}{ks} }; ## these are "-2", output when ka/ks cannot be calulated for some reason
 
     print $OUT join "\t",
       $_,
