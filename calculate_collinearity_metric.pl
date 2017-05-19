@@ -30,13 +30,14 @@ USAGE
   >> calculate_collinarity_metric.pl -i xyz.collinearity.kaks -g xyz.gff -k
 \n";
 
-my ($collinearity, $gff, $kaks, $help);
+my ($collinearity, $gff, $kaks, $help, $debug);
 
 GetOptions (
   'collinearity|i=s' => \$collinearity,
   'gff|g=s'          => \$gff,
   'kaks|k'           => \$kaks,
   'help|h'           => \$help,
+  'debug|d'          => \$debug
 );
 
 die $usage if $help;
@@ -52,7 +53,7 @@ while (<$COL>) {
   chomp;
   if ($_ =~ m/^#/) {
     print $REFORMAT "$_\n";
-    if ($_ =~ m/(\w\w\d+)\&(\w\w\d+)\s(plus|minus)$/) { ## get chrom names and strand orientation of block 2
+    if ($_ =~ m/\s(\w+\d+)\&(\w+\w\d+)\s(plus|minus)$/) { ## get chrom names and strand orientation of block 2
       $chrom1 = $1;
       $chrom2 = $2;
       $orientation = $3;
@@ -87,7 +88,7 @@ while (<$COL>) {
   $blocks{$aln_number}{chrom1} = $chrom1;
   $blocks{$aln_number}{chrom2} = $chrom2;
   $blocks{$aln_number}{orientation} = $orientation;
-  print STDERR "$aln_number $chrom1 $chrom2 $orientation\n";
+  print STDOUT "$aln_number $chrom1 $chrom2 $orientation\n" if $debug;
   if ($kaks) {
     push @{ $blocks{$aln_number}{ks} }, $F[-1]; ## ks is in final column
     push @{ $blocks{$aln_number}{ka} }, $F[-2]; ## ka is in second to last column
