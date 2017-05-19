@@ -45,15 +45,17 @@ die $usage unless ($collinearity && $gff);
 print STDERR "[INFO] Collinearity file: $collinearity\n";
 print STDERR "[INFO] Add average Ka and Ks: TRUE\n" if ($kaks);
 
-my (%blocks,$orientation);
+my (%blocks,$chrom1,$chrom2,$orientation);
 open (my $COL, $collinearity) or die $!;
 open (my $REFORMAT, ">$collinearity.refomatted") or die $!;
 while (<$COL>) {
   chomp;
   if ($_ =~ m/^#/) {
     print $REFORMAT "$_\n";
-    if ($_ =~ m/(plus|minus)$/) { ## get strand orientation of block 2
-      $orientation = $1;
+    if ($_ =~ m/(\w\w\d)\&(\w\w\d)\s(plus|minus)$/) { ## get strand orientation of block 2
+      $chrom1 = $1;
+      $chrom2 = $2;
+      $orientation = $3;
       next;
     } else {
       next;
@@ -82,8 +84,10 @@ while (<$COL>) {
   }
 
   ## dump genes and plus/minus info into %blocks
+  $blocks{$aln_number}{chrom1} = $chrom1;
+  $blocks{$aln_number}{chrom2} = $chrom2;
   $blocks{$aln_number}{orientation} = $orientation;
-
+  print STDERR "$aln_number $chrom1 $chrom2 $orientation\n";
   if ($kaks) {
     push @{ $blocks{$aln_number}{ks} }, $F[-1]; ## ks is in final column
     push @{ $blocks{$aln_number}{ka} }, $F[-2]; ## ka is in second to last column
@@ -94,9 +98,9 @@ close $REFORMAT;
 
 open (my $OUT, ">$collinearity.score") or die $!;
 if ($kaks) {
-  print $OUT join "\t", "block_num","collinear_genes","total_genes1","total_genes2","orientation","score_block1","score_block2","score_avg","ka_avg","ks_avg","\n";
+  print $OUT join "\t", "block_num","chrom1","chrom2","collinear_genes","total_genes1","total_genes2","orientation","score_block1","score_block2","score_avg","ka_avg","ks_avg","\n";
 } else {
-  print $OUT join "\t", "block_num","collinear_genes","total_genes1","total_genes2","orientation","score_block1","score_block2","score_avg","\n";
+  print $OUT join "\t", "block_num","chrom1","chrom2","collinear_genes","total_genes1","total_genes2","orientation","score_block1","score_block2","score_avg","\n";
 }
 
 foreach (sort {$a<=>$b} keys %blocks) {
@@ -136,6 +140,8 @@ foreach (sort {$a<=>$b} keys %blocks) {
 
     print $OUT join "\t",
       $_,
+      $blocks{$_}{chrom1},
+      $blocks{$_}{chrom2},
       scalar(@block1_genes),
       $bl1_length,
       $bl2_length,
