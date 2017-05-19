@@ -52,7 +52,7 @@ while (<$COL>) {
   chomp;
   if ($_ =~ m/^#/) {
     print $REFORMAT "$_\n";
-    if ($_ =~ m/(\w\w\d)\&(\w\w\d)\s(plus|minus)$/) { ## get strand orientation of block 2
+    if ($_ =~ m/(\w\w\d+)\&(\w\w\d+)\s(plus|minus)$/) { ## get chrom names and strand orientation of block 2
       $chrom1 = $1;
       $chrom2 = $2;
       $orientation = $3;
