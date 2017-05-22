@@ -27,7 +27,7 @@ my $ks = 0.5;
 
 GetOptions (
   'collinearity|i=s' => \$collinearity,
-  'kaks|k'           => \$ks,
+  'ks|k:f'           => \$ks,
   'help|h'           => \$help,
   'debug|d'          => \$debug
 );
@@ -58,23 +58,48 @@ close $IN;
 #   print "$_\t@a\n";
 # }
 
-foreach my $block (nsort keys %chroms1) {
+BLOCK: foreach my $block (nsort keys %chroms1) {
   #print "[INFO] Block #$block: $chroms1{$block}\n"; ##name of chrom where $block resides
   my @blocksOnSameChrom = @{ $blocks1{$chroms1{$block}} }; ##all blocks residing on the same chrom
   my @blocksOnHomologousChrom = @{ $blocks2{$chroms2{$block}} }; ##all other blocks residing on (what should be) the HOMOLOGOUS chrom
-  my( $index1 )= grep { $blocksOnSameChrom[$_] == $block } 0..$#blocksOnSameChrom; ##get index of block in series of blocks on same chrom
-  my( $index2 )= grep { $blocksOnHomologousChrom[$_] == $block } 0..$#blocksOnHomologousChrom; ##get index of HOMOLOGOUS block on HOMOLOGOUS chrom
+  my( $index1 ) = grep { $blocksOnSameChrom[$_] == $block } 0..$#blocksOnSameChrom; ##get index of block in series of blocks on same chrom
+  my( $index2 ) = grep { $blocksOnHomologousChrom[$_] == $block } 0..$#blocksOnHomologousChrom; ##get index of HOMOLOGOUS block on HOMOLOGOUS chrom
+  my ($upstreamBlockSameChrom,$downstreamBlockSameChrom,$upstreamBlockHomologousChrom,$downstreamBlockHomologousChrom) = ("5TERM","3TERM","5TERM","3TERM");
 
-  my ($upstreamBlockSameChrom,$downstreamBlockSameChrom,$upstreamBlockHomologousChrom,$downstreamBlockHomologousChrom) = ("NA","NA","NA","NA");
-  unless ( ($index1 == 0) || ($index1 == $#blocksOnSameChrom) ) {
-    $upstreamBlockSameChrom = $blocksOnSameChrom[$index1 - 1];
-    $downstreamBlockSameChrom = $blocksOnSameChrom[$index1 + 1];
-  }
-  unless ( ($index2 == 0) || ($index2 == $#blocksOnHomologousChrom) ) {
-    $upstreamBlockHomologousChrom = $blocksOnHomologousChrom[$index1 - 1];
-    $downstreamBlockHomologousChrom = $blocksOnHomologousChrom[$index1 + 1];
+  if ($index1 == 0 and $index1 == $#blocksOnSameChrom) {
+    ##block is singleton, therefore cannot be non-collinear:
+    print "$block\t$chroms1{$block}\t$index1\t$chroms2{$block}\t@blocksOnHomologousChrom\t$index2\tSINGLETON\n";
+    next BLOCK;
+  } else {
+    if ( $index2 == 0) {
+      ##block is 3' terminal
+      $downstreamBlockHomologousChrom = $blocksOnHomologousChrom[$index2 + 1];
+    } elsif ($index2 == $#blocksOnHomologousChrom) {
+      ##block is 5' terminal
+      $upstreamBlockHomologousChrom = $blocksOnHomologousChrom[$index2 - 1];
+    } else {
+      ##block is somewhere in the middle
+      $upstreamBlockHomologousChrom = $blocksOnHomologousChrom[$index2 - 1];
+      $downstreamBlockHomologousChrom = $blocksOnHomologousChrom[$index2 + 1];
+    }
   }
 
+  if ($index2 == 0 and $index2 == $#blocksOnHomologousChrom) {
+    ##block is singleton, therefore cannot be non-collinear:
+    print "$block\t$chroms1{$block}\t$index1\t$chroms2{$block}\t@blocksOnHomologousChrom\t$index2\tSINGLETON\n";
+    next BLOCK;
+  } else {
+    if ( $index2 == 0) {
+      ##block is 3' terminal
+      $downstreamBlockHomologousChrom = $blocksOnHomologousChrom[$index2 + 1];
+    } elsif ($index2 == $#blocksOnHomologousChrom) {
+      ##block is 5' terminal
+      $upstreamBlockHomologousChrom = $blocksOnHomologousChrom[$index2 - 1];
+    } else {
+      ##block is somewhere in the middle
+      $upstreamBlockHomologousChrom = $blocksOnHomologousChrom[$index2 - 1];
+      $downstreamBlockHomologousChrom = $blocksOnHomologousChrom[$index2 + 1];
+    }
+  }
   print "$block\t$chroms1{$block}\t$index1\t$chroms2{$block}\t@blocksOnHomologousChrom\t$index2\t$upstreamBlockHomologousChrom\t$downstreamBlockHomologousChrom\n";
-
 }
