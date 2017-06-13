@@ -45,7 +45,7 @@ print STDERR "[INFO] Genome file: $genome\n";
 open (my $BED, $bed) or die "[ERROR] Cannot open $bed: $!\n";
 while (<$BED>) {
   #print STDERR "\r[INFO] Working on window \#$n: $_";$| = 1;
-  `printf "$_\n" > tmp.bed`;
+  `printf "$_" > tmp.bed`;
   my ($SAM,$total,$same,$insert,@insert_arr,$insert_avg);
   open($SAM, "bedtools intersect -sorted -g $genome -a $bam -b tmp.bed | samtools view - |");#`bedtools intersect -sorted -g $genome -a $bam -b <(printf "$_") | samtools view - | perl -lane 'if($F[6]eq"="){if($F[8]>500){$insert++};$same++;$total++}else{$total++}END{print "$total\t$same\t".($same/$total)."\t$insert\t".($insert/$total)}'`;
   while (<$SAM>) {
@@ -62,7 +62,7 @@ while (<$BED>) {
   close $SAM;
   print STDOUT join (
     "\t",
-    chomp($_),
+    $_,
     $total,
     $same,
     ($same/$total),
