@@ -41,6 +41,17 @@ die $usage unless ($bam && $bed && $genome);
 print STDERR "[INFO] BAM file: $bam\n";
 print STDERR "[INFO] Windows file: $bed\n";
 print STDERR "[INFO] Genome file: $genome\n";
+print STDOUT join (
+  "\t",
+  "CHROM\tSTART\tEND",#$window,
+  "TOTAL",#$total,
+  "SAME",#$same,
+  "S/T",#($same/$total),
+  "INSERT",#$insert,
+  "I/T",#($insert/$total),
+  "INSERT_AVG",#(sum(@insert_arr)/scalar(@insert_arr)),
+  "\n"
+);
 
 open (my $BED, $bed) or die "[ERROR] Cannot open $bed: $!\n";
 while (my $window = <$BED>) {
