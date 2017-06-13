@@ -54,7 +54,7 @@ while (my $window = <$BED>) {
       $same++;
       $total++;
       $insert++ if ($F[8] > 500);
-      push (@insert_arr, $F[8]);
+      push (@insert_arr, abs($F[8]));
     } else {
       $total++;
     }
