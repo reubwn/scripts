@@ -62,6 +62,7 @@ while (<$BED>) {
   close $SAM;
   print STDOUT join (
     "\t",
+    chomp(`cat tmp.bed`),
     $total,
     $same,
     ($same/$total),
