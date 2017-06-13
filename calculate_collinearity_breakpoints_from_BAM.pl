@@ -60,9 +60,10 @@ while (my $window = <$BED>) {
     }
   }
   close $SAM;
+  chomp($window);
   print STDOUT join (
     "\t",
-    (chomp($window)),
+    $window,
     $total,
     $same,
     ($same/$total),
