@@ -20,28 +20,26 @@ OPTIONS
   -m|--maxcov    [INT] : skip windows with a coverage > this value (default=5000)
   -v|--vcf       [FILE]: VCF file input to calculate SNP density across the same window
   -z|--gzip            : input file is gzipped (default=F)
-  -f|--flatten         : condense output to one line per window (default=F)
-  -p|--pseudochr       : also print 1..n across all scaffolds (default=F)
+  -k|--skip            : skip windows of size < --window (ie small windows at ends of scaffolds) (default=F)
   -h|--help            : this message
 
 USAGE
   window_cov.pl -i genomeCov.txt -w 1000 -o genomeCov.1000.txt
 \n";
 
-my ($infile, $outfile, $vcffile, $gzip, $flatten, $pseudochr, $help);
+my ($infile, $outfile, $vcffile, $gzip, $skip, $help);
 my $window = 1000;
 my $maxcov = 5000;
 
 GetOptions (
-  'in|i=s'      => \$infile,
-  'out|o:s'     => \$outfile,
-  'window|w:i'  => \$window,
-  'maxcov|m:i'  => \$maxcov,
-  'vcf|v:s'     => \$vcffile,
+  'i|in=s'      => \$infile,
+  'o|out:s'     => \$outfile,
+  'w|window:i'  => \$window,
+  'm|maxcov:i'  => \$maxcov,
+  'v|vcf:s'     => \$vcffile,
   'z|gzip'      => \$gzip,
-  'flatten|f'   => \$flatten,
-  'pseudochr|p' => \$pseudochr,
-  'help|h'      => \$help
+  'k|skip'   => \$skip,
+  'h|help'      => \$help
 );
 
 die $usage if $help;
@@ -111,7 +109,7 @@ LINE: while (<$IN>) {
 
   ## print if window size is reached:
   if ($. == 1) {
-    ## nothing?
+    ## empty condition to capture the first line
   } elsif ( $F[1] % $window == 0) {
     if ($vcffile) {
       my $nsnps;
@@ -126,17 +124,19 @@ LINE: while (<$IN>) {
 
   ## OR its a new scaffold (not seen already) OR eof:
   } elsif ( (!exists($seen{$F[0]})) || (eof) ) {
-    if ($vcffile) {
-      my $nsnps;
-      if (exists($v{$E[0]}{$E[1]})) { $nsnps = $v{$E[0]}{$E[1]} } else { $nsnps = 0 }; ##WARNING: THIS MIGHT NEVER WORK.....!!!!!
-      print $OUT join("\t", $E[0], $E[1], ($prev_cumulative_coverage_sum/($E[1] % $window)), $nsnps, ($nsnps/($E[1] % $window)), "\n"); ##WARNING: NSNPS and DENSITY will always be zero for this last window.... IS THIS OK
-    } else {
-      print $OUT join("\t", $E[0], $E[1], ($prev_cumulative_coverage_sum/($E[1] % $window)),"\n");
-    }
+    unless ($E[1] == $window) { ##avoids evaluation for cases where scaffold length is exactly == window size
+      if ($vcffile) {
+        my $nsnps;
+        if (exists($v{$E[0]}{$E[1]})) { $nsnps = $v{$E[0]}{$E[1]} } else { $nsnps = 0 }; ##WARNING: THIS MIGHT NEVER WORK.....!!!!!
+        print $OUT join("\t", $E[0], $E[1], ($prev_cumulative_coverage_sum/($E[1] % $window)), $nsnps, ($nsnps/($E[1] % $window)), "\n"); ##WARNING: NSNPS and DENSITY will always be zero for this last window.... IS THIS OK
+      } else {
+        print $OUT join("\t", $E[0], $E[1], ($prev_cumulative_coverage_sum/($E[1] % $window)),"\n");
+      }
 
-    ## reset cumsum to 0 then begin again:
-    $cumulative_coverage_sum = 0;
-    $cumulative_coverage_sum += $F[2];
+      ## reset cumsum to 0 then begin again:
+      $cumulative_coverage_sum = 0;
+      $cumulative_coverage_sum += $F[2];
+    }
   }
 
   @E = @F; ##store current line in variable accessible to next iteration
