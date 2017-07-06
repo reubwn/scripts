@@ -110,7 +110,9 @@ LINE: while (<$IN>) {
   $cumulative_coverage_sum += $F[2];
 
   ## print if window size is reached:
-  if ( $F[1] % $window == 0) {
+  if ($. == 1) {
+    ## nothing?
+  } elsif ( $F[1] % $window == 0) {
     if ($vcffile) {
       my $nsnps;
       if (exists($v{$F[0]}{$F[1]})) { $nsnps = $v{$F[0]}{$F[1]} } else { $nsnps = 0 };
