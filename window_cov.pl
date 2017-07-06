@@ -45,7 +45,6 @@ GetOptions (
 die $usage if $help;
 die $usage unless ($infile && $window);
 print STDERR "[INFO] Window size: $window\n";
-print STDERR "[INFO] Flatten set to TRUE\n" if $flatten;
 print STDERR "[INFO] Input is gzipped\n" if $gzip;
 unless ($outfile) { $outfile = "$infile.$window.txt" };
 
