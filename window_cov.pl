@@ -20,7 +20,7 @@ OPTIONS
   -m|--maxcov    [INT] : skip windows with a coverage > this value (default=5000)
   -v|--vcf       [FILE]: VCF file input to calculate SNP density across the same window
   -z|--gzip            : input file is gzipped (default=F)
-  -k|--skip            : skip windows of size < --window (ie small windows at ends of scaffolds) (default=F)
+  -k|--skip            : skip windows < windowsize (ie tailends/small scaffolds) (default=F)
   -h|--help            : this message
 
 USAGE
@@ -102,7 +102,6 @@ LINE: while (<$IN>) {
   my @F = split(/\s+/, $_);
   print STDERR "\r[INFO] Analysing scaffold $F[0]..." if ($. % 5000 == 0); $|=1; ##just print info every 5000 bases
 
-  #$cumulative_scaffold_length{$F[0]}++; ##increment length of each scaffold
   ## add coverage at current site to cumulative_coverage_sum:
   $cumulative_coverage_sum += $F[2];
 
@@ -123,7 +122,7 @@ LINE: while (<$IN>) {
 
   ## OR its a new scaffold (not seen already) OR eof:
   } elsif ( (!exists($seen{$F[0]})) || (eof) ) {
-    unless ($E[1] == $window) { ##avoids evaluation for cases where scaffold length is exactly == window size
+    unless ($E[1] == $window) { ## avoids double processing and error for cases where scaffold length is exactly == window size
       if ($vcffile) {
         my $nsnps;
         if (exists($v{$E[0]}{$E[1]})) { $nsnps = $v{$E[0]}{$E[1]} } else { $nsnps = 0 }; ##WARNING: THIS MIGHT NEVER WORK.....!!!!!
