@@ -70,7 +70,7 @@ if ($scaffold) {
 close $OUT;
 
 ## stats
-$stat->add_data(@distance);
+$stat->add_data(@distances);
 print STDERR "[INFO] Input file: $ARGV[0]\n";
 print STDERR "[INFO] Count: ".$stat->count()."\n";
 print STDERR "[INFO] Mean: ".$stat->mean()."\n";
