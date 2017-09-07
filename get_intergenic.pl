@@ -78,7 +78,6 @@ print STDERR "[INFO] Standard deviation: ".$stat->standard_deviation()."\n";
 print STDERR "[INFO] Median: ".$stat->median()."\n";
 print STDERR "[INFO] Min: ".$stat->min()."\n";
 print STDERR "[INFO] Max: ".$stat->max()."\n";
-print STDERR "[INFO] Mean: ".$stat->mean()."\n";
-print STDERR "[INFO] Finished on ".`date`."\n\n";
+print STDERR "[INFO] Finished on ".`date`."\n";
 
 __END__
