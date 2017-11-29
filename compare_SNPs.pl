@@ -67,6 +67,6 @@ foreach my $k1 (nsort keys %h1) {
 }
 close $INTERSECT;
 
-print STDERR "[INFO] # SNPs in $file1: ".(keys $h1)."\n";
-print STDERR "[INFO] # SNPs in $file2: ".(keys $h2)."\n";
+print STDERR "[INFO] # SNPs in $file1: ".(keys %h1)."\n";
+print STDERR "[INFO] # SNPs in $file2: ".(keys %h2)."\n";
 print STDERR "[INFO] # SNPs common to both files: $intersect\n";
