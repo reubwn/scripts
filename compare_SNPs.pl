@@ -49,7 +49,7 @@ close $FILE2;
 open (my $INTERSECT, ">intersect.txt") or die $!;
 foreach my $k1 (nsort keys %h1) {
   if ( (exists($h2{$k1})) and ($h1{$k1}{chrom} eq $h2{$k1}{chrom}) ) { ##SNP exists in same position on same CHROM
-    print join (
+    print $INTERSECT join (
       "\t",
       $h1{$k1}{chrom},
       $h1{$k1}{pos},
