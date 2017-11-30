@@ -91,7 +91,7 @@ close $INTERSECT;
 close $UNIQ1;
 
 foreach (keys %h2) {
-  unless (exists($intersect{$k2})) {
+  unless (exists($intersect{$_})) {
     print $UNIQ2 join (
       "\t",
       $h2{$_}{chrom},
