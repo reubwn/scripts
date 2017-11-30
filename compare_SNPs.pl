@@ -37,14 +37,14 @@ open (my $FILE1, $file1) or die $!;
 while (<$FILE1>) {
   chomp;
   my @F = split /\s+/;
-  $h1{"$F[0].$F[1]"} = { 'chrom' => $F[0], 'pos' => $F[1], 'ref' => $F[2], 'alt' => $F[3], 'cov' => $F[4] }; ##key= pos; val= %{chrom...}
+  $h1{"$F[0].$F[1]"} = { 'chrom' => $F[0], 'pos' => $F[1], 'ref' => $F[2], 'alt' => $F[3], 'TC' => $F[5], 'TR' => $F[6], 'MAF' => $F[8] }; ##key= pos; val= %{chrom...}
 }
 close $FILE1;
 open (my $FILE2, $file2) or die $!;
 while (<$FILE2>) {
   chomp;
   my @F = split /\s+/;
-  $h2{"$F[0].$F[1]"} = { 'chrom' => $F[0], 'pos' => $F[1], 'ref' => $F[2], 'alt' => $F[3], 'cov' => $F[4] }; ##key= pos; val= %{chrom...}
+  $h2{"$F[0].$F[1]"} = { 'chrom' => $F[0], 'pos' => $F[1], 'ref' => $F[2], 'alt' => $F[3], 'TC' => $F[5], 'TR' => $F[6], 'MAF' => $F[8] }; ##key= pos; val= %{chrom...}
 }
 close $FILE2;
 
@@ -57,12 +57,16 @@ foreach my $k1 (nsort keys %h1) {
       $h1{$k1}{pos},
       $h1{$k1}{ref},
       $h1{$k1}{alt},
-      $h1{$k1}{cov},
+      $h1{$k1}{TC},
+      $h1{$k1}{TR},
+      $h1{$k1}{MAF},
       $h2{$k1}{chrom},
       $h2{$k1}{pos},
       $h2{$k1}{ref},
       $h2{$k1}{alt},
-      $h2{$k1}{cov},
+      $h2{$k1}{TC},
+      $h2{$k1}{TR},
+      $h2{$k1}{MAF},
       "\n"
     );
     $intersect++;
