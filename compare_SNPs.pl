@@ -16,7 +16,7 @@ OPTIONS:
 \n";
 
 my ($file1,$file2,$help);
-my $outfile = "intersect";
+my $outfile = "compare";
 my $processed = 0;
 
 GetOptions (
@@ -49,6 +49,8 @@ while (<$FILE2>) {
 close $FILE2;
 
 open (my $INTERSECT, ">$outfile.intersect") or die $!;
+open (my $UNIQ1, ">$outfile.uniq.1") or die $!;
+open (my $UNIQ2, ">$outfile.uniq.2") or die $!;
 foreach my $k1 (nsort keys %h1) {
   if ( (exists($h2{$k1})) and ($h1{$k1}{chrom} eq $h2{$k1}{chrom}) ) { ##SNP exists in same position on same CHROM
     print $INTERSECT join (
@@ -69,16 +71,47 @@ foreach my $k1 (nsort keys %h1) {
       $h2{$k1}{MAF},
       "\n"
     );
-    $intersect++;
+    $intersect{$k1}++;
+    #$intersect++;
+  } else {
+    print $UNIQ1 join (
+      "\t",
+      $h1{$k1}{chrom},
+      $h1{$k1}{pos},
+      $h1{$k1}{ref},
+      $h1{$k1}{alt},
+      $h1{$k1}{TC},
+      $h1{$k1}{TR},
+      $h1{$k1}{MAF},
+      "\n"
+    );
   }
 }
 close $INTERSECT;
+close $UNIQ1;
+
+foreach my $k2 (keys %h2) {
+  unless (exists($intersect{$k2})) {
+    print $UNIQ2 join (
+      "\t",
+      $h1{$k1}{chrom},
+      $h1{$k1}{pos},
+      $h1{$k1}{ref},
+      $h1{$k1}{alt},
+      $h1{$k1}{TC},
+      $h1{$k1}{TR},
+      $h1{$k1}{MAF},
+      "\n"
+    );
+  }
+}
+close $UNIQ2;
 
 print STDERR "[INFO] # SNPs in $file1: ".(keys %h1)."\n";
 print STDERR "[INFO] # SNPs in $file2: ".(keys %h2)."\n";
-print STDERR "[INFO] # SNPs common to both files: $intersect\n";
-print STDERR "[INFO]   % SNPs $file1: ".percentage($intersect,scalar(keys %h1))."\n";
-print STDERR "[INFO]   % SNPs $file2: ".percentage($intersect,scalar(keys %h2))."\n";
+print STDERR "[INFO] # SNPs common to both files: ".scalar(keys %intersect)."\n";
+print STDERR "[INFO]   % SNPs $file1: ".percentage(scalar(keys %intersect),scalar(keys %h1))."\n";
+print STDERR "[INFO]   % SNPs $file2: ".percentage(scalar(keys %intersect),scalar(keys %h2))."\n";
 
 ################### SUBS
 
