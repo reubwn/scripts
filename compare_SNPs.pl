@@ -51,38 +51,38 @@ close $FILE2;
 open (my $INTERSECT, ">$outfile.intersect") or die $!;
 open (my $UNIQ1, ">$outfile.uniq.1") or die $!;
 open (my $UNIQ2, ">$outfile.uniq.2") or die $!;
-foreach my $k1 (nsort keys %h1) {
-  if ( (exists($h2{$k1})) and ($h1{$k1}{chrom} eq $h2{$k1}{chrom}) ) { ##SNP exists in same position on same CHROM
+foreach (nsort keys %h1) {
+  if ( (exists($h2{$_})) and ($h1{$_}{chrom} eq $h2{$_}{chrom}) ) { ##SNP exists in same position on same CHROM
     print $INTERSECT join (
       "\t",
-      $h1{$k1}{chrom},
-      $h1{$k1}{pos},
-      $h1{$k1}{ref},
-      $h1{$k1}{alt},
-      $h1{$k1}{TC},
-      $h1{$k1}{TR},
-      $h1{$k1}{MAF},
-      $h2{$k1}{chrom},
-      $h2{$k1}{pos},
-      $h2{$k1}{ref},
-      $h2{$k1}{alt},
-      $h2{$k1}{TC},
-      $h2{$k1}{TR},
-      $h2{$k1}{MAF},
+      $h1{$_}{chrom},
+      $h1{$_}{pos},
+      $h1{$_}{ref},
+      $h1{$_}{alt},
+      $h1{$_}{TC},
+      $h1{$_}{TR},
+      $h1{$_}{MAF},
+      $h2{$_}{chrom},
+      $h2{$_}{pos},
+      $h2{$_}{ref},
+      $h2{$_}{alt},
+      $h2{$_}{TC},
+      $h2{$_}{TR},
+      $h2{$_}{MAF},
       "\n"
     );
-    $intersect{$k1}++;
+    $intersect{$_}++;
     #$intersect++;
   } else {
     print $UNIQ1 join (
       "\t",
-      $h1{$k1}{chrom},
-      $h1{$k1}{pos},
-      $h1{$k1}{ref},
-      $h1{$k1}{alt},
-      $h1{$k1}{TC},
-      $h1{$k1}{TR},
-      $h1{$k1}{MAF},
+      $h1{$_}{chrom},
+      $h1{$_}{pos},
+      $h1{$_}{ref},
+      $h1{$_}{alt},
+      $h1{$_}{TC},
+      $h1{$_}{TR},
+      $h1{$_}{MAF},
       "\n"
     );
   }
@@ -90,17 +90,17 @@ foreach my $k1 (nsort keys %h1) {
 close $INTERSECT;
 close $UNIQ1;
 
-foreach my $k2 (keys %h2) {
+foreach (keys %h2) {
   unless (exists($intersect{$k2})) {
     print $UNIQ2 join (
       "\t",
-      $h1{$k1}{chrom},
-      $h1{$k1}{pos},
-      $h1{$k1}{ref},
-      $h1{$k1}{alt},
-      $h1{$k1}{TC},
-      $h1{$k1}{TR},
-      $h1{$k1}{MAF},
+      $h2{$_}{chrom},
+      $h2{$_}{pos},
+      $h2{$_}{ref},
+      $h2{$_}{alt},
+      $h2{$_}{TC},
+      $h2{$_}{TR},
+      $h2{$_}{MAF},
       "\n"
     );
   }
