@@ -60,7 +60,8 @@ foreach my $k1 (nsort keys %h1) {
       $h2{$k1}{pos},
       $h2{$k1}{ref},
       $h2{$k1}{alt},
-      $h2{$k1}{cov}
+      $h2{$k1}{cov},
+      "\n"
     );
     $intersect++;
   }
@@ -70,3 +71,23 @@ close $INTERSECT;
 print STDERR "[INFO] # SNPs in $file1: ".(keys %h1)."\n";
 print STDERR "[INFO] # SNPs in $file2: ".(keys %h2)."\n";
 print STDERR "[INFO] # SNPs common to both files: $intersect\n";
+print STDERR "[INFO]   % SNPs $file1: ".percentage($intersect,scalar(keys %h1))."\n";
+print STDERR "[INFO]   % SNPs $file2: ".percentage($intersect,scalar(keys %h2))."\n";
+
+################### SUBS
+
+sub commify {
+    my $text = reverse $_[0];
+    $text =~ s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/g;
+    return scalar reverse $text;
+}
+
+sub percentage {
+    my $numerator = $_[0];
+    my $denominator = $_[1];
+    my $places = "\%.2f"; ## default is two decimal places
+    if (exists $_[2]){$places = "\%.".$_[2]."f";};
+    my $float = (($numerator / $denominator)*100);
+    my $rounded = sprintf("$places",$float);
+    return "$rounded\%";
+}
