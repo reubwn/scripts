@@ -117,13 +117,13 @@ foreach (sort {ncmp($h2{$a}{chrom},$h2{$b}{chrom})} keys %h2) {
 }
 close $UNIQ2;
 
-#print STDERR "[INFO] # SNPs in $file1: ".commify(scalar(keys %h1))."\n";
-#print STDERR "[INFO] # SNPs in $file2: ".commify(scalar(keys %h2))."\n";
-#print STDERR "[INFO] # SNPs common to both files: ".commify(scalar(keys %intersect))."\n";
-#print STDERR "[INFO]   % SNPs $file1: ".percentage(scalar(keys %intersect),scalar(keys %h1))."\n";
-#print STDERR "[INFO]   % SNPs $file2: ".percentage(scalar(keys %intersect),scalar(keys %h2))."\n";
-#print STDERR "[INFO] # SNPs at same position but mismatched states: ".commify($mismatch)."\n";
-#print STDERR "[INFO] Finished on ".`date`."\n";
+print STDERR "[INFO] # SNPs in $file1: ".commify(scalar(keys %h1))."\n";
+print STDERR "[INFO] # SNPs in $file2: ".commify(scalar(keys %h2))."\n";
+print STDERR "[INFO] # SNPs common to both files: ".commify(scalar(keys %intersect))."\n";
+print STDERR "[INFO]   % SNPs $file1: ".percentage(scalar(keys %intersect),scalar(keys %h1))."\n";
+print STDERR "[INFO]   % SNPs $file2: ".percentage(scalar(keys %intersect),scalar(keys %h2))."\n";
+print STDERR "[INFO] # SNPs at same position but mismatched states: ".commify($mismatch)."\n";
+print STDERR "[INFO] Finished on ".`date`."\n";
 
 print $INFO "[INFO] # SNPs in $file1: ".commify(scalar(keys %h1))."\n";
 print $INFO "[INFO] # SNPs in $file2: ".commify(scalar(keys %h2))."\n";
@@ -133,8 +133,6 @@ print $INFO "[INFO]   % SNPs $file2: ".percentage(scalar(keys %intersect),scalar
 print $INFO "[INFO] # SNPs at same position but mismatched states: ".commify($mismatch)."\n";
 print $INFO "[INFO] Finished on ".`date`."\n";
 close $INFO;
-
-`cat $outfile.summary`;
 
 ################### SUBS
 
