@@ -16,7 +16,7 @@ OPTIONS:
 \n";
 
 my ($file1,$file2,$help);
-my $outfile = "compare";
+my $outfile = "compare_SNP";
 my $processed = 0;
 
 GetOptions (
