@@ -10,8 +10,9 @@ use Sort::Naturally;
 
 my $usage = "
 OPTIONS:
-  -1|--file1 [FILE]
-  -2|--file2 [FILE]
+  -1|--file1 [FILE] : SNP freqs file 1
+  -2|--file2 [FILE] : SNP freqs file 2
+  -o|--out   [STR]  : output prefix (default 'compare_SNP')
   -h|--help
 \n";
 
