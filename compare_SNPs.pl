@@ -53,6 +53,7 @@ open (my $INTERSECT, ">$outfile.intersect") or die $!;
 open (my $MISMATCH, ">$outfile.mismatch") or die $!;
 open (my $UNIQ1, ">$outfile.uniq.1") or die $!;
 open (my $UNIQ2, ">$outfile.uniq.2") or die $!;
+open (my $INFO, ">$outfile.summary") or die $!;
 foreach (sort {ncmp($h1{$a}{chrom},$h1{$b}{chrom})} keys %h1) {
   ## SNP exists in same position on same CHROM:
   if ( (exists($h2{$_})) and ($h1{$_}{chrom} eq $h2{$_}{chrom}) ) {
@@ -96,9 +97,10 @@ foreach (sort {ncmp($h1{$a}{chrom},$h1{$b}{chrom})} keys %h1) {
   }
 }
 close $INTERSECT;
+close $MISMATCH;
 close $UNIQ1;
 
-foreach (nsort keys %h2) {
+foreach (sort {ncmp($h2{$a}{chrom},$h2{$b}{chrom})} keys %h2) {
   unless (exists($intersect{$_})) {
     print $UNIQ2 join (
       "\t",
@@ -115,13 +117,24 @@ foreach (nsort keys %h2) {
 }
 close $UNIQ2;
 
-print STDERR "[INFO] # SNPs in $file1: ".commify(scalar(keys %h1))."\n";
-print STDERR "[INFO] # SNPs in $file2: ".commify(scalar(keys %h2))."\n";
-print STDERR "[INFO] # SNPs common to both files: ".commify(scalar(keys %intersect))."\n";
-print STDERR "[INFO]   % SNPs $file1: ".percentage(scalar(keys %intersect),scalar(keys %h1))."\n";
-print STDERR "[INFO]   % SNPs $file2: ".percentage(scalar(keys %intersect),scalar(keys %h2))."\n";
-print STDERR "[INFO] # SNPs at same position but mismatched states: ".commify($mismatch)."\n";
-print STDERR "[INFO] Finished on ".`date`."\n";
+#print STDERR "[INFO] # SNPs in $file1: ".commify(scalar(keys %h1))."\n";
+#print STDERR "[INFO] # SNPs in $file2: ".commify(scalar(keys %h2))."\n";
+#print STDERR "[INFO] # SNPs common to both files: ".commify(scalar(keys %intersect))."\n";
+#print STDERR "[INFO]   % SNPs $file1: ".percentage(scalar(keys %intersect),scalar(keys %h1))."\n";
+#print STDERR "[INFO]   % SNPs $file2: ".percentage(scalar(keys %intersect),scalar(keys %h2))."\n";
+#print STDERR "[INFO] # SNPs at same position but mismatched states: ".commify($mismatch)."\n";
+#print STDERR "[INFO] Finished on ".`date`."\n";
+
+print $INFO "[INFO] # SNPs in $file1: ".commify(scalar(keys %h1))."\n";
+print $INFO "[INFO] # SNPs in $file2: ".commify(scalar(keys %h2))."\n";
+print $INFO "[INFO] # SNPs common to both files: ".commify(scalar(keys %intersect))."\n";
+print $INFO "[INFO]   % SNPs $file1: ".percentage(scalar(keys %intersect),scalar(keys %h1))."\n";
+print $INFO "[INFO]   % SNPs $file2: ".percentage(scalar(keys %intersect),scalar(keys %h2))."\n";
+print $INFO "[INFO] # SNPs at same position but mismatched states: ".commify($mismatch)."\n";
+print $INFO "[INFO] Finished on ".`date`."\n";
+close $INFO;
+
+`cat $outfile.summary`;
 
 ################### SUBS
 
