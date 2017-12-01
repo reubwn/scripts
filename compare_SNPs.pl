@@ -30,7 +30,7 @@ die $usage if $help;
 die $usage unless ($file1 && $file2);
 
 my (%h1,%h2,%intersect,%uniq1,%uniq2);
-my ($intersect,$uniq1,$uniq2) = (0,0,0);
+my ($mismatch,$uniq1,$uniq2) = (0,0,0);
 
 ## parse SNPs in file1/2:
 open (my $FILE1, $file1) or die $!;
@@ -52,27 +52,33 @@ open (my $INTERSECT, ">$outfile.intersect") or die $!;
 open (my $UNIQ1, ">$outfile.uniq.1") or die $!;
 open (my $UNIQ2, ">$outfile.uniq.2") or die $!;
 foreach (nsort keys %h1) {
-  if ( (exists($h2{$_})) and ($h1{$_}{chrom} eq $h2{$_}{chrom}) ) { ##SNP exists in same position on same CHROM
-    print $INTERSECT join (
-      "\t",
-      $h1{$_}{chrom},
-      $h1{$_}{pos},
-      $h1{$_}{ref},
-      $h1{$_}{alt},
-      $h1{$_}{TC},
-      $h1{$_}{TR},
-      $h1{$_}{MAF},
-      $h2{$_}{chrom},
-      $h2{$_}{pos},
-      $h2{$_}{ref},
-      $h2{$_}{alt},
-      $h2{$_}{TC},
-      $h2{$_}{TR},
-      $h2{$_}{MAF},
-      "\n"
-    );
-    $intersect{$_}++;
-    #$intersect++;
+  ## SNP exists in same position on same CHROM:
+  if ( (exists($h2{$_})) and ($h1{$_}{chrom} eq $h2{$_}{chrom}) ) {
+    ## check REF and ALT alleles are also the same:
+    unless ( ($h1{$_}{ref} eq $h2{$_}{ref}) and ($h1{$_}{alt} eq $h2{$_}{alt}) ) {
+      print STDERR "[INFO] SNP at position $h1{$_}{chrom}:$h1{$_}{pos} has $h1{$_}{ref}/$h1{$_}{alt} in $file1 but $h2{$_}{ref}/$h2{$_}{alt} in $file2\n";
+      $mismatch++;
+    } else {
+      print $INTERSECT join (
+        "\t",
+        $h1{$_}{chrom},
+        $h1{$_}{pos},
+        $h1{$_}{ref},
+        $h1{$_}{alt},
+        $h1{$_}{TC},
+        $h1{$_}{TR},
+        $h1{$_}{MAF},
+        $h2{$_}{chrom},
+        $h2{$_}{pos},
+        $h2{$_}{ref},
+        $h2{$_}{alt},
+        $h2{$_}{TC},
+        $h2{$_}{TR},
+        $h2{$_}{MAF},
+        "\n"
+      );
+      $intersect{$_}++;
+    }
   } else {
     print $UNIQ1 join (
       "\t",
@@ -107,9 +113,10 @@ foreach (keys %h2) {
 }
 close $UNIQ2;
 
-print STDERR "[INFO] # SNPs in $file1: ".(keys %h1)."\n";
-print STDERR "[INFO] # SNPs in $file2: ".(keys %h2)."\n";
-print STDERR "[INFO] # SNPs common to both files: ".scalar(keys %intersect)."\n";
+print STDERR "[INFO] # SNPs in $file1: ".commify(scalar(keys %h1))."\n";
+print STDERR "[INFO] # SNPs in $file2: ".commify(scalar(keys %h2))."\n";
+print STDERR "[INFO] # SNPs common to both files: ".commify(scalar(keys %intersect))."\n";
+print STDERR "[INFO] # SNPs at same position but mismatched states: ".commify($mismatch)."\n";
 print STDERR "[INFO]   % SNPs $file1: ".percentage(scalar(keys %intersect),scalar(keys %h1))."\n";
 print STDERR "[INFO]   % SNPs $file2: ".percentage(scalar(keys %intersect),scalar(keys %h2))."\n";
 
