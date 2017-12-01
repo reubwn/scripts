@@ -52,7 +52,7 @@ open (my $INTERSECT, ">$outfile.intersect") or die $!;
 open (my $MISMATCH, ">$outfile.mismatch") or die $!;
 open (my $UNIQ1, ">$outfile.uniq.1") or die $!;
 open (my $UNIQ2, ">$outfile.uniq.2") or die $!;
-foreach (nsort keys %h1) {
+foreach (nsort {$h1{$a}{chrom}<=>$h1{$b}{chrom}} keys %h1) {
   ## SNP exists in same position on same CHROM:
   if ( (exists($h2{$_})) and ($h1{$_}{chrom} eq $h2{$_}{chrom}) ) {
     ## check REF and ALT alleles are also the same:
@@ -97,7 +97,7 @@ foreach (nsort keys %h1) {
 close $INTERSECT;
 close $UNIQ1;
 
-foreach (keys %h2) {
+foreach (nsort keys %h2) {
   unless (exists($intersect{$_})) {
     print $UNIQ2 join (
       "\t",
