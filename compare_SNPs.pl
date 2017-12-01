@@ -49,6 +49,7 @@ while (<$FILE2>) {
 close $FILE2;
 
 open (my $INTERSECT, ">$outfile.intersect") or die $!;
+open (my $MISMATCH, ">$outfile.mismatch") or die $!;
 open (my $UNIQ1, ">$outfile.uniq.1") or die $!;
 open (my $UNIQ2, ">$outfile.uniq.2") or die $!;
 foreach (nsort keys %h1) {
@@ -56,7 +57,7 @@ foreach (nsort keys %h1) {
   if ( (exists($h2{$_})) and ($h1{$_}{chrom} eq $h2{$_}{chrom}) ) {
     ## check REF and ALT alleles are also the same:
     unless ( ($h1{$_}{ref} eq $h2{$_}{ref}) and ($h1{$_}{alt} eq $h2{$_}{alt}) ) {
-      print STDERR "[INFO] SNP at position $h1{$_}{chrom}:$h1{$_}{pos} has $h1{$_}{ref}/$h1{$_}{alt} in $file1 but $h2{$_}{ref}/$h2{$_}{alt} in $file2\n";
+      print $MISMATCH "[INFO] SNP at position $h1{$_}{chrom}:$h1{$_}{pos} has $h1{$_}{ref}/$h1{$_}{alt} in $file1 but $h2{$_}{ref}/$h2{$_}{alt} in $file2 ($h2{$_}{chrom}:$h2{$_}{pos})\n";
       $mismatch++;
     } else {
       print $INTERSECT join (
@@ -116,9 +117,10 @@ close $UNIQ2;
 print STDERR "[INFO] # SNPs in $file1: ".commify(scalar(keys %h1))."\n";
 print STDERR "[INFO] # SNPs in $file2: ".commify(scalar(keys %h2))."\n";
 print STDERR "[INFO] # SNPs common to both files: ".commify(scalar(keys %intersect))."\n";
-print STDERR "[INFO] # SNPs at same position but mismatched states: ".commify($mismatch)."\n";
 print STDERR "[INFO]   % SNPs $file1: ".percentage(scalar(keys %intersect),scalar(keys %h1))."\n";
 print STDERR "[INFO]   % SNPs $file2: ".percentage(scalar(keys %intersect),scalar(keys %h2))."\n";
+print STDERR "[INFO] # SNPs at same position but mismatched states: ".commify($mismatch)."\n";
+print STDERR "[INFO] Finished on ".`date`."\n";
 
 ################### SUBS
 
