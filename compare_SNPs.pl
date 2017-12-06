@@ -25,7 +25,7 @@ my $processed = 0;
 GetOptions (
   '1|file1=s' => \$file1,
   '2|file2=s' => \$file2,
-  'f|fasta:s' => \$fasta,
+  'f|fasta=s' => \$fasta,
   'o|out:s'   => \$outfile,
   'h|help'    => \$help,
 );
@@ -36,12 +36,11 @@ die $usage unless ($file1 && $file2);
 my (%seqlengths,%h1,%h2,%intersect,%uniq1,%uniq2);
 my ($mismatch,$uniq1,$uniq2) = (0,0,0);
 
-if ($fasta) {
-  print STDERR "[INFO] Getting sequence lengths from: $fasta...\n";
-  my $in = Bio::SeqIO ( -file => $fasta, -format => 'fasta' );
-  while ( my $seqobj = $in -> next_seq() ) {
-    $seqlengths{$seqobj->display_id()} = $seqobj->length();
-  }
+
+print STDERR "[INFO] Getting sequence lengths from: $fasta...\n";
+my $in = Bio::SeqIO ( -file => $fasta, -format => 'fasta' );
+while ( my $seqobj = $in -> next_seq() ) {
+  $seqlengths{$seqobj->display_id()} = $seqobj->length();
 }
 
 ## parse SNPs in file1/2:
@@ -73,7 +72,7 @@ foreach (sort {ncmp($h1{$a}{chrom},$h1{$b}{chrom})} keys %h1) {
       print $MISMATCH join (
         "\t",
         $h1{$_}{chrom},
-        $seqlengths{chrom} if ($fasta),
+        $seqlengths{chrom},
         $h1{$_}{pos},
         $h1{$_}{ref},
         $h1{$_}{alt},
@@ -94,7 +93,7 @@ foreach (sort {ncmp($h1{$a}{chrom},$h1{$b}{chrom})} keys %h1) {
       print $INTERSECT join (
         "\t",
         $h1{$_}{chrom},
-        $seqlengths{chrom} if ($fasta),
+        $seqlengths{chrom},
         $h1{$_}{pos},
         $h1{$_}{ref},
         $h1{$_}{alt},
@@ -116,7 +115,7 @@ foreach (sort {ncmp($h1{$a}{chrom},$h1{$b}{chrom})} keys %h1) {
     print $UNIQ1 join (
       "\t",
       $h1{$_}{chrom},
-      $seqlengths{chrom} if ($fasta),
+      $seqlengths{chrom},
       $h1{$_}{pos},
       $h1{$_}{ref},
       $h1{$_}{alt},
@@ -136,7 +135,7 @@ foreach (sort {ncmp($h2{$a}{chrom},$h2{$b}{chrom})} keys %h2) {
     print $UNIQ2 join (
       "\t",
       $h2{$_}{chrom},
-      $seqlengths{chrom} if ($fasta),
+      $seqlengths{chrom},
       $h2{$_}{pos},
       $h2{$_}{ref},
       $h2{$_}{alt},
