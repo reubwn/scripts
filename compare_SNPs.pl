@@ -72,7 +72,7 @@ foreach (sort {ncmp($h1{$a}{chrom},$h1{$b}{chrom})} keys %h1) {
       print $MISMATCH join (
         "\t",
         $h1{$_}{chrom},
-        $seqlengths{chrom},
+        $seqlengths{$h1{$_}{chrom}},
         $h1{$_}{pos},
         $h1{$_}{ref},
         $h1{$_}{alt},
@@ -80,6 +80,7 @@ foreach (sort {ncmp($h1{$a}{chrom},$h1{$b}{chrom})} keys %h1) {
         $h1{$_}{TR},
         $h1{$_}{MAF},
         $h2{$_}{chrom},
+        $seqlengths{$h2{$_}{chrom}},
         $h2{$_}{pos},
         $h2{$_}{ref},
         $h2{$_}{alt},
@@ -93,7 +94,7 @@ foreach (sort {ncmp($h1{$a}{chrom},$h1{$b}{chrom})} keys %h1) {
       print $INTERSECT join (
         "\t",
         $h1{$_}{chrom},
-        $seqlengths{chrom},
+        $seqlengths{$h1{$_}{chrom}},
         $h1{$_}{pos},
         $h1{$_}{ref},
         $h1{$_}{alt},
@@ -101,6 +102,7 @@ foreach (sort {ncmp($h1{$a}{chrom},$h1{$b}{chrom})} keys %h1) {
         $h1{$_}{TR},
         $h1{$_}{MAF},
         $h2{$_}{chrom},
+        $seqlengths{$h2{$_}{chrom}},
         $h2{$_}{pos},
         $h2{$_}{ref},
         $h2{$_}{alt},
@@ -115,7 +117,7 @@ foreach (sort {ncmp($h1{$a}{chrom},$h1{$b}{chrom})} keys %h1) {
     print $UNIQ1 join (
       "\t",
       $h1{$_}{chrom},
-      $seqlengths{chrom},
+      $seqlengths{$h1{$_}{chrom}},
       $h1{$_}{pos},
       $h1{$_}{ref},
       $h1{$_}{alt},
@@ -135,7 +137,7 @@ foreach (sort {ncmp($h2{$a}{chrom},$h2{$b}{chrom})} keys %h2) {
     print $UNIQ2 join (
       "\t",
       $h2{$_}{chrom},
-      $seqlengths{chrom},
+      $seqlengths{$h1{$_}{chrom}},
       $h2{$_}{pos},
       $h2{$_}{ref},
       $h2{$_}{alt},
