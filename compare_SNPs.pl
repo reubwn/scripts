@@ -48,7 +48,7 @@ open (my $FILE1, $file1) or die $!;
 while (<$FILE1>) {
   chomp;
   my @F = split /\s+/;
-  $h1{"$F[0].$F[1]"} = { 'chrom' => $F[0], 'pos' => $F[1], 'ref' => $F[2], 'alt' => $F[3], 'TC' => $F[5], 'TR' => $F[6], 'MAF' => $F[8] }; ##key= pos; val= %{chrom...}
+  $h1{"$F[0].$F[1]"} = { 'chrom' => $F[0], 'pos' => $F[1], 'ref' => $F[2], 'alt' => $F[3], 'TC' => $F[5], 'TR' => $F[6], 'MAF' => $F[9] }; ##key= pos; val= %{chrom...}
 }
 close $FILE1;
 open (my $FILE2, $file2) or die $!;
