@@ -137,7 +137,7 @@ foreach (sort {ncmp($h2{$a}{chrom},$h2{$b}{chrom})} keys %h2) {
     print $UNIQ2 join (
       "\t",
       $h2{$_}{chrom},
-      $seqlengths{$h1{$_}{chrom}},
+      $seqlengths{$h2{$_}{chrom}},
       $h2{$_}{pos},
       $h2{$_}{ref},
       $h2{$_}{alt},
