@@ -38,7 +38,7 @@ my ($mismatch,$uniq1,$uniq2) = (0,0,0);
 
 
 print STDERR "[INFO] Getting sequence lengths from: $fasta...\n";
-my $in = Bio::SeqIO ( -file => $fasta, -format => 'fasta' );
+my $in = Bio::SeqIO->new( -file => $fasta, -format => 'fasta' );
 while ( my $seqobj = $in -> next_seq() ) {
   $seqlengths{$seqobj->display_id()} = $seqobj->length();
 }
