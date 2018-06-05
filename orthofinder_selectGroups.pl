@@ -42,14 +42,14 @@ my $prefix = "selectGroups_output";
 my $delim = "|";
 
 GetOptions (
-  'in|i=s'     => \$in,
-  'fastas|f=s' => \$fastas,
-  'delim|d:s'  => \$delim,
-  'select|s=s' => \$select,
-  'noseqs|n'   => \$noseqsplease, ## :-)
-  'only|y'     => \$only,
-  'out|o:s'    => \$prefix,
-  'help|h'     => \$help,
+  'i|in=s'     => \$in,
+  'f|fastas=s' => \$fastas,
+  'd|delim:s'  => \$delim,
+  's|select=s' => \$select,
+  'n|noseqs'   => \$noseqsplease, ## :-)
+  'y|only'     => \$only,
+  'o|out:s'    => \$prefix,
+  'h|help'     => \$help,
 );
 
 die $usage if $help;
@@ -76,6 +76,17 @@ print "\n";
 my %seq_hash;
 unless ($noseqsplease){ ## skip if just counting
   my @fastas = glob("$fastas*fasta");
+  if (scalar(@fastas) == 0) {
+    print "Nothing found in $fastas with *.fasta... will try *.faa\n";
+    @fastas = glob("$fastas*faa");
+  }
+  if (scalar(@fastas) == 0) {
+    print "Nothing found in $fastas with *.faa... will try *.aa (augustus style)\n";
+    @fastas = glob("$fastas*aa");
+  }
+  if (scalar(@fastas) == 0) {
+    die "Still nothing found in $fastas\nPlease make sure there are protein fastas in $fasta with extension fasta|faa|aa\n";
+  }
   print "Reading sequences from:\n";
   foreach (@fastas){
     print "  $_\n";
