@@ -89,7 +89,7 @@ unless ($noseqsplease){ ## skip if just counting
     @fastas = glob("$fastas*aa");
   }
   if (scalar(@fastas) == 0) {
-    die "Still nothing found in $fastas\nPlease make sure there are protein fastas in $fasta with extension fasta|faa|fna|aa\n";
+    die "Still nothing found in $fastas\nPlease make sure there are protein fastas in $fastas with extension fasta|faa|fna|aa\n";
   }
   print "Reading sequences from:\n";
   foreach (@fastas){
