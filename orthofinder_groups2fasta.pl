@@ -81,6 +81,8 @@ if ($annot) {
     $annot_hash{$F[0]}{tax} = $F[11];
   }
 }
+close $ANNOT;
+print STDERR "[INFO] Collected annotations for ".commify(scalar(keys %annot_hash))." genes\n";
 
 ## make $outdir
 $outdir = $orthogroups_file."_seqs";
@@ -102,7 +104,7 @@ while (my $line = <$GROUPS>) {
   open (my $OUT, ">$outdir/$a[0].fasta") or die $!;
   foreach (@b) {
     if ($annot) {
-      if ($annot_hash{$_}{category} eq "OUTGROUP") { ## only write annotations for HGTc genes
+      if ($annot_hash{$_}{category} =~ "OUTGROUP") { ## only write annotations for HGTc genes
         print $OUT ">$_ ";
         print $OUT join ("|", $annot_hash{$_}{hU}, $annot_hash{$_}{AI}, $annot_hash{$_}{category}, $annot_hash{$_}{CHS}, $annot_hash{$_}{tax}, "\n")
       } else {
@@ -116,6 +118,7 @@ while (my $line = <$GROUPS>) {
   close $OUT;
   print STDERR "\r[INFO] Working on OG \#$.: $a[0]"; $|=1;
 }
+close $GROUPS;
 
 print STDERR "\n[INFO] Finished on ".`date`."\n";
 
