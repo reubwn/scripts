@@ -40,15 +40,15 @@ die $usage unless ($orthogroups && $path);
 my %seq_hash;
 my @fastas = glob("$path*fasta");
 if (scalar(@fastas) == 0) {
-  print STDERR "[INFO] Nothing found in $fastas with *.fasta... will try *.faa\n";
+  print STDERR "[INFO] Nothing found in $path with *.fasta... will try *.faa\n";
   @fastas = glob("$path*faa");
 }
 if (scalar(@fastas) == 0) {
-  print STDERR "[INFO] Nothing found in $fastas with *.faa... will try *.fna\n";
+  print STDERR "[INFO] Nothing found in $path with *.faa... will try *.fna\n";
   @fastas = glob("$path*fna");
 }
 if (scalar(@fastas) == 0) {
-  print STDERR "[INFO] Nothing found in $fastas with *.fna... will try *.aa (augustus style)\n";
+  print STDERR "[INFO] Nothing found in $path with *.fna... will try *.aa (augustus style)\n";
   @fastas = glob("$$path*aa");
 }
 if (scalar(@fastas) == 0) {
