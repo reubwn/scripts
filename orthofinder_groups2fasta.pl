@@ -89,3 +89,13 @@ while (my $line = <$GROUPS>) {
 }
 
 print STDERR "\n[INFO] Finished on ".`date`."\n";
+
+######################## SUBS
+
+sub commify {
+  my $text = reverse $_[0];
+  $text =~ s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/g;
+  return scalar reverse $text;
+}
+
+__END__
