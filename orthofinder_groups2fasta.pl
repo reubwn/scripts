@@ -81,7 +81,7 @@ while (my $line = <$GROUPS>) {
   my @a = split(/\:\s+/, $line);
   my @b = split(/\s+/, $a[1]);
   ## open file:
-  open (my $OUT, ">$outdir/$a[0]") or die $!;
+  open (my $OUT, ">$outdir/$a[0].fasta") or die $!;
   foreach (@b) {
     print $OUT ">$_\n$seq_hash{$_}\n";
   }
