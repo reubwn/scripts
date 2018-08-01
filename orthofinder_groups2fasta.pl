@@ -38,7 +38,7 @@ die $usage unless ($orthogroups && $path);
 
 ## get sequences
 my %seq_hash;
-my @fastas = glob("$fastas*fasta");
+my @fastas = glob("$path*fasta");
 if (scalar(@fastas) == 0) {
   print STDERR "[INFO] Nothing found in $fastas with *.fasta... will try *.faa\n";
   @fastas = glob("$fastas*faa");
