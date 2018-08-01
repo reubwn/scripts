@@ -41,18 +41,18 @@ my %seq_hash;
 my @fastas = glob("$path*fasta");
 if (scalar(@fastas) == 0) {
   print STDERR "[INFO] Nothing found in $fastas with *.fasta... will try *.faa\n";
-  @fastas = glob("$fastas*faa");
+  @fastas = glob("$path*faa");
 }
 if (scalar(@fastas) == 0) {
   print STDERR "[INFO] Nothing found in $fastas with *.faa... will try *.fna\n";
-  @fastas = glob("$fastas*fna");
+  @fastas = glob("$path*fna");
 }
 if (scalar(@fastas) == 0) {
   print STDERR "[INFO] Nothing found in $fastas with *.fna... will try *.aa (augustus style)\n";
-  @fastas = glob("$fastas*aa");
+  @fastas = glob("$$path*aa");
 }
 if (scalar(@fastas) == 0) {
-  die "[ERROR] Still nothing found in $fastas\nPlease make sure there are protein fastas in $fastas with extension fasta|faa|fna|aa\n";
+  die "[ERROR] Still nothing found in $path\nPlease make sure there are protein fastas in $path with extension fasta|faa|fna|aa\n";
 }
 print STDERR "[INFO] Reading sequences from:\n";
 foreach (@fastas){
