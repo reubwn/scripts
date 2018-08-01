@@ -65,7 +65,7 @@ foreach (@fastas){
 print STDERR "[INFO] Read in ".commify(scalar(keys %seq_hash))." sequences from ".commify(scalar(@fastas))." files\n\n";
 
 ## make $outdir
-$outdir = $orthogroups_file."_seqs"
+$outdir = $orthogroups_file."_seqs";
 if (-e $outdir && -d $outdir) {
   rmtree([ "$outdir" ]);
   mkdir $outdir;
