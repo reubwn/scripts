@@ -19,17 +19,19 @@ SYNOPSIS
 OPTIONS
   -i|--groups [FILE] : Orthogroups.txt file [required]
   -p|--path   [FILE] : path to directory of fasta files used to construct Orthogroups.txt [required]
-  -d|--outdir [STR]  : output dir name [default: orthofinder_groups2fasta]
+  -d|--outdir [STR]  : output dir name [default: {infile}_seqs]
+  -a|--annot  [FILE] : annotate sequences with results from HGT analysis
   -h|--help          : prints this help message
 \n";
 
-my ($orthogroups_file,$path,$outdir,$help);
+my ($orthogroups_file,$path,$outdir,$annot,$help);
 #my $outdir = "orthofinder_groups2fasta";
 
 GetOptions (
   'i|in=s'     => \$orthogroups_file,
   'p|path=s'   => \$path,
   'd|outdir:s' => \$outdir,
+  'a|annot:s'  => \$annot,
   'h|help'     => \$help,
 );
 
@@ -64,6 +66,22 @@ foreach (@fastas){
 }
 print STDERR "[INFO] Read in ".commify(scalar(keys %seq_hash))." sequences from ".commify(scalar(@fastas))." files\n\n";
 
+## parse $annot if present
+my %annot_hash;
+if ($annot) {
+  print STDERR "[INFO] Collecting annotations from " . colored($annot, 'white on_blue') . "\n";
+  open (my $ANNOT, $annot) or die $!;
+  while (my $line = <$ANNOT>) {
+    chomp $line;
+    my @F = split (m/\s+/, $line);
+    $annot_hash{$F[0]}{hU} = $F[3];
+    $annot_hash{$F[0]}{AI} = $F[6];
+    $annot_hash{$F[0]}{category} = $F[9];
+    $annot_hash{$F[0]}{CHS} = $F[10];
+    $annot_hash{$F[0]}{tax} = $F[11];
+  }
+}
+
 ## make $outdir
 $outdir = $orthogroups_file."_seqs";
 if (-e $outdir && -d $outdir) {
@@ -83,7 +101,17 @@ while (my $line = <$GROUPS>) {
   ## open file:
   open (my $OUT, ">$outdir/$a[0].fasta") or die $!;
   foreach (@b) {
-    print $OUT ">$_\n$seq_hash{$_}\n";
+    if ($annot) {
+      if ($annot_hash{$_}) {
+        print $OUT ">$_ ";
+        print $OUT join (";", $annot_hash{$_}{hU}, $annot_hash{$_}{AI}, $annot_hash{$_}{category}, $annot_hash{$_}{CHS}, $annot_hash{$_}{tax})
+      } else {
+        print $OUT ">$_\n";
+      }
+      print $OUT "$seq_hash{$_}\n";
+    } else {
+      print $OUT ">$_\n$seq_hash{$_}\n";
+    }
   }
   close $OUT;
   print STDERR "\r[INFO] Working on OG \#$.: $a[0]"; $|=1;
