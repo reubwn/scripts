@@ -104,7 +104,7 @@ while (my $line = <$GROUPS>) {
     if ($annot) {
       if ($annot_hash{$_}{category} eq "OUTGROUP") { ## only write annotations for HGTc genes
         print $OUT ">$_ ";
-        print $OUT join (";", $annot_hash{$_}{hU}, $annot_hash{$_}{AI}, $annot_hash{$_}{category}, $annot_hash{$_}{CHS}, $annot_hash{$_}{tax}, "\n")
+        print $OUT join ("|", $annot_hash{$_}{hU}, $annot_hash{$_}{AI}, $annot_hash{$_}{category}, $annot_hash{$_}{CHS}, $annot_hash{$_}{tax}, "\n")
       } else {
         print $OUT ">$_\n";
       }
