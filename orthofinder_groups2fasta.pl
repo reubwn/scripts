@@ -85,7 +85,7 @@ while (my $line = <$GROUPS>) {
     print $OUT ">$_\n$seq_hash{$_}\n";
   }
   close $OUT;
-  print STDERR "\r[INFO] Working on \#$. OG: $a[0]"; $|=1;
+  print STDERR "\r[INFO] Working on OG \#$.: $a[0]"; $|=1;
 }
 
 print STDERR "\n[INFO] Finished on ".`date`."\n";
