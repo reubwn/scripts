@@ -104,7 +104,8 @@ while (my $line = <$GROUPS>) {
   open (my $OUT, ">$outdir/$a[0].fasta") or die $!;
   foreach (@b) {
     if ($annot) {
-      if ($annot_hash{$_}{category} =~ m/OUTGROUP/) { ## only write annotations for HGTc genes
+      print STDERR "$_\n";
+      if ($annot_hash{$_}) { ## only write annotations for HGTc genes
         print $OUT ">$_ ";
         print $OUT join ("|", $annot_hash{$_}{hU}, $annot_hash{$_}{AI}, $annot_hash{$_}{category}, $annot_hash{$_}{CHS}, $annot_hash{$_}{tax}, "\n")
       } else {
