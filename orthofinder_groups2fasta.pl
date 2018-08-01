@@ -23,18 +23,18 @@ OPTIONS
   -h|--help          : prints this help message
 \n";
 
-my ($orthogroups,$path,$outdir,$help);
-my $outdir = "orthofinder_groups2fasta";
+my ($orthogroups_file,$path,$outdir,$help);
+#my $outdir = "orthofinder_groups2fasta";
 
 GetOptions (
-  'i|in=s'     => \$orthogroups,
+  'i|in=s'     => \$orthogroups_file,
   'p|path=s'   => \$path,
   'd|outdir:s' => \$outdir,
   'h|help'     => \$help,
 );
 
 die $usage if $help;
-die $usage unless ($orthogroups && $path);
+die $usage unless ($orthogroups_file && $path);
 
 ## get sequences
 my %seq_hash;
@@ -65,6 +65,7 @@ foreach (@fastas){
 print STDERR "[INFO] Read in ".commify(scalar(keys %seq_hash))." sequences from ".commify(scalar(@fastas))." files\n\n";
 
 ## make $outdir
+$outdir = $orthogroups_file."_seqs"
 if (-e $outdir && -d $outdir) {
   rmtree([ "$outdir" ]);
   mkdir $outdir;
@@ -74,7 +75,7 @@ if (-e $outdir && -d $outdir) {
 
 ## open Orthogroups
 my %orthogroups;
-open (my $GROUPS, $orthogroups) or die $!;
+open (my $GROUPS, $orthogroups_file) or die $!;
 while (my $line = <$GROUPS>) {
   chomp $line;
   my @a = split(/\:\s+/, $line);
