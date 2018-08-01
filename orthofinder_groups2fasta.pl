@@ -102,9 +102,9 @@ while (my $line = <$GROUPS>) {
   open (my $OUT, ">$outdir/$a[0].fasta") or die $!;
   foreach (@b) {
     if ($annot) {
-      if ($annot_hash{$_}) {
+      if ($annot_hash{$_}{category} eq "OUTGROUP") {
         print $OUT ">$_ ";
-        print $OUT join (";", $annot_hash{$_}{hU}, $annot_hash{$_}{AI}, $annot_hash{$_}{category}, $annot_hash{$_}{CHS}, $annot_hash{$_}{tax})
+        print $OUT join (";", $annot_hash{$_}{hU}, $annot_hash{$_}{AI}, $annot_hash{$_}{category}, $annot_hash{$_}{CHS}, $annot_hash{$_}{tax}, "\n")
       } else {
         print $OUT ">$_\n";
       }
