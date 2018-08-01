@@ -24,7 +24,7 @@ OPTIONS
 \n";
 
 my ($orthogroups,$path,$outdir,$help);
-my $prefix = "orthofinder_groups2fasta";
+my $outdir = "orthofinder_groups2fasta";
 
 GetOptions (
   'i|in=s'     => \$orthogroups,
