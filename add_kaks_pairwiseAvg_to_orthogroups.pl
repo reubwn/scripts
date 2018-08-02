@@ -31,7 +31,7 @@ OPTIONS
   -h|--help                 : print this message
 \n";
 
-my ($orthogroups, $prot_path, $cds_path, $overwrite, $help);
+my ($orthogroups, $prot_path, $cds_path, $outdir, $outfile, $overwrite, $help);
 
 GetOptions (
   'i|orthogroups=s' => \$orthogroups,
@@ -46,8 +46,8 @@ die $usage if $help;
 die $usage unless ($orthogroups && $prot_path && $cds_path);
 
 ## outfiles
-my $outdir = $orthogroups."_kaks";
-my $outfile = $orthogroups.".kaks.txt";
+$outdir = $orthogroups."_kaks";
+$outfile = $orthogroups.".kaks.txt";
 
 ## make $outdir
 if (-e $outdir && -d $outdir) {
