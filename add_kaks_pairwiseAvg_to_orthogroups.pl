@@ -163,7 +163,7 @@ sub commify {
 
 sub get_fasta {
   my $path = $_[0];
-  my @files = glob("$path/*\.f.*a");
+  my @files = glob("$path/*\.f*a");
   if (scalar(@files) == 0) {
     die "[ERROR] Nothing with extension fasta|faa|fna|fa found in $path\n";
   } else {
