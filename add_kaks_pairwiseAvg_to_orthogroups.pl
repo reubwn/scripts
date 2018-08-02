@@ -32,8 +32,6 @@ OPTIONS
 \n";
 
 my ($orthogroups, $prot_path, $cds_path, $overwrite, $help);
-my $outdir = $orthogroups."_kaks";
-my $outfile = $orthogroups.".kaks.txt";
 
 GetOptions (
   'i|orthogroups=s' => \$orthogroups,
@@ -46,6 +44,10 @@ GetOptions (
 
 die $usage if $help;
 die $usage unless ($orthogroups && $prot_path && $cds_path);
+
+## outfiles
+my $outdir = $orthogroups."_kaks";
+my $outfile = $orthogroups.".kaks.txt";
 
 ## make $outdir
 if (-e $outdir && -d $outdir) {
@@ -84,7 +86,7 @@ foreach (@cds_fastas){
     $cds_hash{($seq_obj->display_id())} = ($seq_obj->seq());
   }
 }
-print STDERR "[INFO] Read in ".commify(scalar(keys %cds_hash))." CDS sequences\n";
+print STDERR "[INFO] Read in ".commify(scalar(keys %cds_hash))." CDS sequences\n\n";
 
 ## check there are some sequences
 if ((scalar(keys %protein_hash) == 0) || (scalar(keys %cds_hash) == 0)) {
@@ -161,9 +163,9 @@ sub commify {
 
 sub get_fasta {
   my $path = $_[0];
-  my @files = glob("$path/*\.fa*");
+  my @files = glob("$path/*\.f.*a");
   if (scalar(@files) == 0) {
-    die "[ERROR] Nothing with extension fasta|faa|fna found in $path\n";
+    die "[ERROR] Nothing with extension fasta|faa|fna|fa found in $path\n";
   } else {
     print STDERR "[INFO] Found ".scalar(@files)." files in $path\n";
   }
