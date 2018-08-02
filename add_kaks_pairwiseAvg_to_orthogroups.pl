@@ -126,7 +126,7 @@ while (my $line = <$GROUPS>) {
   ## get Ka (Dn), Ks (Ds) values
   eval {
     my $stats = Bio::Align::DNAStatistics->new();
-    my $result = $stats->calc_average_KaKs($dna_aln, 1000);
+    my $result = $stats->calc_average_KaKs($dna_aln_obj, 1000);
     my ($D_n, $D_s, $D_n_var, $D_s_var, $z_score);
     for my $an (@$result) {
       for (sort keys %$an ) {
