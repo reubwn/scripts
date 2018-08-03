@@ -105,7 +105,7 @@ if ($annot) {
     my @F = split (m/\s+/, $line);
     # $annot_hash{$F[0]}{hU} = $F[3];
     # $annot_hash{$F[0]}{AI} = $F[6];
-    $annot_hash{$F[0]}{category} = $F[9];
+    $annot_hash{$F[0]} = $F[9];
     # $annot_hash{$F[0]}{CHS} = $F[10];
     # $annot_hash{$F[0]}{tax} = $F[11];
   }
@@ -138,7 +138,8 @@ while (my $line = <$GROUPS>) {
   ## get % HGT genes in OG
   my $n_hgt;
   if ($annot) {
-    my $string = join (" ", keys %protein_seqs);
+    my $string = join (" ", keys %{@annot_hash{keys %protein_seqs}});
+    print STDERR "$sring\n";
     $n_hgt = () = $string =~ m/OUTGROUP/g;
   }
 
