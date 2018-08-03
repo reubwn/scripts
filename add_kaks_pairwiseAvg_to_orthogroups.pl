@@ -110,8 +110,12 @@ if ($annot) {
     $annot_hash{$F[0]}{tax} = $F[11];
   }
   close $ANNOT;
+  print STDERR "[INFO] Collected annotations for ".commify(scalar(keys %annot_hash))." genes\n";
 }
-print STDERR "[INFO] Collected annotations for ".commify(scalar(keys %annot_hash))." genes\n";
+
+###############
+## MAIN LOOP ##
+###############
 
 ## open groups file
 open (my $GROUPS, $orthogroups) or die $!;
@@ -143,7 +147,7 @@ while (my $line = <$GROUPS>) {
   if (system ("clustalo --infile=clustal.pro --outfile=$outdir/prot_clustalo/$og_name.prot_aln.faa --force") != 0) { die "[ERROR] Problem with clustalo!\n"; }
   ## fetch alignment and backtranslate to nucleotides
   my $get_prot_aln = Bio::AlignIO -> new(-file=>"$outdir/prot_clustalo/$og_name.prot_aln.faa", -format=>"fasta");
-  my $write_dna_aln = Bio::AlignIO -> new(-file=>"$outdir/dna_aln/$og_name.dna_aln.fna", -format=>"fasta");
+  my $write_dna_aln = Bio::AlignIO -> new(-file=>"$outdir/dna_alns/$og_name.dna_aln.fna", -format=>"fasta");
   my $prot_aln_obj = $get_prot_aln -> next_aln();
   my $dna_aln_obj = aa_to_dna_aln($prot_aln_obj, \%cds_seqs);
   $write_dna_aln -> write_aln($dna_aln_obj);
