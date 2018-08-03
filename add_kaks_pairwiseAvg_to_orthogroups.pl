@@ -136,9 +136,10 @@ while (my $line = <$GROUPS>) {
   close $PRO;
 
   ## get % HGT genes in OG
+  my $n_hgt;
   if ($annot) {
     my $string = join (" ", keys %protein_seqs);
-    my $n_hgt = () = $string =~ m/OUTGROUP/g;
+    $n_hgt = () = $string =~ m/OUTGROUP/g;
   }
 
   ## fetch corresponding cds seqs as hash of Bio::Seq objects
