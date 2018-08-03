@@ -150,7 +150,7 @@ while (my $line = <$GROUPS>) {
   my $write_dna_aln = Bio::AlignIO -> new( -file=>">$outdir/dna_alns/$og_name.dna_aln.fna", -format=>"fasta" );
   my $prot_aln_obj = $get_prot_aln -> next_aln();
   my $dna_aln_obj = aa_to_dna_aln($prot_aln_obj, \%cds_seqs);
-  $write_dna_aln -> write_aln($dna_aln_obj);
+  #$write_dna_aln -> write_aln($dna_aln_obj);
 
   ## get Ka (Dn), Ks (Ds) values
   eval {
