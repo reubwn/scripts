@@ -26,17 +26,19 @@ OPTIONS
   -i|--orthogroups [FILE]   : Orthogroups.txt file from OrthoFinder
   -p|--protein     [FILE]   : fasta file of protein sequences
   -c|--cds         [FILE]   : fasta file of corresponding CDSs (nucleotide)
+  -a|--annot  [FILE] : annotate sequences with results from HGT analysis
   -o|--outfile     [STR]    : output filename (default: 'inputfilename.kaks.txt')
   -d|--outdir      [DIR]    : base dirname to write stuff (default: 'inputfilename_kaks')
   -h|--help                 : print this message
 \n";
 
-my ($orthogroups, $prot_path, $cds_path, $outdir, $outfile, $overwrite, $help);
+my ($orthogroups, $prot_path, $cds_path, $annot, $outdir, $outfile, $overwrite, $help);
 
 GetOptions (
   'i|orthogroups=s' => \$orthogroups,
   'p|proteins=s'     => \$prot_path,
   'c|cds=s'         => \$cds_path,
+  'a|annot:s'       => \$annot,
   'd|outdir:s'     => \$outdir,
   'x|overwrite'   => \$overwrite,
   'h|help'          => \$help
@@ -93,6 +95,24 @@ if ((scalar(keys %protein_hash) == 0) || (scalar(keys %cds_hash) == 0)) {
   die "[ERROR] No sequences found in $prot_path or $cds_path!\n";
 }
 
+## parse $annot if present
+my %annot_hash;
+if ($annot) {
+  print STDERR "[INFO] Collecting annotations from " . colored($annot, 'white on_blue') . "\n";
+  open (my $ANNOT, $annot) or die $!;
+  while (my $line = <$ANNOT>) {
+    chomp $line;
+    my @F = split (m/\s+/, $line);
+    $annot_hash{$F[0]}{hU} = $F[3];
+    $annot_hash{$F[0]}{AI} = $F[6];
+    $annot_hash{$F[0]}{category} = $F[9];
+    $annot_hash{$F[0]}{CHS} = $F[10];
+    $annot_hash{$F[0]}{tax} = $F[11];
+  }
+  close $ANNOT;
+}
+print STDERR "[INFO] Collected annotations for ".commify(scalar(keys %annot_hash))." genes\n";
+
 ## open groups file
 open (my $GROUPS, $orthogroups) or die $!;
 open (my $OUT, ">$outdir/$outfile") or die $!;
@@ -104,14 +124,17 @@ while (my $line = <$GROUPS>) {
 
   ## fetch proteins and print to temp file
   @protein_seqs{@a} = @protein_hash{@a};
-  foreach (keys %protein_seqs) { print STDERR "$_\n$protein_seqs{$_}\n" };
-  my $string = join (" ", keys %protein_seqs);
-  my $n_hgt = () = $string =~ m/OUTGROUP/g;
   open (my $PRO, ">clustal.pro") or die $!;
   foreach (keys %protein_seqs) {
     print $PRO ">$_\n$protein_seqs{$_}\n";
   }
   close $PRO;
+
+  ## get % HGT genes in OG
+  if ($annot) {
+    my $string = join (" ", keys %protein_seqs);
+    my $n_hgt = () = $string =~ m/OUTGROUP/g;
+  }
 
   ## fetch corresponding cds seqs as hash
   @cds_seqs{@a} = @cds_hash{@a};
@@ -144,7 +167,11 @@ while (my $line = <$GROUPS>) {
     $D_s = -2 unless ($D_s);
 
     ## print to file
-    print $OUT join ("\t", $og_name, scalar(keys %cds_seqs), $D_n, $D_s, $D_n_var, $D_s_var, $z_score) . "\n";
+    if ($annot) {
+      print $OUT join ("\t", $og_name, scalar(keys %cds_seqs), $D_n, $D_s, $D_n_var, $D_s_var, $z_score) . "\n";
+    } else {
+      print $OUT join ("\t", $og_name, scalar(keys %cds_seqs), $D_n, $D_s, $D_n_var, $D_s_var, $z_score) . "\n";
+    }
   }
 }
 
