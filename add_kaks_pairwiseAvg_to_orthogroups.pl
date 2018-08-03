@@ -55,13 +55,13 @@ if (-e $outdir && -d $outdir) {
     rmtree([ "$outdir" ]);
     mkdir $outdir;
     mkdir "$outdir/prot_clustalo";
-    mkdir "$outdir/cds_alns";
+    mkdir "$outdir/dna_alns";
   } else {
     die "[ERROR] Dir $outdir already exists. Specify '-x' to overwrite it.\n";
   }
 } else {
   mkdir $outdir;
-  mkdir "$outdir/prot_mafft";
+  mkdir "$outdir/prot_clustalo";
   mkdir "$outdir/dna_alns";
 }
 
@@ -99,7 +99,7 @@ open (my $OUT, ">$outdir/$outfile") or die $!;
 while (my $line = <$GROUPS>) {
   chomp $line;
   my @a = split (m/\s+/, $line);
-  my $og_name = shift @a;
+  my $og_name = shift @a; $og_name =~ s/://;
   my (%protein_seqs, %cds_seqs);
 
   ## fetch proteins and print to temp file
@@ -166,8 +166,6 @@ sub get_fasta {
   my @files = glob("$path/*\.f*a");
   if (scalar(@files) == 0) {
     die "[ERROR] Nothing with extension fasta|faa|fna|fa found in $path\n";
-  } else {
-    print STDERR "[INFO] Found ".scalar(@files)." files in $path\n";
   }
   return \@files;
 }
