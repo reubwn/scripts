@@ -77,7 +77,7 @@ while (my $line = <$GROUPS>) {
 
   ## print
   print $OUT join (" ", @b) . "\n";
-  print $PROP join (" ", scalar(@b), $count, (sprintf("%.1f",($count/scalar(@b))))) . "\n";
+  print $PROP join (" ", scalar(@b), $count, (sprintf("%.3f",($count/scalar(@b))))) . "\n";
 }
 close $GROUPS;
 close $OUT;
