@@ -138,7 +138,7 @@ while (my $line = <$GROUPS>) {
   ## get % HGT genes in OG
   my $n_hgt;
   if ($annot) {
-    my $string = join (" ", keys %{@annot_hash{keys %protein_seqs}});
+    my $string = join (" ", @annot_hash{keys %protein_seqs});
     print STDERR "$string\n";
     $n_hgt = () = $string =~ m/OUTGROUP/g;
   }
