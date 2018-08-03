@@ -33,7 +33,7 @@ die $usage if $help;
 die $usage unless ($orthogroupsfile && $annot);
 
 ## outfiles
-$outfile = $orthogroupsfile."annot" unless ($outfile);
+$outfile = $orthogroupsfile.".annot" unless ($outfile);
 open (my $OUT, ">$outfile") or die $!;
 open (my $PROP, ">$outfile.proportion") or die $!;
 
