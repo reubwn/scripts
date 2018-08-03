@@ -20,8 +20,8 @@ OPTIONS
   -h|--help               : print this message
 \n";
 
-my ($orthogroupsfile, $annot, $outfile, $help);
-
+my ($orthogroupsfile, $annot, $help);
+my $outfile =
 GetOptions (
   'i|orthogroups=s' => \$orthogroupsfile,
   'a|annot=s'       => \$annot,
@@ -32,9 +32,14 @@ GetOptions (
 die $usage if $help;
 die $usage unless ($orthogroupsfile && $annot);
 
+## outfiles
+$outfile = $orthogroupsfile."annot" unless ($outfile);
+open (my $OUT, ">$outfile") or die $!;
+open (my $PROP, ">$outfile.proportion") or die $!;
+
 ## parse $annot if present
 my %annot_hash;
-#print STDERR "[INFO] Collecting annotations from " . colored($annot, 'white on_blue') . "\n";
+print STDERR "[INFO] Collecting annotations from " . colored($annot, 'white on_blue') . "\n";
 open (my $ANNOT, $annot) or die $!;
 while (my $line = <$ANNOT>) {
   chomp $line;
@@ -46,7 +51,7 @@ while (my $line = <$ANNOT>) {
   $annot_hash{$F[0]}{tax} = $F[11];
 }
 close $ANNOT;
-#print STDERR "[INFO] Collected annotations for ".commify(scalar(keys %annot_hash))." genes\n";
+print STDERR "[INFO] Collected annotations for ".commify(scalar(keys %annot_hash))." genes\n";
 
 ## open groups file
 open (my $GROUPS, $orthogroupsfile) or die $!;
@@ -67,6 +72,13 @@ while (my $line = <$GROUPS>) {
       push (@b, $element);
     }
   }
-  print STDOUT join (" ", @b) . "\n";
+  ## count number OUTGROUP seqs in OG
+  my $count = () = join(" ", @b) =~ m/OUTGROUP/g;
+
+  ## print
+  print $OUT join (" ", @b) . "\n";
+  print $PROP join (" ", scalar(@b), $count, (sprintf("%.1f",($count/scalar(@b))))) . "\n";
 }
 close $GROUPS;
+close $OUT;
+close $PROP;
