@@ -49,7 +49,7 @@ close $ANNOT;
 #print STDERR "[INFO] Collected annotations for ".commify(scalar(keys %annot_hash))." genes\n";
 
 ## open groups file
-open (my $GROUPS, $orthogroups) or die $!;
+open (my $GROUPS, $orthogroupsfile) or die $!;
 while (my $line = <$GROUPS>) {
   chomp $line;
   my @a = split (m/\s+/, $line);
@@ -69,3 +69,4 @@ while (my $line = <$GROUPS>) {
   }
   print STDOUT join (" ", @b) . "\n";
 }
+close $GROUPS;
