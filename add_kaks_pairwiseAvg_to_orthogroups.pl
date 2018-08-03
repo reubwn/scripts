@@ -75,7 +75,7 @@ foreach (@prot_fastas){
   print STDERR "-->" . colored($_, 'white on_blue') . "\n";
   my $in = Bio::SeqIO->new ( -file => $_, -format => "fasta" );
   while ( my $seq_obj = $in->next_seq() ){
-    $protein_hash{($seq_obj->display_id())} = ($seq_obj->seq());
+    $protein_hash{($seq_obj->display_id())} = $seq_obj;
   }
 }
 print STDERR "[INFO] Read in ".commify(scalar(keys %protein_hash))." protein sequences\n";
@@ -85,7 +85,7 @@ foreach (@cds_fastas){
   print STDERR "-->" . colored($_, 'white on_blue') . "\n";
   my $in = Bio::SeqIO->new ( -file => $_, -format => "fasta" );
   while ( my $seq_obj = $in->next_seq() ){
-    $cds_hash{($seq_obj->display_id())} = ($seq_obj->seq());
+    $cds_hash{($seq_obj->display_id())} = $seq_obj;
   }
 }
 print STDERR "[INFO] Read in ".commify(scalar(keys %cds_hash))." CDS sequences\n\n";
@@ -131,7 +131,7 @@ while (my $line = <$GROUPS>) {
   @protein_seqs{@a} = @protein_hash{@a};
   open (my $PRO, ">clustal.pro") or die $!;
   foreach (keys %protein_seqs) {
-    print $PRO ">$_\n$protein_seqs{$_}\n";
+    print $PRO ">$_\n" . $protein_seqs{$_}->seq() . "\n";
   }
   close $PRO;
 
@@ -142,10 +142,10 @@ while (my $line = <$GROUPS>) {
   }
 
   ## fetch corresponding cds seqs as hash of Bio::Seq objects
-  foreach (keys %protein_seqs) {
-    $cds_seqs{$_} = Bio::Seq -> new( -display_id => $_, -seq => $cds_hash{$_});
-  }
-  #@cds_seqs{@a} = @cds_hash{@a};
+  # foreach (keys %protein_seqs) {
+  #   $cds_seqs{$_} = Bio::Seq -> new( -display_id => $_, -seq => "$cds_hash{$_}");
+  # }
+  @cds_seqs{@a} = @cds_hash{@a};
 
   ## sanity check that keys in %protein_seqs are same as
   my %cmp = map { $_ => 1 } keys %protein_seqs;
