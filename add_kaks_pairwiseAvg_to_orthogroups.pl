@@ -146,6 +146,7 @@ while (my $line = <$GROUPS>) {
   #   $cds_seqs{$_} = Bio::Seq -> new( -display_id => $_, -seq => "$cds_hash{$_}");
   # }
   @cds_seqs{@a} = @cds_hash{@a};
+  foreach (keys %cds_seqs) { print "$_\n$cds_seqs{$_}\n" };
 
   ## sanity check that keys in %protein_seqs are same as
   my %cmp = map { $_ => 1 } keys %protein_seqs;
@@ -154,7 +155,7 @@ while (my $line = <$GROUPS>) {
     delete $cmp{$key};
   }
   if (%cmp) {
-    die "[ERROR] Mismatch between protein and CDS seqids - check fasta files\n\n";
+    die "[ERROR] Mismatch between protein and CDS seqids - check fasta headers\n\n";
   }
 
   ## run alignment
@@ -164,10 +165,10 @@ while (my $line = <$GROUPS>) {
   my $write_dna_aln = Bio::AlignIO -> new( -file=>">$outdir/dna_alns/$og_name.dna_aln.fna", -format=>"fasta" );
   my $prot_aln_obj = $get_prot_aln -> next_aln();
   my $dna_aln_obj = aa_to_dna_aln($prot_aln_obj, \%cds_seqs);
-  #$write_dna_aln -> write_aln($dna_aln_obj);
+  $write_dna_aln -> write_aln($dna_aln_obj);
 
   ## get Ka (Dn), Ks (Ds) values
-  eval {
+  # eval {
     my $stats = Bio::Align::DNAStatistics->new();
     my $result = $stats->calc_average_KaKs($dna_aln_obj, 1000);
     my ($D_n, $D_s, $D_n_var, $D_s_var, $z_score);
@@ -190,13 +191,13 @@ while (my $line = <$GROUPS>) {
     } else {
       print $OUT join ("\t", $og_name, scalar(keys %cds_seqs), $D_n, $D_s, $D_n_var, $D_s_var, $z_score) . "\n";
     }
-  }
+  # }
 }
 
 close $GROUPS;
 close $OUT;
 system ("rm clustal*");
-print "[INFO] Finished on ".`date`."\n\n";
+print "\n[INFO] Finished on ".`date`."\n";
 
 ######################## SUBS
 
