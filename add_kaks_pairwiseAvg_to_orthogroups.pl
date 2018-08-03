@@ -187,9 +187,9 @@ while (my $line = <$GROUPS>) {
 
     ## print to file
     if ($annot) {
-      print $OUT join ("\t", $og_name, scalar(keys %cds_seqs), $D_n, $D_s, $D_n_var, $D_s_var, $z_score) . "\n";
-    } else {
       print $OUT join ("\t", $og_name, scalar(keys %cds_seqs), $n_hgt, ($n_hgt/scalar(keys %cds_seqs)), $D_n, $D_s, $D_n_var, $D_s_var, $z_score) . "\n";
+    } else {
+      print $OUT join ("\t", $og_name, scalar(keys %cds_seqs), $D_n, $D_s, $D_n_var, $D_s_var, $z_score) . "\n";
     }
   }
 }
