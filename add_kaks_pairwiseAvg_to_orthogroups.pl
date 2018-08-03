@@ -124,9 +124,10 @@ while (my $line = <$GROUPS>) {
   chomp $line;
   my @a = split (m/\s+/, $line);
   my $og_name = shift @a; $og_name =~ s/://;
-  my (%protein_seqs, %cds_seqs);
+  print STDERR "\r[INFO] Working on OG \#$.: $og_name"; $|=1;
 
   ## fetch proteins and print to temp file
+  my (%protein_seqs, %cds_seqs);
   @protein_seqs{@a} = @protein_hash{@a};
   open (my $PRO, ">clustal.pro") or die $!;
   foreach (keys %protein_seqs) {
@@ -153,9 +154,7 @@ while (my $line = <$GROUPS>) {
     delete $cmp{$key};
   }
   if (%cmp) {
-    die "[ERROR] they don't have the same keys\n";
-  } else {
-    print "they have the same keys\n";
+    die "[ERROR] Mismatch between protein and CDS seqids - check fasta files\n\n";
   }
 
   ## run alignment
