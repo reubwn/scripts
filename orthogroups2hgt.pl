@@ -20,8 +20,8 @@ OPTIONS
   -h|--help               : print this message
 \n";
 
-my ($orthogroupsfile, $annot, $help);
-my $outfile =
+my ($orthogroupsfile, $annot, $outfile, $help);
+
 GetOptions (
   'i|orthogroups=s' => \$orthogroupsfile,
   'a|annot=s'       => \$annot,
