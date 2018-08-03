@@ -82,3 +82,13 @@ while (my $line = <$GROUPS>) {
 close $GROUPS;
 close $OUT;
 close $PROP;
+
+######################## SUBS
+
+sub commify {
+  my $text = reverse $_[0];
+  $text =~ s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/g;
+  return scalar reverse $text;
+}
+
+__END__
