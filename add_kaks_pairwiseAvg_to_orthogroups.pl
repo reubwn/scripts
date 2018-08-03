@@ -140,8 +140,23 @@ while (my $line = <$GROUPS>) {
     my $n_hgt = () = $string =~ m/OUTGROUP/g;
   }
 
-  ## fetch corresponding cds seqs as hash
-  @cds_seqs{@a} = @cds_hash{@a};
+  ## fetch corresponding cds seqs as hash of Bio::Seq objects
+  foreach (keys %protein_seqs) {
+    $cds_seqs{$_} = Bio::Seq -> new( -display_id => $_, -seq => $cds_hash{$_});
+  }
+  #@cds_seqs{@a} = @cds_hash{@a};
+
+  ## sanity check that keys in %protein_seqs are same as
+  my %cmp = map { $_ => 1 } keys %protein_seqs;
+  for my $key (keys %cds_seqs) {
+    last unless exists $cmp{$key};
+    delete $cmp{$key};
+  }
+  if (%cmp) {
+    die "[ERROR] they don't have the same keys\n";
+  } else {
+    print "they have the same keys\n";
+  }
 
   ## run alignment
   if (system ("clustalo --infile=clustal.pro --outfile=$outdir/prot_clustalo/$og_name.prot_aln.faa --force") != 0) { die "[ERROR] Problem with clustalo!\n"; }
