@@ -143,11 +143,8 @@ while (my $line = <$GROUPS>) {
   }
 
   ## fetch corresponding cds seqs as hash of Bio::Seq objects
-  # foreach (keys %protein_seqs) {
-  #   $cds_seqs{$_} = Bio::Seq -> new( -display_id => $_, -seq => "$cds_hash{$_}");
-  # }
   @cds_seqs{@a} = @cds_hash{@a};
-  foreach (keys %cds_seqs) { print "$_\n$cds_seqs{$_}\n" };
+  #foreach (keys %cds_seqs) { print "$_\n$cds_seqs{$_}\n" };
 
   ## sanity check that keys in %protein_seqs are same as
   my %cmp = map { $_ => 1 } keys %protein_seqs;
@@ -173,15 +170,13 @@ while (my $line = <$GROUPS>) {
     my $stats = Bio::Align::DNAStatistics->new();
     my $result = $stats->calc_average_KaKs($dna_aln_obj, 1000);
     my ($D_n, $D_s, $D_n_var, $D_s_var, $z_score);
-    for my $an (@$result) {
-      for (sort keys %$an ) {
-        next if /Seq/;
-        if($_ eq "D_n"){$D_n = $an->{$_}};
-        if($_ eq "D_s"){$D_s = $an->{$_}};
-        if($_ eq "D_n_var"){$D_n_var = $an->{$_};}
-        if($_ eq "D_s_var"){$D_s_var = $an->{$_};}
-        if($_ eq "z_score"){$z_score = $an->{$_};}
-      }
+    for (sort keys %{$result}) {
+      next if /Seq/;
+      if($_ eq "D_n"){$D_n = $an->{$_}};
+      if($_ eq "D_s"){$D_s = $an->{$_}};
+      if($_ eq "D_n_var"){$D_n_var = $an->{$_};}
+      if($_ eq "D_s_var"){$D_s_var = $an->{$_};}
+      if($_ eq "z_score"){$z_score = $an->{$_};}
     }
     $D_n = -2 unless ($D_n); ## default values
     $D_s = -2 unless ($D_s);
