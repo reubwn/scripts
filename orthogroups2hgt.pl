@@ -16,15 +16,17 @@ SYNOPSIS
 OPTIONS
   -i|--orthogroups [FILE] : Orthogroups.txt file from OrthoFinder
   -a|--annot       [FILE] : *HGT_results file
+  -s|--simple             : print simple output
   -o|--outfile     [STR]  : output base filename (default: 'inputfilename')
   -h|--help               : print this message
 \n";
 
-my ($orthogroupsfile, $annot, $outfile, $help);
+my ($orthogroupsfile, $annot, $simple, $outfile, $help);
 
 GetOptions (
   'i|orthogroups=s' => \$orthogroupsfile,
   'a|annot=s'       => \$annot,
+  's|simple'    => \$simple,
   'o|outfile'   => \$outfile,
   'h|help'          => \$help
 );
@@ -61,12 +63,17 @@ while (my $line = <$GROUPS>) {
   my @b;
   foreach my $element (@a) {
     if ($annot_hash{$element}) {
-      if ($annot_hash{$element}{category} eq "OUTGROUP") {
-        my $new_id = join (":", $element, $annot_hash{$element}{hU}, $annot_hash{$element}{AI}, $annot_hash{$element}{category}, $annot_hash{$element}{CHS}, $annot_hash{$element}{tax});
+      if ($simple) {
+        my $new_id = join (":", $element, $annot_hash{$element}{category});
         push (@b, $new_id);
       } else {
-        my $new_id = join (":", $element, $annot_hash{$element}{hU}, $annot_hash{$element}{category});
-        push (@b, $new_id);
+        if ($annot_hash{$element}{category} eq "OUTGROUP") {
+          my $new_id = join (":", $element, $annot_hash{$element}{hU}, $annot_hash{$element}{AI}, $annot_hash{$element}{category}, $annot_hash{$element}{CHS}, $annot_hash{$element}{tax});
+          push (@b, $new_id);
+        } else {
+          my $new_id = join (":", $element, $annot_hash{$element}{hU}, $annot_hash{$element}{category});
+          push (@b, $new_id);
+        }
       }
     } else {
       push (@b, $element);
