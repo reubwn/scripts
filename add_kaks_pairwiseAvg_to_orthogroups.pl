@@ -139,7 +139,7 @@ while (my $line = <$GROUPS>) {
   my $n_hgt;
   if ($annot) {
     my $string = join (" ", keys %{@annot_hash{keys %protein_seqs}});
-    print STDERR "$sring\n";
+    print STDERR "$string\n";
     $n_hgt = () = $string =~ m/OUTGROUP/g;
   }
 
@@ -173,11 +173,11 @@ while (my $line = <$GROUPS>) {
     my ($D_n, $D_s, $D_n_var, $D_s_var, $z_score);
     for (sort keys %{$result}) {
       next if /Seq/;
-      if($_ eq "D_n"){$D_n = $an->{$_}};
-      if($_ eq "D_s"){$D_s = $an->{$_}};
-      if($_ eq "D_n_var"){$D_n_var = $an->{$_};}
-      if($_ eq "D_s_var"){$D_s_var = $an->{$_};}
-      if($_ eq "z_score"){$z_score = $an->{$_};}
+      if($_ eq "D_n"){$D_n = $result->{$_}};
+      if($_ eq "D_s"){$D_s = $result->{$_}};
+      if($_ eq "D_n_var"){$D_n_var = $result->{$_};}
+      if($_ eq "D_s_var"){$D_s_var = $result->{$_};}
+      if($_ eq "z_score"){$z_score = $result->{$_};}
     }
     $D_n = -2 unless ($D_n); ## default values
     $D_s = -2 unless ($D_s);
