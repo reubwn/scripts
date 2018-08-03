@@ -103,11 +103,11 @@ if ($annot) {
   while (my $line = <$ANNOT>) {
     chomp $line;
     my @F = split (m/\s+/, $line);
-    $annot_hash{$F[0]}{hU} = $F[3];
-    $annot_hash{$F[0]}{AI} = $F[6];
+    # $annot_hash{$F[0]}{hU} = $F[3];
+    # $annot_hash{$F[0]}{AI} = $F[6];
     $annot_hash{$F[0]}{category} = $F[9];
-    $annot_hash{$F[0]}{CHS} = $F[10];
-    $annot_hash{$F[0]}{tax} = $F[11];
+    # $annot_hash{$F[0]}{CHS} = $F[10];
+    # $annot_hash{$F[0]}{tax} = $F[11];
   }
   close $ANNOT;
   print STDERR "[INFO] Collected annotations for ".commify(scalar(keys %annot_hash))." genes\n";
@@ -168,7 +168,7 @@ while (my $line = <$GROUPS>) {
   $write_dna_aln -> write_aln($dna_aln_obj);
 
   ## get Ka (Dn), Ks (Ds) values
-  # eval {
+   eval {
     my $stats = Bio::Align::DNAStatistics->new();
     my $result = $stats->calc_average_KaKs($dna_aln_obj, 1000);
     my ($D_n, $D_s, $D_n_var, $D_s_var, $z_score);
@@ -189,13 +189,13 @@ while (my $line = <$GROUPS>) {
     if ($annot) {
       print $OUT join ("\t", $og_name, scalar(keys %cds_seqs), $D_n, $D_s, $D_n_var, $D_s_var, $z_score) . "\n";
     } else {
-      print $OUT join ("\t", $og_name, scalar(keys %cds_seqs), $D_n, $D_s, $D_n_var, $D_s_var, $z_score) . "\n";
+      print $OUT join ("\t", $og_name, scalar(keys %cds_seqs), $n_hgt, ($n_hgt/scalar(keys %cds_seqs)), $D_n, $D_s, $D_n_var, $D_s_var, $z_score) . "\n";
     }
-  # }
+  }
 }
-
 close $GROUPS;
 close $OUT;
+
 system ("rm clustal*");
 print "\n[INFO] Finished on ".`date`."\n";
 
