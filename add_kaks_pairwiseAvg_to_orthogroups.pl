@@ -23,13 +23,13 @@ SYNOPSIS
   Uses MAFFT to generate alignments, make sure MAFFT is discoverable in \$PATH.
 
 OPTIONS
-  -i|--orthogroups [FILE]   : Orthogroups.txt file from OrthoFinder
-  -p|--protein     [FILE]   : fasta file of protein sequences
-  -c|--cds         [FILE]   : fasta file of corresponding CDSs (nucleotide)
-  -a|--annot  [FILE] : annotate sequences with results from HGT analysis
-  -o|--outfile     [STR]    : output filename (default: 'inputfilename.kaks.txt')
-  -d|--outdir      [DIR]    : base dirname to write stuff (default: 'inputfilename_kaks')
-  -h|--help                 : print this message
+  -i|--orthogroups [FILE] : Orthogroups.txt file from OrthoFinder
+  -p|--protein     [FILE] : fasta file of protein sequences
+  -c|--cds         [FILE] : fasta file of corresponding CDSs (nucleotide)
+  -a|--annot       [FILE] : annotate sequences with results from HGT analysis
+  -o|--outfile     [STR]  : output filename (default: 'inputfilename.kaks.txt')
+  -d|--outdir      [DIR]  : base dirname to write stuff (default: 'inputfilename_kaks')
+  -h|--help               : print this message
 \n";
 
 my ($orthogroups, $prot_path, $cds_path, $annot, $outdir, $outfile, $overwrite, $help);
@@ -39,6 +39,7 @@ GetOptions (
   'p|proteins=s'     => \$prot_path,
   'c|cds=s'         => \$cds_path,
   'a|annot:s'       => \$annot,
+  'o|outfile:s'    => \$outfile,
   'd|outdir:s'     => \$outdir,
   'x|overwrite'   => \$overwrite,
   'h|help'          => \$help
@@ -48,8 +49,8 @@ die $usage if $help;
 die $usage unless ($orthogroups && $prot_path && $cds_path);
 
 ## outfiles
-$outdir = $orthogroups."_kaks";
-$outfile = $orthogroups.".kaks.txt";
+$outdir = $orthogroups."_kaks" unless ($outdir);
+$outfile = $orthogroups.".kaks.txt" unless ($outfile);
 
 ## make $outdir
 if (-e $outdir && -d $outdir) {
@@ -105,7 +106,7 @@ if ($annot) {
     my @F = split (m/\s+/, $line);
     # $annot_hash{$F[0]}{hU} = $F[3];
     # $annot_hash{$F[0]}{AI} = $F[6];
-    $annot_hash{$F[0]} = $F[9];
+    $annot_hash{$F[0]} = $F[9]; ## key= geneid; val=INGROUP or OUTGROUP
     # $annot_hash{$F[0]}{CHS} = $F[10];
     # $annot_hash{$F[0]}{tax} = $F[11];
   }
