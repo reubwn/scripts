@@ -208,7 +208,7 @@ GROUP: while (my $line = <$GROUPS>) {
   eval {
     my $stats = Bio::Align::DNAStatistics->new();
     my $result = $stats->calc_average_KaKs($dna_aln_obj, 1000);
-    my ($D_n, $D_s, $D_n_var, $D_s_var, $z_score);
+    my ($D_n, $D_s, $D_n_var, $D_s_var, $z_score, $omega) = ("NA", "NA", "NA", "NA", "NA", "NA");
     for (sort keys %{$result}) {
       next if /Seq/;
       if($_ eq "D_n"){$D_n = $result->{$_}};
@@ -217,14 +217,17 @@ GROUP: while (my $line = <$GROUPS>) {
       if($_ eq "D_s_var"){$D_s_var = $result->{$_};}
       if($_ eq "z_score"){$z_score = $result->{$_};}
     }
-    $D_n = "NA" unless ($D_n); ## default values
-    $D_s = "NA" unless ($D_s);
+    if ( ($D_n =~ /\d+/) and ($D_s =~ /\d+/) ) {
+      $omega = $D_n/$D_s;
+    }
+    # $D_n = "NA" unless ($D_n); ## default values
+    # $D_s = "NA" unless ($D_s);
 
     ## print to file
     if ($annot) {
-      print $OUT join ("\t", $og_name, scalar(@a), $n_hgt, ($n_hgt/scalar(@a)), $D_n, $D_s, $D_n_var, $D_s_var, $z_score) . "\n";
+      print $OUT join ("\t", $og_name, scalar(@a), $n_hgt, ($n_hgt/scalar(@a)), $D_n, $D_s, $omega, $D_n_var, $D_s_var, $z_score) . "\n";
     } else {
-      print $OUT join ("\t", $og_name, scalar(@a), $D_n, $D_s, $D_n_var, $D_s_var, $z_score) . "\n";
+      print $OUT join ("\t", $og_name, scalar(@a), $D_n, $D_s, $omega, $D_n_var, $D_s_var, $z_score) . "\n";
     }
   };
 }
