@@ -146,9 +146,9 @@ GROUP: while (my $line = <$GROUPS>) {
   if ( (scalar(@a) > $max_seqs) or (scalar(@a) < $min_seqs) ) {
     ## print to file
     if ($annot) {
-      print $OUT join ("\t", $og_name, scalar(keys %cds_seqs), $n_hgt, ($n_hgt/scalar(keys %cds_seqs)), "NA", "NA", "NA", "NA", "NA") . "\n";
+      print $OUT join ("\t", $og_name, scalar(@a), $n_hgt, ($n_hgt/scalar(keys %cds_seqs)), "NA", "NA", "NA", "NA", "NA") . "\n";
     } else {
-      print $OUT join ("\t", $og_name, scalar(keys %cds_seqs), "NA", "NA", "NA", "NA", "NA") . "\n";
+      print $OUT join ("\t", $og_name, scalar(@a), "NA", "NA", "NA", "NA", "NA") . "\n";
     }
     next GROUP;
   }
@@ -217,14 +217,14 @@ GROUP: while (my $line = <$GROUPS>) {
       if($_ eq "D_s_var"){$D_s_var = $result->{$_};}
       if($_ eq "z_score"){$z_score = $result->{$_};}
     }
-    $D_n = -2 unless ($D_n); ## default values
-    $D_s = -2 unless ($D_s);
+    $D_n = "NA" unless ($D_n); ## default values
+    $D_s = "NA" unless ($D_s);
 
     ## print to file
     if ($annot) {
-      print $OUT join ("\t", $og_name, scalar(keys %cds_seqs), $n_hgt, ($n_hgt/scalar(keys %cds_seqs)), $D_n, $D_s, $D_n_var, $D_s_var, $z_score) . "\n";
+      print $OUT join ("\t", $og_name, scalar(@a), $n_hgt, ($n_hgt/scalar(@a)), $D_n, $D_s, $D_n_var, $D_s_var, $z_score) . "\n";
     } else {
-      print $OUT join ("\t", $og_name, scalar(keys %cds_seqs), $D_n, $D_s, $D_n_var, $D_s_var, $z_score) . "\n";
+      print $OUT join ("\t", $og_name, scalar(@a), $D_n, $D_s, $D_n_var, $D_s_var, $z_score) . "\n";
     }
   };
 }
