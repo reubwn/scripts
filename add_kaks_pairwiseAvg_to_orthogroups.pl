@@ -196,11 +196,11 @@ GROUP: while (my $line = <$GROUPS>) {
     my $new_id;
     if ($annot_hash{$trim}{category}) {
       $new_id = join (" ", $trim, (join (":", $annot_hash{$trim}{hU}, $annot_hash{$trim}{category}, $annot_hash{$trim}{tax})));
+      $n_hgt++ if $annot_hash{$trim}{category} eq "OUTGROUP"; ## count number of HGTc in OG
     } else {
       $new_id = $trim;
     }
     print $DNA ">$new_id\n" . $seq_obj->seq() . "\n";
-    $n_hgt++ if $annot_hash{$trim}{category} eq "OUTGROUP"; ## count number of HGTc in OG
   }
   close $DNA;
 
