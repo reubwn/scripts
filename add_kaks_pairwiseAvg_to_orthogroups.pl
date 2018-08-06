@@ -149,23 +149,15 @@ GROUP: while (my $line = <$GROUPS>) {
   @protein_seqs{@a} = @protein_hash{@a};
   open (my $PRO, ">$outdir/clustal.pro") or die $!;
   foreach (keys %protein_seqs) {
-    print $PRO ">$_\n" . $protein_seqs{$_}->seq() . "\n";
+    my $new_id = join (" ", $_, (join (":", $annot_hash{$_}{hU}, $annot_hash{$_}{category}, $annot_hash{$_}{tax})));
+    print $PRO ">$new_id\n" . $protein_seqs{$_}->seq() . "\n";
   }
   close $PRO;
 
-  ## get % HGT genes in OG
-  my $n_hgt;
-  # if ($annot) {
-  #   my $string = join (" ", @annot_hash{category}{keys %protein_seqs});
-  #   print STDERR ": $string\n";
-  #   $n_hgt = () = $string =~ m/OUTGROUP/g;
-  # }
-
   ## fetch corresponding cds seqs as hash of Bio::Seq objects
   @cds_seqs{@a} = @cds_hash{@a};
-  #foreach (keys %cds_seqs) { print "$_\n$cds_seqs{$_}\n" };
 
-  ## sanity check that keys in %protein_seqs are same as
+  ## sanity check that keys in %protein_seqs are same as %cds_seqs
   my %cmp = map { $_ => 1 } keys %protein_seqs;
   for my $key (keys %cds_seqs) {
     last unless exists $cmp{$key};
@@ -176,26 +168,24 @@ GROUP: while (my $line = <$GROUPS>) {
   }
 
   ## run alignment
-  #print STDERR "[INFO] Running Clustalo: ".`date`."\n";
   if (system ("clustalo --infile=$outdir/clustal.pro --outfile=$outdir/prot_clustalo/$og_name.prot_aln.faa --force --threads=$threads") != 0) { die "[ERROR] Problem with clustalo!\n"; }
   ## fetch alignment and backtranslate to nucleotides
   my $get_prot_aln = Bio::AlignIO -> new( -file=>"$outdir/prot_clustalo/$og_name.prot_aln.faa", -format=>"fasta" );
-  #my $write_dna_aln = Bio::AlignIO -> new( -file=>">$outdir/dna_alns/$og_name.dna_aln.fna", -format=>"fasta" );
   my $prot_aln_obj = $get_prot_aln -> next_aln();
   my $dna_aln_obj = aa_to_dna_aln($prot_aln_obj, \%cds_seqs);
+
+  ## print to file
+  my $n_hgt;
   open (my $DNA, ">$outdir/dna_alns/$og_name.dna_aln.fna");
   foreach my $seq_obj ($dna_aln_obj->each_seq) {
     (my $trim = $seq_obj->display_id()) =~ s/\/*//;
     my $new_id = join (" ", $trim, (join (":", $annot_hash{$trim}{hU}, $annot_hash{$trim}{category}, $annot_hash{$trim}{tax})));
-    print $DNA ">$new_id\n";
-    print $DNA $seq_obj->seq() . "\n";
+    print $DNA ">$new_id\n" . $seq_obj->seq() . "\n";
+    $n_hgt++ if $annot_hash{$trim}{category} eq "OUTGROUP"; ## count number of HGTc in OG
   }
   close $DNA;
-  #$write_dna_aln -> write_aln($dna_aln_obj);
-  #print STDERR "[INFO] Finished Clustalo: ".`date`."\n";
 
   ## get Ka (Dn), Ks (Ds) values
-  #print STDERR "[INFO] Getting Ka/Ks: ".`date`."\n";
   eval {
     my $stats = Bio::Align::DNAStatistics->new();
     my $result = $stats->calc_average_KaKs($dna_aln_obj, 1000);
@@ -218,7 +208,6 @@ GROUP: while (my $line = <$GROUPS>) {
       print $OUT join ("\t", $og_name, scalar(keys %cds_seqs), $D_n, $D_s, $D_n_var, $D_s_var, $z_score) . "\n";
     }
   };
-  #print STDERR "[INFO] Finished: ".`date`."\n";
 }
 close $GROUPS;
 close $OUT;
