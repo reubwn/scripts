@@ -149,7 +149,7 @@ while (my $line = <$GROUPS>) {
   my $n_hgt;
   if ($annot) {
     my $string = join (" ", @annot_hash{keys %protein_seqs});
-    print STDERR "$string\n";
+    print STDERR ": $string\n";
     $n_hgt = () = $string =~ m/OUTGROUP/g;
   }
 
@@ -168,6 +168,7 @@ while (my $line = <$GROUPS>) {
   }
 
   ## run alignment
+  print STDERR "[INFO] Running Clustalo: ".`date`."\n";
   if (system ("clustalo --infile=clustal.pro --outfile=$outdir/prot_clustalo/$og_name.prot_aln.faa --force --threads=$threads") != 0) { die "[ERROR] Problem with clustalo!\n"; }
   ## fetch alignment and backtranslate to nucleotides
   my $get_prot_aln = Bio::AlignIO -> new( -file=>"$outdir/prot_clustalo/$og_name.prot_aln.faa", -format=>"fasta" );
@@ -175,9 +176,11 @@ while (my $line = <$GROUPS>) {
   my $prot_aln_obj = $get_prot_aln -> next_aln();
   my $dna_aln_obj = aa_to_dna_aln($prot_aln_obj, \%cds_seqs);
   $write_dna_aln -> write_aln($dna_aln_obj);
+  print STDERR "[INFO] Finished Clustalo: ".`date`."\n";
 
   ## get Ka (Dn), Ks (Ds) values
-   eval {
+  print STDERR "[INFO] Getting Ka/Ks: ".`date`."\n";
+  eval {
     my $stats = Bio::Align::DNAStatistics->new();
     my $result = $stats->calc_average_KaKs($dna_aln_obj, 1000);
     my ($D_n, $D_s, $D_n_var, $D_s_var, $z_score);
@@ -199,6 +202,7 @@ while (my $line = <$GROUPS>) {
       print $OUT join ("\t", $og_name, scalar(keys %cds_seqs), $D_n, $D_s, $D_n_var, $D_s_var, $z_score) . "\n";
     }
   }
+  print STDERR "[INFO] Finished Ka/Ks: ".`date`."\n";
 }
 close $GROUPS;
 close $OUT;
