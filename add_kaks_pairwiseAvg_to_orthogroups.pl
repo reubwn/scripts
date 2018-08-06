@@ -194,7 +194,7 @@ GROUP: while (my $line = <$GROUPS>) {
   foreach my $seq_obj ($dna_aln_obj->each_seq) {
     (my $trim = $seq_obj->display_id()) =~ s/\/*//;
     my $new_id;
-    if ($annot_hash{$seq_obj->display_id()}{category}) {
+    if ($annot_hash{$trim}{category}) {
       $new_id = join (" ", $trim, (join (":", $annot_hash{$trim}{hU}, $annot_hash{$trim}{category}, $annot_hash{$trim}{tax})));
     } else {
       $new_id = $trim;
