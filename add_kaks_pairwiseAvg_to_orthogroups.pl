@@ -143,8 +143,15 @@ GROUP: while (my $line = <$GROUPS>) {
   print STDERR "\r[INFO] Working on OG \#$.: $og_name"; $|=1;
 
   ## skip groups that are too big or too small
-  next GROUP if scalar(@a) > $max_seqs;
-  next GROUP if scalar(@a) < $min_seqs;
+  if ( (scalar(@a) > $max_seqs) or (scalar(@a) < $min_seqs) ) {
+    ## print to file
+    if ($annot) {
+      print $OUT join ("\t", $og_name, scalar(keys %cds_seqs), $n_hgt, ($n_hgt/scalar(keys %cds_seqs)), "NA", "NA", "NA", "NA", "NA") . "\n";
+    } else {
+      print $OUT join ("\t", $og_name, scalar(keys %cds_seqs), "NA", "NA", "NA", "NA", "NA") . "\n";
+    }
+    next GROUP;
+  }
 
   ## fetch proteins and print to temp file
   my (%protein_seqs, %cds_seqs);
