@@ -180,15 +180,18 @@ GROUP: while (my $line = <$GROUPS>) {
   if (system ("clustalo --infile=$outdir/clustal.pro --outfile=$outdir/prot_clustalo/$og_name.prot_aln.faa --force --threads=$threads") != 0) { die "[ERROR] Problem with clustalo!\n"; }
   ## fetch alignment and backtranslate to nucleotides
   my $get_prot_aln = Bio::AlignIO -> new( -file=>"$outdir/prot_clustalo/$og_name.prot_aln.faa", -format=>"fasta" );
-  my $write_dna_aln = Bio::AlignIO -> new( -file=>">$outdir/dna_alns/$og_name.dna_aln.fna", -format=>"fasta" );
+  #my $write_dna_aln = Bio::AlignIO -> new( -file=>">$outdir/dna_alns/$og_name.dna_aln.fna", -format=>"fasta" );
   my $prot_aln_obj = $get_prot_aln -> next_aln();
   my $dna_aln_obj = aa_to_dna_aln($prot_aln_obj, \%cds_seqs);
+  open (my $DNA, ">$outdir/dna_alns/$og_name.dna_aln.fna");
   foreach my $seq_obj ($dna_aln_obj->each_seq) {
     (my $trim = $seq_obj->display_id()) =~ s/\/*//;
-    my $new = join (" ", $trim, (join (":", $annot_hash{$trim}{hU}, $annot_hash{$trim}{category}, $annot_hash{$trim}{tax})));
-    $seq_obj->display_id($new);
+    my $new_id = join (" ", $trim, (join (":", $annot_hash{$trim}{hU}, $annot_hash{$trim}{category}, $annot_hash{$trim}{tax})));
+    print $DNA ">$new_id\n";
+    print $DNA $seq_obj->seq() . "\n";
   }
-  $write_dna_aln -> write_aln($dna_aln_obj);
+  close $DNA;
+  #$write_dna_aln -> write_aln($dna_aln_obj);
   #print STDERR "[INFO] Finished Clustalo: ".`date`."\n";
 
   ## get Ka (Dn), Ks (Ds) values
