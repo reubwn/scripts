@@ -146,7 +146,7 @@ GROUP: while (my $line = <$GROUPS>) {
   if ( (scalar(@a) > $max_seqs) or (scalar(@a) < $min_seqs) ) {
     ## print to file
     if ($annot) {
-      print $OUT join ("\t", $og_name, scalar(@a), $n_hgt, ($n_hgt/scalar(keys %cds_seqs)), "NA", "NA", "NA", "NA", "NA") . "\n";
+      print $OUT join ("\t", $og_name, scalar(@a), "NA", "NA", "NA", "NA", "NA", "NA", "NA") . "\n";
     } else {
       print $OUT join ("\t", $og_name, scalar(@a), "NA", "NA", "NA", "NA", "NA") . "\n";
     }
