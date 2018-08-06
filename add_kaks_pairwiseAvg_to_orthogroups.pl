@@ -184,7 +184,7 @@ GROUP: while (my $line = <$GROUPS>) {
   my $prot_aln_obj = $get_prot_aln -> next_aln();
   my $dna_aln_obj = aa_to_dna_aln($prot_aln_obj, \%cds_seqs);
   foreach my $seq_obj ($dna_aln_obj->each_seq) {
-    (my $trim) = $seq_obj->display_id() =~ s/\/*//;
+    (my $trim = $seq_obj->display_id()) =~ s/\/*//;
     my $new = join (" ", $trim, (join (":", $annot_hash{$trim}{hU}, $annot_hash{$trim}{category}, $annot_hash{$trim}{tax})));
     $seq_obj->display_id($new);
   }
