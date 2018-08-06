@@ -35,11 +35,15 @@ OPTIONS
 
 my ($orthogroups, $prot_path, $cds_path, $annot, $outdir, $outfile, $overwrite, $help);
 my $threads = 1;
+my $max_seqs = 100;
+my $min_seqs = 2;
 
 GetOptions (
   'i|orthogroups=s' => \$orthogroups,
   'p|proteins=s'     => \$prot_path,
   'c|cds=s'         => \$cds_path,
+  'm|max:i'       => \$max_seqs,
+  'n|min:i'       => \$min_seqs,
   't|threads:i'   => \$threads,
   'a|annot:s'       => \$annot,
   'o|outfile:s'    => \$outfile,
@@ -130,16 +134,20 @@ if ($annot) {
 
 ## open groups file
 open (my $GROUPS, $orthogroups) or die $!;
-while (my $line = <$GROUPS>) {
+GROUP: while (my $line = <$GROUPS>) {
   chomp $line;
   my @a = split (m/\s+/, $line);
   my $og_name = shift @a; $og_name =~ s/://;
   print STDERR "\r[INFO] Working on OG \#$.: $og_name"; $|=1;
 
+  ## skip groups that are too big or too small
+  next GROUP if scalar(@a) > $max_seqs;
+  next GROUP if scalar(@a) < $min_seqs;
+
   ## fetch proteins and print to temp file
   my (%protein_seqs, %cds_seqs);
   @protein_seqs{@a} = @protein_hash{@a};
-  open (my $PRO, ">clustal.pro") or die $!;
+  open (my $PRO, ">$outdir/clustal.pro") or die $!;
   foreach (keys %protein_seqs) {
     print $PRO ">$_\n" . $protein_seqs{$_}->seq() . "\n";
   }
@@ -169,7 +177,7 @@ while (my $line = <$GROUPS>) {
 
   ## run alignment
   print STDERR "[INFO] Running Clustalo: ".`date`."\n";
-  if (system ("clustalo --infile=clustal.pro --outfile=$outdir/prot_clustalo/$og_name.prot_aln.faa --force --threads=$threads") != 0) { die "[ERROR] Problem with clustalo!\n"; }
+  if (system ("clustalo --infile=$outdir/clustal.pro --outfile=$outdir/prot_clustalo/$og_name.prot_aln.faa --force --threads=$threads") != 0) { die "[ERROR] Problem with clustalo!\n"; }
   ## fetch alignment and backtranslate to nucleotides
   my $get_prot_aln = Bio::AlignIO -> new( -file=>"$outdir/prot_clustalo/$og_name.prot_aln.faa", -format=>"fasta" );
   my $write_dna_aln = Bio::AlignIO -> new( -file=>">$outdir/dna_alns/$og_name.dna_aln.fna", -format=>"fasta" );
@@ -207,7 +215,7 @@ while (my $line = <$GROUPS>) {
 close $GROUPS;
 close $OUT;
 
-system ("rm clustal*");
+system ("rm $outdir/clustal*");
 print STDERR "\n[INFO] Finished on ".`date`."\n";
 
 ######################## SUBS
