@@ -149,7 +149,12 @@ GROUP: while (my $line = <$GROUPS>) {
   @protein_seqs{@a} = @protein_hash{@a};
   open (my $PRO, ">$outdir/clustal.pro") or die $!;
   foreach (keys %protein_seqs) {
-    my $new_id = join (" ", $_, (join (":", $annot_hash{$_}{hU}, $annot_hash{$_}{category}, $annot_hash{$_}{tax})));
+    my $new_id;
+    if ($annot_hash{$_}{category}) {
+      $new_id = join (" ", $_, (join (":", $annot_hash{$_}{hU}, $annot_hash{$_}{category}, $annot_hash{$_}{tax})));
+    } else {
+      $new_id = $_;
+    }
     print $PRO ">$new_id\n" . $protein_seqs{$_}->seq() . "\n";
   }
   close $PRO;
@@ -179,7 +184,12 @@ GROUP: while (my $line = <$GROUPS>) {
   open (my $DNA, ">$outdir/dna_alns/$og_name.dna_aln.fna");
   foreach my $seq_obj ($dna_aln_obj->each_seq) {
     (my $trim = $seq_obj->display_id()) =~ s/\/*//;
-    my $new_id = join (" ", $trim, (join (":", $annot_hash{$trim}{hU}, $annot_hash{$trim}{category}, $annot_hash{$trim}{tax})));
+    my $new_id;
+    if ($annot_hash{$_}{category}) {
+      $new_id = join (" ", $trim, (join (":", $annot_hash{$trim}{hU}, $annot_hash{$trim}{category}, $annot_hash{$trim}{tax})));
+    } else {
+      $new_id = $trim;
+    }
     print $DNA ">$new_id\n" . $seq_obj->seq() . "\n";
     $n_hgt++ if $annot_hash{$trim}{category} eq "OUTGROUP"; ## count number of HGTc in OG
   }
