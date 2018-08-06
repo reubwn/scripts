@@ -189,12 +189,12 @@ GROUP: while (my $line = <$GROUPS>) {
   my $dna_aln_obj = aa_to_dna_aln($prot_aln_obj, \%cds_seqs);
 
   ## print to file
-  my $n_hgt;
+  my $n_hgt = 0;
   open (my $DNA, ">$outdir/dna_alns/$og_name.dna_aln.fna");
   foreach my $seq_obj ($dna_aln_obj->each_seq) {
     (my $trim = $seq_obj->display_id()) =~ s/\/*//;
     my $new_id;
-    if ($annot_hash{$_}{category}) {
+    if ($annot_hash{$seq_obj->display_id()}{category}) {
       $new_id = join (" ", $trim, (join (":", $annot_hash{$trim}{hU}, $annot_hash{$trim}{category}, $annot_hash{$trim}{tax})));
     } else {
       $new_id = $trim;
