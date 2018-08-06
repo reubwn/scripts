@@ -155,11 +155,11 @@ GROUP: while (my $line = <$GROUPS>) {
 
   ## get % HGT genes in OG
   my $n_hgt;
-  if ($annot) {
-    my $string = join (" ", @annot_hash{category}{keys %protein_seqs});
-    print STDERR ": $string\n";
-    $n_hgt = () = $string =~ m/OUTGROUP/g;
-  }
+  # if ($annot) {
+  #   my $string = join (" ", @annot_hash{category}{keys %protein_seqs});
+  #   print STDERR ": $string\n";
+  #   $n_hgt = () = $string =~ m/OUTGROUP/g;
+  # }
 
   ## fetch corresponding cds seqs as hash of Bio::Seq objects
   @cds_seqs{@a} = @cds_hash{@a};
@@ -183,6 +183,11 @@ GROUP: while (my $line = <$GROUPS>) {
   my $write_dna_aln = Bio::AlignIO -> new( -file=>">$outdir/dna_alns/$og_name.dna_aln.fna", -format=>"fasta" );
   my $prot_aln_obj = $get_prot_aln -> next_aln();
   my $dna_aln_obj = aa_to_dna_aln($prot_aln_obj, \%cds_seqs);
+  foreach my $seq_obj ($dna_aln_obj->each_seq) {
+    (my $trim) = $seq_obj->display_id() =~ s/\/*//;
+    my $new = join (" ", $trim, (join (":", $annot_hash{$trim}{hU}, $annot_hash{$trim}{category}, $annot_hash{$trim}{tax})));
+    $seq_obj->display_id($new);
+  }
   $write_dna_aln -> write_aln($dna_aln_obj);
   #print STDERR "[INFO] Finished Clustalo: ".`date`."\n";
 
