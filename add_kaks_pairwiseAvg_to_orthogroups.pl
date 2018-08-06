@@ -26,6 +26,7 @@ OPTIONS
   -i|--orthogroups [FILE] : Orthogroups.txt file from OrthoFinder
   -p|--protein     [FILE] : fasta file of protein sequences
   -c|--cds         [FILE] : fasta file of corresponding CDSs (nucleotide)
+  -t|--threads     [INT]  : number of clustalo aligning threads
   -a|--annot       [FILE] : annotate sequences with results from HGT analysis
   -o|--outfile     [STR]  : output filename (default: 'inputfilename.kaks.txt')
   -d|--outdir      [DIR]  : base dirname to write stuff (default: 'inputfilename_kaks')
@@ -33,11 +34,13 @@ OPTIONS
 \n";
 
 my ($orthogroups, $prot_path, $cds_path, $annot, $outdir, $outfile, $overwrite, $help);
+my $threads = 1;
 
 GetOptions (
   'i|orthogroups=s' => \$orthogroups,
   'p|proteins=s'     => \$prot_path,
   'c|cds=s'         => \$cds_path,
+  't|threads:i'   => \$threads,
   'a|annot:s'       => \$annot,
   'o|outfile:s'    => \$outfile,
   'd|outdir:s'     => \$outdir,
@@ -118,9 +121,15 @@ if ($annot) {
 ## MAIN LOOP ##
 ###############
 
+open (my $OUT, ">$outdir/$outfile") or die $!;
+if ($annot) {
+  print $OUT join ("\t", "NAME", "NUM_SEQS", "NUM_HGT", "PROP_HGT", "KA", "KS", "KA_VAR", "KS_VAR", "Z_SCORE") . "\n";
+} else {
+  print $OUT join ("\t", "NAME", "NUM_SEQS", "KA", "KS", "KA_VAR", "KS_VAR", "Z_SCORE") . "\n";
+}
+
 ## open groups file
 open (my $GROUPS, $orthogroups) or die $!;
-open (my $OUT, ">$outdir/$outfile") or die $!;
 while (my $line = <$GROUPS>) {
   chomp $line;
   my @a = split (m/\s+/, $line);
@@ -155,11 +164,11 @@ while (my $line = <$GROUPS>) {
     delete $cmp{$key};
   }
   if (%cmp) {
-    die "[ERROR] Mismatch between protein and CDS seqids - check fasta headers\n\n";
+    die "[ERROR] Mismatch between protein and CDS seqids: check fasta headers\n\n";
   }
 
   ## run alignment
-  if (system ("clustalo --infile=clustal.pro --outfile=$outdir/prot_clustalo/$og_name.prot_aln.faa --force") != 0) { die "[ERROR] Problem with clustalo!\n"; }
+  if (system ("clustalo --infile=clustal.pro --outfile=$outdir/prot_clustalo/$og_name.prot_aln.faa --force --threads=$threads") != 0) { die "[ERROR] Problem with clustalo!\n"; }
   ## fetch alignment and backtranslate to nucleotides
   my $get_prot_aln = Bio::AlignIO -> new( -file=>"$outdir/prot_clustalo/$og_name.prot_aln.faa", -format=>"fasta" );
   my $write_dna_aln = Bio::AlignIO -> new( -file=>">$outdir/dna_alns/$og_name.dna_aln.fna", -format=>"fasta" );
