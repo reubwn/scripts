@@ -201,14 +201,14 @@ while (my $line = <$GROUPS>) {
     } else {
       print $OUT join ("\t", $og_name, scalar(keys %cds_seqs), $D_n, $D_s, $D_n_var, $D_s_var, $z_score) . "\n";
     }
-  }
-  print STDERR "[INFO] Finished Ka/Ks: ".`date`."\n";
+  };
+  print STDERR "[INFO] Finished: ".`date`."\n";
 }
 close $GROUPS;
 close $OUT;
 
 system ("rm clustal*");
-print "\n[INFO] Finished on ".`date`."\n";
+print STDERR "\n[INFO] Finished on ".`date`."\n";
 
 ######################## SUBS
 
