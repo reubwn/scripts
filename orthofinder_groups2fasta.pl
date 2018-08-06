@@ -75,7 +75,7 @@ if ($annot) {
     chomp $line;
     my @F = split (m/\s+/, $line);
     $annot_hash{$F[0]}{hU} = $F[3];
-    $annot_hash{$F[0]}{AI} = $F[6];
+    $annot_hash{$F[0]}{AI} = (sprintf "%.1f", $F[6]); ## round to 1dp
     $annot_hash{$F[0]}{category} = $F[9];
     $annot_hash{$F[0]}{CHS} = $F[10];
     $annot_hash{$F[0]}{tax} = $F[11];

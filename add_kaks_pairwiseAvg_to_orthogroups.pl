@@ -111,11 +111,11 @@ if ($annot) {
   while (my $line = <$ANNOT>) {
     chomp $line;
     my @F = split (m/\s+/, $line);
-    # $annot_hash{$F[0]}{hU} = $F[3];
-    # $annot_hash{$F[0]}{AI} = $F[6];
-    $annot_hash{$F[0]} = $F[9]; ## key= geneid; val=INGROUP or OUTGROUP
-    # $annot_hash{$F[0]}{CHS} = $F[10];
-    # $annot_hash{$F[0]}{tax} = $F[11];
+    $annot_hash{$F[0]}{hU} = $F[3];
+    $annot_hash{$F[0]}{AI} = (sprintf "%.1f", $F[6]); ## round to 1dp
+    $annot_hash{$F[0]}{category} = $F[9]; ## key= geneid; val=INGROUP or OUTGROUP
+    $annot_hash{$F[0]}{CHS} = $F[10];
+    $annot_hash{$F[0]}{tax} = $F[11];
   }
   close $ANNOT;
   print STDERR "[INFO] Collected annotations for ".commify(scalar(keys %annot_hash))." genes\n";
@@ -156,7 +156,7 @@ GROUP: while (my $line = <$GROUPS>) {
   ## get % HGT genes in OG
   my $n_hgt;
   if ($annot) {
-    my $string = join (" ", @annot_hash{keys %protein_seqs});
+    my $string = join (" ", @annot_hash{category}{keys %protein_seqs});
     print STDERR ": $string\n";
     $n_hgt = () = $string =~ m/OUTGROUP/g;
   }
@@ -176,7 +176,7 @@ GROUP: while (my $line = <$GROUPS>) {
   }
 
   ## run alignment
-  print STDERR "[INFO] Running Clustalo: ".`date`."\n";
+  #print STDERR "[INFO] Running Clustalo: ".`date`."\n";
   if (system ("clustalo --infile=$outdir/clustal.pro --outfile=$outdir/prot_clustalo/$og_name.prot_aln.faa --force --threads=$threads") != 0) { die "[ERROR] Problem with clustalo!\n"; }
   ## fetch alignment and backtranslate to nucleotides
   my $get_prot_aln = Bio::AlignIO -> new( -file=>"$outdir/prot_clustalo/$og_name.prot_aln.faa", -format=>"fasta" );
@@ -184,10 +184,10 @@ GROUP: while (my $line = <$GROUPS>) {
   my $prot_aln_obj = $get_prot_aln -> next_aln();
   my $dna_aln_obj = aa_to_dna_aln($prot_aln_obj, \%cds_seqs);
   $write_dna_aln -> write_aln($dna_aln_obj);
-  print STDERR "[INFO] Finished Clustalo: ".`date`."\n";
+  #print STDERR "[INFO] Finished Clustalo: ".`date`."\n";
 
   ## get Ka (Dn), Ks (Ds) values
-  print STDERR "[INFO] Getting Ka/Ks: ".`date`."\n";
+  #print STDERR "[INFO] Getting Ka/Ks: ".`date`."\n";
   eval {
     my $stats = Bio::Align::DNAStatistics->new();
     my $result = $stats->calc_average_KaKs($dna_aln_obj, 1000);
@@ -210,7 +210,7 @@ GROUP: while (my $line = <$GROUPS>) {
       print $OUT join ("\t", $og_name, scalar(keys %cds_seqs), $D_n, $D_s, $D_n_var, $D_s_var, $z_score) . "\n";
     }
   };
-  print STDERR "[INFO] Finished: ".`date`."\n";
+  #print STDERR "[INFO] Finished: ".`date`."\n";
 }
 close $GROUPS;
 close $OUT;
