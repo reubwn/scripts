@@ -20,16 +20,18 @@ use Bio::Align::Utilities qw(aa_to_dna_aln);
 my $usage = "
 SYNOPSIS
   Calculates average pairwise Ka and Ks for all pairs of genes from an OrthoFinder Orthogroups.txt file.
-  Uses MAFFT to generate alignments, make sure MAFFT is discoverable in \$PATH.
+  Uses Clustalo to generate alignments, make sure Clustalo is discoverable in \$PATH.
 
 OPTIONS
   -i|--orthogroups [FILE] : Orthogroups.txt file from OrthoFinder
   -p|--protein     [FILE] : fasta file of protein sequences
   -c|--cds         [FILE] : fasta file of corresponding CDSs (nucleotide)
+  -m|--max         [INT]  : Maximum number of seqs in OG, skips if > (100)
+  -n|--min         [INT]  : Minimum number of seqs in OG (2)
   -t|--threads     [INT]  : number of clustalo aligning threads
   -a|--annot       [FILE] : annotate sequences with results from HGT analysis
-  -o|--outfile     [STR]  : output filename (default: 'inputfilename.kaks.txt')
-  -d|--outdir      [DIR]  : base dirname to write stuff (default: 'inputfilename_kaks')
+  -o|--outfile     [STR]  : output filename ('inputfilename.kaks.txt')
+  -d|--outdir      [DIR]  : base dirname to write stuff ('inputfilename_kaks')
   -h|--help               : print this message
 \n";
 
