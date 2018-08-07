@@ -129,9 +129,9 @@ if ($annot) {
 
 open (my $OUT, ">$outdir/$outfile") or die $!;
 if ($annot) {
-  print $OUT join ("\t", "NAME", "NUM_SEQS", "NUM_HGT", "PROP_HGT", "KA", "KS", "KA_VAR", "KS_VAR", "Z_SCORE") . "\n";
+  print $OUT join ("\t", "NAME", "NUM_SEQS", "NUM_HGT", "PROP_HGT", "KA", "KS", "OMEGA", "KA_VAR", "KS_VAR", "Z_SCORE") . "\n";
 } else {
-  print $OUT join ("\t", "NAME", "NUM_SEQS", "KA", "KS", "KA_VAR", "KS_VAR", "Z_SCORE") . "\n";
+  print $OUT join ("\t", "NAME", "NUM_SEQS", "KA", "KS", "OMEGA", "KA_VAR", "KS_VAR", "Z_SCORE") . "\n";
 }
 
 ## open groups file
