@@ -112,8 +112,8 @@ if ($annot) {
   while (my $line = <$ANNOT>) {
     chomp $line;
     my @F = split (m/\s+/, $line);
-    $annot_hash{$F[0]}{hU} = sprintf("%.1f", $F[3]) if looks_like_number($annot_hash{$F[0]}{hU});
-    $annot_hash{$F[0]}{AI} = sprintf("%.1f", $F[6]) if looks_like_number($annot_hash{$F[0]}{AI}); ## round to 1dp
+    $annot_hash{$F[0]}{hU} = sprintf("%.1f", $F[3]);
+    $annot_hash{$F[0]}{AI} = sprintf("%.1f", $F[6]); ## round to 1dp
     $annot_hash{$F[0]}{category} = $F[9]; ## key= geneid; val=INGROUP or OUTGROUP
     $annot_hash{$F[0]}{CHS} = $F[10];
     $annot_hash{$F[0]}{tax} = $F[11];
