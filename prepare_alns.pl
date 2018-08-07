@@ -176,7 +176,7 @@ GROUP: while (my $line = <$GROUPS>) {
       print $OUTP join ("\t", $protid, $annot_hash{$protid}{category}, $annot_hash{$protid}{hU}, $annot_hash{$protid}{AI}, $annot_hash{$protid}{tax});
       ## count residues
       foreach my $res (nsort @acids) {
-        my $string = $protein_seqs{$protid}->seq()
+        my $string = $protein_seqs{$protid}->seq();
         my $count = eval "\$string =~ tr/$res//";
         print $OUTP "\t$count";
       }
@@ -188,7 +188,7 @@ GROUP: while (my $line = <$GROUPS>) {
       print $OUTP join ("\t", $protid, "-","-","-","-");
       ## count residues
       foreach my $res (nsort @acids) {
-        my $string = $protein_seqs{$protid}->seq()
+        my $string = $protein_seqs{$protid}->seq();
         my $count = eval "\$string =~ tr/$res//";
         print $OUTP "\t$count";
       }
