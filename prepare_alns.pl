@@ -210,13 +210,13 @@ GROUP: while (my $line = <$GROUPS>) {
       print $OUTD join ("\t", $og_name, $dnaid, $annot_hash{$dnaid}{category}, $annot_hash{$dnaid}{hU}, $annot_hash{$dnaid}{AI}, $annot_hash{$dnaid}{tax});
       ## count GC
       my $count = $cds_seqs{$dnaid}->seq() =~ tr/GCgc//;
-      print $OUTD "\t" . sprintf("%.2f", ($count/$cds_seqs{$dnaid}->length()) . "\n";
+      print $OUTD "\t" . sprintf("%.2f", ($count/$cds_seqs{$dnaid}->length())) . "\n";
   } else {
     ## print details to $OUTD
     print $OUTD join ("\t", $og_name, $dnaid, "-","-","-","-");
     ## count GC
     my $count = $cds_seqs{$dnaid}->seq() =~ tr/GCgc//;
-    print $OUTD "\t" . sprintf("%.2f", ($count/$cds_seqs{$dnaid}->length()) . "\n";
+    print $OUTD "\t" . sprintf("%.2f", ($count/$cds_seqs{$dnaid}->length())) . "\n";
   }
 
   ## sanity check that keys in %protein_seqs are same as %cds_seqs
