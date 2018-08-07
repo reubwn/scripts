@@ -8,7 +8,8 @@ use warnings;
 use Getopt::Long;
 use Term::ANSIColor;
 use Sort::Naturally;
-use File::Path 'rmtree';
+use File::Path qw(rmtree);
+use Scalar::Util qw(looks_like_number);
 
 use Bio::SeqIO;
 use Bio::AlignIO;
@@ -111,8 +112,8 @@ if ($annot) {
   while (my $line = <$ANNOT>) {
     chomp $line;
     my @F = split (m/\s+/, $line);
-    $annot_hash{$F[0]}{hU} = $F[3];
-    $annot_hash{$F[0]}{AI} = (sprintf "%.1f", $F[6]); ## round to 1dp
+    $annot_hash{$F[0]}{hU} = sprintf("%.1f", $F[3]) if looks_like_number($annot_hash{$F[0]}{hU});
+    $annot_hash{$F[0]}{AI} = sprintf("%.1f", $F[6]) if looks_like_number($annot_hash{$F[0]}{AI}); ## round to 1dp
     $annot_hash{$F[0]}{category} = $F[9]; ## key= geneid; val=INGROUP or OUTGROUP
     $annot_hash{$F[0]}{CHS} = $F[10];
     $annot_hash{$F[0]}{tax} = $F[11];
@@ -138,12 +139,12 @@ open (my $OUTD, ">$outdir/$outfile.dna.txt") or die $!;
 open (my $OUTP, ">$outdir/$outfile.protein.txt") or die $!;
 if ($annot) {
   print $OUTG join ("\t", "NAME", "NUM_SEQS", "NUM_HGT", "PROP_HGT") . "\n";
-  print $OUTD join ("\t", "NAME", "CAT", "hU", "AI", "TAX", "GC") . "\n";
-  print $OUTP join ("\t", "NAME", "CAT", "hU", "AI", "TAX", nsort(@acids)) . "\n";
+  print $OUTD join ("\t", "NAME", "OG", "CAT", "hU", "AI", "TAX", "GC") . "\n";
+  print $OUTP join ("\t", "NAME", "OG", "CAT", "hU", "AI", "TAX", nsort(@acids)) . "\n";
 } else {
   print $OUTG join ("\t", "NAME", "NUM_SEQS") . "\n";
-  print $OUTD join ("\t", "NAME", "GC") . "\n";
-  print $OUTP join ("\t", "NAME", nsort(@acids)) . "\n";
+  print $OUTD join ("\t", "NAME", "OG", "GC") . "\n";
+  print $OUTP join ("\t", "NAME", "OG", nsort(@acids)) . "\n";
 }
 
 
@@ -173,12 +174,12 @@ GROUP: while (my $line = <$GROUPS>) {
     my $header;
     if ($annot_hash{$protid}{category}) {
       ## print details to $OUTP
-      print $OUTP join ("\t", $protid, $annot_hash{$protid}{category}, $annot_hash{$protid}{hU}, $annot_hash{$protid}{AI}, $annot_hash{$protid}{tax});
+      print $OUTP join ("\t", $protid, $og_name, $annot_hash{$protid}{category}, $annot_hash{$protid}{hU}, $annot_hash{$protid}{AI}, $annot_hash{$protid}{tax});
       ## count residues
       foreach my $res (nsort @acids) {
         my $string = $protein_seqs{$protid}->seq();
         my $count = eval "\$string =~ tr/$res//";
-        print $OUTP "\t$count";
+        print $OUTP "\t" . sprintf("%.2f", $count/length($string));
       }
       print $OUTP "\n";
       ## annotate fasta headers
@@ -190,7 +191,7 @@ GROUP: while (my $line = <$GROUPS>) {
       foreach my $res (nsort @acids) {
         my $string = $protein_seqs{$protid}->seq();
         my $count = eval "\$string =~ tr/$res//";
-        print $OUTP "\t$count";
+        print $OUTP "\t" . sprintf("%.2f", ($count/length($string)));
       }
       print $OUTP "\n";
       ## simple header
@@ -206,16 +207,16 @@ GROUP: while (my $line = <$GROUPS>) {
   foreach my $dnaid (keys %cds_seqs) {
     if ($annot_hash{$dnaid}{category}) {
       ## print details to $OUTD
-      print $OUTD join ("\t", $dnaid, $annot_hash{$dnaid}{category}, $annot_hash{$dnaid}{hU}, $annot_hash{$dnaid}{AI}, $annot_hash{$dnaid}{tax});
+      print $OUTD join ("\t", $og_name, $dnaid, $annot_hash{$dnaid}{category}, $annot_hash{$dnaid}{hU}, $annot_hash{$dnaid}{AI}, $annot_hash{$dnaid}{tax});
       ## count GC
       my $count = $cds_seqs{$dnaid}->seq() =~ tr/GCgc//;
-      print $OUTD "\t$count\n";
+      print $OUTD "\t" . sprintf("%.2f", ($count/$cds_seqs{$dnaid}->length()) . "\n";
   } else {
     ## print details to $OUTD
-    print $OUTD join ("\t", $dnaid, "-","-","-","-");
+    print $OUTD join ("\t", $og_name, $dnaid, "-","-","-","-");
     ## count GC
     my $count = $cds_seqs{$dnaid}->seq() =~ tr/GCgc//;
-    print $OUTD "\t$count\n";
+    print $OUTD "\t" . sprintf("%.2f", ($count/$cds_seqs{$dnaid}->length()) . "\n";
   }
 
   ## sanity check that keys in %protein_seqs are same as %cds_seqs
