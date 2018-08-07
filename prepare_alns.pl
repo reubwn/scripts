@@ -28,6 +28,8 @@ OPTIONS
   -n|--min         [INT]  : Minimum number of seqs in OG (2)
   -t|--threads     [INT]  : number of clustalo aligning threads
   -a|--annot       [FILE] : annotate sequences with results from HGT analysis
+  -u|--hU          [INT]  : hU threshold for defining HGTc (>30)
+  -c|--CHS         [INT]  : CHS threshold for defining HGTc (>90\%)
   -d|--outdir      [DIR]  : base dirname to write stuff ('prepare/')
   -o|--outfile     [STR]  : base filename for some simple stats ('prepare_stats')
   -x|--overwrite          : overwrite outdir and outfile
@@ -38,6 +40,8 @@ my ($orthogroups, $prot_path, $cds_path, $annot, $outdir, $outfile, $overwrite, 
 my $threads = 1;
 my $max_seqs = 100;
 my $min_seqs = 2;
+my $hU_threshold = 30;
+my $CHS_threshold = 90;
 
 GetOptions (
   'i|orthogroups=s' => \$orthogroups,
@@ -47,6 +51,8 @@ GetOptions (
   'n|min:i'       => \$min_seqs,
   't|threads:i'   => \$threads,
   'a|annot:s'       => \$annot,
+  'u|hU:i'      => \$hU_threshold,
+  'c|CHS:i'     => \$CHS_threshold,
   'o|outfile:s'    => \$outfile,
   'd|outdir:s'     => \$outdir,
   'x|overwrite'   => \$overwrite,
@@ -109,7 +115,8 @@ my %annot_hash;
 if ($annot) {
   print STDERR "[INFO] Collecting annotations from " . colored($annot, 'white on_blue') . "\n";
   open (my $ANNOT, $annot) or die $!;
-  while (my $line = <$ANNOT>) {
+  LINE: while (my $line = <$ANNOT>) {
+    next LINE if $line =~ m/^\#/;
     chomp $line;
     my @F = split (m/\s+/, $line);
     $annot_hash{$F[0]}{hU} = sprintf("%.1f", $F[3]);
@@ -139,18 +146,20 @@ open (my $OUTD, ">$outdir/$outfile.dna.txt") or die $!;
 open (my $OUTP, ">$outdir/$outfile.protein.txt") or die $!;
 if ($annot) {
   print $OUTG join ("\t", "NAME", "NUM_SEQS", "NUM_HGT", "PROP_HGT") . "\n";
-  print $OUTD join ("\t", "NAME", "OG", "CAT", "hU", "AI", "TAX", "GC") . "\n";
-  print $OUTP join ("\t", "NAME", "OG", "CAT", "hU", "AI", "TAX", nsort(@acids)) . "\n";
+  print $OUTD join ("\t", "NAME", "OG", "HGTc", "hU", "AI", "CAT", "CHS", "TAX", "GC") . "\n";
+  print $OUTP join ("\t", "NAME", "OG", "HGTc", "hU", "AI", "CAT", "CHS", "TAX", nsort(@acids)) . "\n";
 } else {
   print $OUTG join ("\t", "NAME", "NUM_SEQS") . "\n";
   print $OUTD join ("\t", "NAME", "OG", "GC") . "\n";
   print $OUTP join ("\t", "NAME", "OG", nsort(@acids)) . "\n";
 }
 
-
 ###############
 ## MAIN LOOP ##
 ###############
+
+## HGTc hash for storing HGTc gene names
+my %HGTc_hash;
 
 ## open groups file
 open (my $GROUPS, $orthogroups) or die $!;
@@ -170,53 +179,89 @@ GROUP: while (my $line = <$GROUPS>) {
   my (%protein_seqs, %cds_seqs);
   @protein_seqs{@a} = @protein_hash{@a};
   open (my $PRO, ">$outdir/clustal.pro") or die $!;
-  foreach my $protid (keys %protein_seqs) {
+  foreach my $pid (keys %protein_seqs) {
     my $header;
-    if ($annot_hash{$protid}{category}) {
-      ## print details to $OUTP
-      print $OUTP join ("\t", $protid, $og_name, $annot_hash{$protid}{category}, $annot_hash{$protid}{hU}, $annot_hash{$protid}{AI}, $annot_hash{$protid}{tax});
-      ## count residues
-      foreach my $res (nsort @acids) {
-        my $string = $protein_seqs{$protid}->seq();
-        my $count = eval "\$string =~ tr/$res//";
-        print $OUTP "\t" . sprintf("%.2f", $count/length($string));
+    ## if gene has some annotations in %annot_hash...
+    if ($annot_hash{$pid}{category}) {
+      ## if gene is HGTc (must have hU > 30 && category eq OUTGROUP with support > 90%)
+      if ( ($annot_hash{$element}{hU} > 30) and ($annot_hash{$element}{category} eq "OUTGROUP") and ($annot_hash{$element}{CHS} > 90) ) {
+        ## gene is HGTc...
+        ## print details to $OUTP
+        print $OUTP join ("\t", $pid, $og_name, "1", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax});
+        ## count residues
+        foreach my $res (nsort @acids) {
+          my $string = $protein_seqs{$pid}->seq();
+          my $count = eval "\$string =~ tr/$res//";
+          print $OUTP "\t" . sprintf("%.2f", $count/length($string));
+        }
+        print $OUTP "\n";
+        ## annotate fasta headers
+        $header = join (" ", $pid, (join (":", $annot_hash{$pid}{hU}, $annot_hash{$pid}{category}, $annot_hash{$pid}{tax})));
+        ## put $pid into %HGTc_hash
+        $HGTc_hash{$pid}++;
+
+      } else {
+        ## gene is not HGTc...
+        ## print details to $OUTP
+        print $OUTP join ("\t", $pid, $og_name, "0", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax});
+        ## count residues
+        foreach my $res (nsort @acids) {
+          my $string = $protein_seqs{$pid}->seq();
+          my $count = eval "\$string =~ tr/$res//";
+          print $OUTP "\t" . sprintf("%.2f", $count/length($string));
+        }
+        print $OUTP "\n";
+        ## annotate fasta headers
+        $header = $pid;
       }
-      print $OUTP "\n";
-      ## annotate fasta headers
-      $header = join (" ", $protid, (join (":", $annot_hash{$protid}{hU}, $annot_hash{$protid}{category}, $annot_hash{$protid}{tax})));
     } else { ## if no annotations present
+      ## gene is not HGTc...
       ## print details to $OUTP
-      print $OUTP join ("\t", $protid, "-","-","-","-");
+      print $OUTP join ("\t", $pid, $og_name, "0", "-","-","-","-","-");
       ## count residues
       foreach my $res (nsort @acids) {
-        my $string = $protein_seqs{$protid}->seq();
+        my $string = $protein_seqs{$pid}->seq();
         my $count = eval "\$string =~ tr/$res//";
         print $OUTP "\t" . sprintf("%.2f", ($count/length($string)));
       }
       print $OUTP "\n";
       ## simple header
-      $header = $protid;
+      $header = $pid;
     }
     ## print to fasta format
-    print $PRO ">$header\n" . $protein_seqs{$protid}->seq() . "\n";
+    print $PRO ">$header\n" . $protein_seqs{$pid}->seq() . "\n";
   }
   close $PRO;
 
   ## fetch corresponding cds seqs as hash of Bio::Seq objects
   @cds_seqs{@a} = @cds_hash{@a};
-  foreach my $dnaid (keys %cds_seqs) {
-    if ($annot_hash{$dnaid}{category}) {
-      ## print details to $OUTD
-      print $OUTD join ("\t", $og_name, $dnaid, $annot_hash{$dnaid}{category}, $annot_hash{$dnaid}{hU}, $annot_hash{$dnaid}{AI}, $annot_hash{$dnaid}{tax});
-      ## count GC
-      my $count = $cds_seqs{$dnaid}->seq() =~ tr/GCgc//;
-      print $OUTD "\t" . sprintf("%.2f", ($count/$cds_seqs{$dnaid}->length())) . "\n";
-  } else {
+  foreach my $gid (keys %cds_seqs) {
+    ## if gene has annotation...
+    if ($annot_hash{$gid}{category}) {
+      ## if gene is HGTc (must have hU > 30 && category eq OUTGROUP with support > 90%)
+      if ( ($annot_hash{$element}{hU} > 30) and ($annot_hash{$element}{category} eq "OUTGROUP") and ($annot_hash{$element}{CHS} > 90) ) {
+        ## gene is HGTc...
+        ## print details to $OUTD
+        print $OUTD join ("\t", $gid, $og_name, "1", $annot_hash{$gid}{hU}, $annot_hash{$gid}{AI}, $annot_hash{$gid}{category}, $annot_hash{$gid}{CHS}, $annot_hash{$gid}{tax});
+        ## count GC
+        my $GC = $cds_seqs{$gid}->seq() =~ tr/GCgc//;
+        print $OUTD "\t" . sprintf("%.2f", ($GC/$cds_seqs{$gid}->length())) . "\n";
+      } else {
+        ## gene is not HGTc...
+        ## print details to $OUTD
+        print $OUTD join ("\t", $gid, $og_name, "0", "-","-","-","-","-");
+        ## count GC
+        my $GC = $cds_seqs{$gid}->seq() =~ tr/GCgc//;
+        print $OUTD "\t" . sprintf("%.2f", ($GC/$cds_seqs{$gid}->length())) . "\n";
+      }
+    } else { ## gene does not have annotation
+    ## gene is not HGTc...
     ## print details to $OUTD
-    print $OUTD join ("\t", $og_name, $dnaid, "-","-","-","-");
+    print $OUTD join ("\t", $gid, $og_name, "0", "-","-","-","-","-");
     ## count GC
-    my $count = $cds_seqs{$dnaid}->seq() =~ tr/GCgc//;
-    print $OUTD "\t" . sprintf("%.2f", ($count/$cds_seqs{$dnaid}->length())) . "\n";
+    my $GC = $cds_seqs{$gid}->seq() =~ tr/GCgc//;
+    print $OUTD "\t" . sprintf("%.2f", ($GC/$cds_seqs{$gid}->length())) . "\n";
+    }
   }
 
   ## sanity check that keys in %protein_seqs are same as %cds_seqs
@@ -237,14 +282,12 @@ GROUP: while (my $line = <$GROUPS>) {
   my $dna_aln_obj = aa_to_dna_aln($prot_aln_obj, \%cds_seqs);
 
   ## print to file
-  my $n_hgt = 0;
   open (my $DNA, ">$outdir/dna_alns/$og_name.dna_aln.fna");
   foreach my $seq_obj ($dna_aln_obj->each_seq) {
     (my $temp = $seq_obj->display_id()) =~ s/\/*//; ##trim annoying length suffix
     my $header;
     if ($annot_hash{$temp}{category}) {
       $header = join (" ", $temp, (join (":", $annot_hash{$temp}{hU}, $annot_hash{$temp}{category}, $annot_hash{$temp}{tax})));
-      $n_hgt++ if $annot_hash{$temp}{category} eq "OUTGROUP"; ## count number of HGTc in OG
     } else {
       $header = $temp;
     }
@@ -252,14 +295,14 @@ GROUP: while (my $line = <$GROUPS>) {
   }
   close $DNA;
 
-    ## print to file
-    if ($annot) {
-      print $OUTG join ("\t", $og_name, scalar(@a), $n_hgt, ($n_hgt/scalar(@a))) . "\n";
-    } else {
-      print $OUTG join ("\t", $og_name, scalar(@a)) . "\n";
-    }
-  };
+  ## print to file
+  if ($annot) {
+    print $OUTG join ("\t", $og_name, scalar(@a), scalar(keys %HGTc_hash), (scalar(keys %HGTc_hash)/scalar(@a))) . "\n";
+  } else {
+    print $OUTG join ("\t", $og_name, scalar(@a)) . "\n";
+  }
 }
+
 close $GROUPS;
 close $OUTG;
 close $OUTP;
