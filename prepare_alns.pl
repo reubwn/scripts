@@ -58,14 +58,9 @@ GetOptions (
   'x|overwrite'   => \$overwrite,
   'h|help'        => \$help
 );
-print STDERR "I am here\n";
+
 die $usage if $help;
-print STDERR "I am here too\n";
-print STDERR "-i $orthogroups\n";
-print STDERR "-p $prot_path\n";
-print STDERR "-c $cds_path\n";
 die $usage unless ($orthogroups && $prot_path && $cds_path);
-print STDERR "I am here three\n";
 
 ## outfiles
 $outdir = "prepare" unless ($outdir);
