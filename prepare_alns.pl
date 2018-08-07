@@ -40,8 +40,8 @@ my ($orthogroups, $prot_path, $cds_path, $annot, $outdir, $outfile, $overwrite, 
 my $threads = 1;
 my $max_seqs = 100;
 my $min_seqs = 2;
-my $hU_threshold = 30;
-my $CHS_threshold = 90;
+my $hgt_threshold = 30;
+my $chs_threshold = 90;
 
 GetOptions (
   'i|orthogroups=s' => \$orthogroups,
@@ -51,12 +51,12 @@ GetOptions (
   'n|min:i'       => \$min_seqs,
   't|threads:i'   => \$threads,
   'a|annot:s'       => \$annot,
-  'u|threshold:i'      => \$hU_threshold,
-  'c|chs:i'     => \$CHS_threshold,
+  'u|threshold:i'  => \$hgt_threshold,
+  'c|chs:i'       => \$chs_threshold,
   'o|outfile:s'    => \$outfile,
   'd|outdir:s'     => \$outdir,
   'x|overwrite'   => \$overwrite,
-  'h|help'          => \$help
+  'h|help'        => \$help
 );
 
 die $usage if $help;
@@ -184,7 +184,7 @@ GROUP: while (my $line = <$GROUPS>) {
     ## if gene has some annotations in %annot_hash...
     if ($annot_hash{$pid}{category}) {
       ## if gene is HGTc (must have hU > 30 && category eq OUTGROUP with support > 90%)
-      if ( ($annot_hash{$pid}{hU} > 30) and ($annot_hash{$pid}{category} eq "OUTGROUP") and ($annot_hash{$pid}{CHS} > 90) ) {
+      if ( ($annot_hash{$pid}{hU} > $hgt_threshold) and ($annot_hash{$pid}{category} eq "OUTGROUP") and ($annot_hash{$pid}{CHS} > $chs_threshold) ) {
         ## gene is HGTc...
         ## print details to $OUTP
         print $OUTP join ("\t", $pid, $og_name, "1", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax});
@@ -239,7 +239,7 @@ GROUP: while (my $line = <$GROUPS>) {
     ## if gene has annotation...
     if ($annot_hash{$gid}{category}) {
       ## if gene is HGTc (must have hU > 30 && category eq OUTGROUP with support > 90%)
-      if ( ($annot_hash{$gid}{hU} > 30) and ($annot_hash{$gid}{category} eq "OUTGROUP") and ($annot_hash{$gid}{CHS} > 90) ) {
+      if ( ($annot_hash{$gid}{hU} > $hgt_threshold) and ($annot_hash{$gid}{category} eq "OUTGROUP") and ($annot_hash{$gid}{CHS} > $chs_threshold) ) {
         ## gene is HGTc...
         ## print details to $OUTD
         print $OUTD join ("\t", $gid, $og_name, "1", $annot_hash{$gid}{hU}, $annot_hash{$gid}{AI}, $annot_hash{$gid}{category}, $annot_hash{$gid}{CHS}, $annot_hash{$gid}{tax});
