@@ -22,10 +22,10 @@ SYNOPSIS
 
 OPTIONS
   -i|--orthogroups [FILE] : Orthogroups.txt file from OrthoFinder
-  -p|--protein     [FILE] : fasta file of protein sequences
-  -c|--cds         [FILE] : fasta file of corresponding CDSs (nucleotide)
-  -m|--max         [INT]  : Maximum number of seqs in OG, skips if > (100)
-  -n|--min         [INT]  : Minimum number of seqs in OG (2)
+  -p|--protein     [FILE] : path to protein fasta sequences
+  -c|--cds         [FILE] : path to corresponding CDS sequences
+  -m|--max         [INT]  : maximum number of seqs in OG, skips if > (100)
+  -n|--min         [INT]  : minimum number of seqs in OG (2)
   -t|--threads     [INT]  : number of clustalo aligning threads
   -a|--annot       [FILE] : annotate sequences with results from HGT analysis
   -u|--hgt         [INT]  : hU threshold for defining HGTc (>30)
@@ -59,8 +59,8 @@ GetOptions (
   'h|help'          => \$help
 );
 
-die $usage if $help;
-die $usage unless ($orthogroups && $prot_path && $cds_path);
+# die $usage if $help;
+# die $usage unless ($orthogroups && $prot_path && $cds_path);
 
 ## outfiles
 $outdir = "prepare" unless ($outdir);
