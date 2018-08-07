@@ -28,8 +28,8 @@ OPTIONS
   -n|--min         [INT]  : minimum number of seqs in OG (2)
   -t|--threads     [INT]  : number of clustalo aligning threads
   -a|--annot       [FILE] : annotate sequences with results from HGT analysis
-  -u|--thr         [INT]  : hU threshold for defining HGTc (>30)
-  -c|--chs         [INT]  : CHS threshold for defining HGTc (>90\%)
+  -u|--hU          [INT]  : hU threshold for defining HGTc (>30)
+  -s|--CHS         [INT]  : CHS threshold for defining HGTc (>90\%)
   -d|--outdir      [DIR]  : base dirname to write stuff ('prepare/')
   -o|--outfile     [STR]  : base filename for some simple stats ('prepare_stats')
   -x|--overwrite          : overwrite outdir and outfile
@@ -51,8 +51,8 @@ GetOptions (
   'n|min:i'       => \$min_seqs,
   't|threads:i'   => \$threads,
   'a|annot:s'       => \$annot,
-  'u|threshold:i'  => \$hgt_threshold,
-  'c|chs:i'       => \$chs_threshold,
+  'u|hU_threshold:i'  => \$hgt_threshold,
+  's|CHS_threshold:i' => \$chs_threshold,
   'o|outfile:s'    => \$outfile,
   'd|outdir:s'     => \$outdir,
   'x|overwrite'   => \$overwrite,
