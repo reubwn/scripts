@@ -184,7 +184,7 @@ GROUP: while (my $line = <$GROUPS>) {
     ## if gene has some annotations in %annot_hash...
     if ($annot_hash{$pid}{category}) {
       ## if gene is HGTc (must have hU > 30 && category eq OUTGROUP with support > 90%)
-      if ( ($annot_hash{$element}{hU} > 30) and ($annot_hash{$element}{category} eq "OUTGROUP") and ($annot_hash{$element}{CHS} > 90) ) {
+      if ( ($annot_hash{$pid}{hU} > 30) and ($annot_hash{$pid}{category} eq "OUTGROUP") and ($annot_hash{$pid}{CHS} > 90) ) {
         ## gene is HGTc...
         ## print details to $OUTP
         print $OUTP join ("\t", $pid, $og_name, "1", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax});
@@ -239,7 +239,7 @@ GROUP: while (my $line = <$GROUPS>) {
     ## if gene has annotation...
     if ($annot_hash{$gid}{category}) {
       ## if gene is HGTc (must have hU > 30 && category eq OUTGROUP with support > 90%)
-      if ( ($annot_hash{$element}{hU} > 30) and ($annot_hash{$element}{category} eq "OUTGROUP") and ($annot_hash{$element}{CHS} > 90) ) {
+      if ( ($annot_hash{$gid}{hU} > 30) and ($annot_hash{$gid}{category} eq "OUTGROUP") and ($annot_hash{$gid}{CHS} > 90) ) {
         ## gene is HGTc...
         ## print details to $OUTD
         print $OUTD join ("\t", $gid, $og_name, "1", $annot_hash{$gid}{hU}, $annot_hash{$gid}{AI}, $annot_hash{$gid}{category}, $annot_hash{$gid}{CHS}, $annot_hash{$gid}{tax});
