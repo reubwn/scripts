@@ -176,8 +176,9 @@ GROUP: while (my $line = <$GROUPS>) {
       print $OUTP join ("\t", $protid, $annot_hash{$protid}{category}, $annot_hash{$protid}{hU}, $annot_hash{$protid}{AI}, $annot_hash{$protid}{tax});
       ## count residues
       foreach my $res (nsort @acids) {
-        my $count = $protein_seqs{$protid}->seq() =~ tr/$res//;
-        print $OUTP "$count\t";
+        my $string = $protein_seqs{$protid}->seq()
+        my $count = eval "\$string =~ tr/$res//";
+        print $OUTP "\t$count";
       }
       print $OUTP "\n";
       ## annotate fasta headers
@@ -187,8 +188,9 @@ GROUP: while (my $line = <$GROUPS>) {
       print $OUTP join ("\t", $protid, "-","-","-","-");
       ## count residues
       foreach my $res (nsort @acids) {
-        my $count = $protein_seqs{$protid}->seq() =~ tr/$res//;
-        print $OUTP "$count\t";
+        my $string = $protein_seqs{$protid}->seq()
+        my $count = eval "\$string =~ tr/$res//";
+        print $OUTP "\t$count";
       }
       print $OUTP "\n";
       ## simple header
@@ -207,13 +209,13 @@ GROUP: while (my $line = <$GROUPS>) {
       print $OUTD join ("\t", $dnaid, $annot_hash{$dnaid}{category}, $annot_hash{$dnaid}{hU}, $annot_hash{$dnaid}{AI}, $annot_hash{$dnaid}{tax});
       ## count GC
       my $count = $cds_seqs{$dnaid}->seq() =~ tr/GCgc//;
-      print $OUTD "$count\n";
+      print $OUTD "\t$count\n";
   } else {
     ## print details to $OUTD
     print $OUTD join ("\t", $dnaid, "-","-","-","-");
     ## count GC
     my $count = $cds_seqs{$dnaid}->seq() =~ tr/GCgc//;
-    print $OUTD "$count\n";
+    print $OUTD "\t$count\n";
   }
 
   ## sanity check that keys in %protein_seqs are same as %cds_seqs
