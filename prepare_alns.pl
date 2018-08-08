@@ -9,7 +9,6 @@ use Getopt::Long;
 use Term::ANSIColor;
 use Sort::Naturally;
 use File::Path qw(rmtree);
-use Scalar::Util qw(looks_like_number);
 
 use Bio::SeqIO;
 use Bio::AlignIO;
@@ -145,13 +144,13 @@ open (my $OUTG, ">$outdir/$outfile.groups.txt") or die $!;
 open (my $OUTD, ">$outdir/$outfile.dna.txt") or die $!;
 open (my $OUTP, ">$outdir/$outfile.protein.txt") or die $!;
 if ($annot) {
-  print $OUTG join ("\t", "NAME", "NUM_SEQS", "NUM_HGT", "PROP_HGT") . "\n";
-  print $OUTD join ("\t", "NAME", "OG", "HGTc", "hU", "AI", "CAT", "CHS", "TAX", "GC") . "\n";
-  print $OUTP join ("\t", "NAME", "OG", "HGTc", "hU", "AI", "CAT", "CHS", "TAX", nsort(@acids)) . "\n";
+  print $OUTG join ("\t", "#NAME", "NUM_SEQS", "NUM_HGT", "PROP_HGT") . "\n";
+  print $OUTD join ("\t", "#NAME", "OG", "HGTc", "hU", "AI", "BBSUMCAT", "CHS", "TAX", "GC") . "\n";
+  print $OUTP join ("\t", "#NAME", "OG", "HGTc", "hU", "AI", "BBSUMCAT", "CHS", "TAX", nsort(@acids)) . "\n";
 } else {
-  print $OUTG join ("\t", "NAME", "NUM_SEQS") . "\n";
-  print $OUTD join ("\t", "NAME", "OG", "GC") . "\n";
-  print $OUTP join ("\t", "NAME", "OG", nsort(@acids)) . "\n";
+  print $OUTG join ("\t", "#NAME", "NUM_SEQS") . "\n";
+  print $OUTD join ("\t", "#NAME", "OG", "GC") . "\n";
+  print $OUTP join ("\t", "#NAME", "OG", nsort(@acids)) . "\n";
 }
 
 ###############
@@ -171,10 +170,6 @@ GROUP: while (my $line = <$GROUPS>) {
   my $og_name = shift @a; $og_name =~ s/://;
   print STDERR "\r[INFO] Working on OG \#$.: $og_name"; $|=1;
 
-  ## skip groups that are too big or too small
-  next GROUP if scalar(@a) > $max_seqs;
-  next GROUP if scalar(@a) < $min_seqs;
-
   ## fetch proteins, analyse and print to temp file
   my (%protein_seqs, %cds_seqs);
   @protein_seqs{@a} = @protein_hash{@a};
@@ -185,14 +180,14 @@ GROUP: while (my $line = <$GROUPS>) {
     if ($annot_hash{$pid}{category}) {
       ## if gene is HGTc (must have hU > 30 && category eq OUTGROUP with support > 90%)
       if ( ($annot_hash{$pid}{hU} > $hgt_threshold) and ($annot_hash{$pid}{category} eq "OUTGROUP") and ($annot_hash{$pid}{CHS} > $chs_threshold) ) {
-        ## gene is HGTc...
+        ## gene is HGTc... gets '1'
         ## print details to $OUTP
         print $OUTP join ("\t", $pid, $og_name, "1", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax});
         ## count residues
         foreach my $res (nsort @acids) {
           my $string = $protein_seqs{$pid}->seq();
           my $count = eval "\$string =~ tr/$res//";
-          print $OUTP "\t" . sprintf("%.2f", $count/length($string));
+          print $OUTP "\t" . sprintf("%.4f", $count/length($string));
         }
         print $OUTP "\n";
         ## annotate fasta headers
@@ -201,28 +196,28 @@ GROUP: while (my $line = <$GROUPS>) {
         $HGTc_hash{$pid}++;
 
       } else {
-        ## gene is not HGTc...
+        ## gene is not HGTc... gets '0' but still has some annotations
         ## print details to $OUTP
         print $OUTP join ("\t", $pid, $og_name, "0", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax});
         ## count residues
         foreach my $res (nsort @acids) {
           my $string = $protein_seqs{$pid}->seq();
           my $count = eval "\$string =~ tr/$res//";
-          print $OUTP "\t" . sprintf("%.2f", $count/length($string));
+          print $OUTP "\t" . sprintf("%.4f", $count/length($string));
         }
         print $OUTP "\n";
         ## annotate fasta headers
         $header = $pid;
       }
     } else { ## if no annotations present
-      ## gene is not HGTc...
+      ## gene is not HGTc... gets '0' with no annotations
       ## print details to $OUTP
-      print $OUTP join ("\t", $pid, $og_name, "0", "-","-","-","-","-");
+      print $OUTP join ("\t", $pid, $og_name, "0", "NA","NA","NA","NA","NA");
       ## count residues
       foreach my $res (nsort @acids) {
         my $string = $protein_seqs{$pid}->seq();
         my $count = eval "\$string =~ tr/$res//";
-        print $OUTP "\t" . sprintf("%.2f", ($count/length($string)));
+        print $OUTP "\t" . sprintf("%.4f", ($count/length($string)));
       }
       print $OUTP "\n";
       ## simple header
@@ -240,27 +235,27 @@ GROUP: while (my $line = <$GROUPS>) {
     if ($annot_hash{$gid}{category}) {
       ## if gene is HGTc (must have hU > 30 && category eq OUTGROUP with support > 90%)
       if ( ($annot_hash{$gid}{hU} > $hgt_threshold) and ($annot_hash{$gid}{category} eq "OUTGROUP") and ($annot_hash{$gid}{CHS} > $chs_threshold) ) {
-        ## gene is HGTc...
+        ## gene is HGTc... gets '1'
         ## print details to $OUTD
         print $OUTD join ("\t", $gid, $og_name, "1", $annot_hash{$gid}{hU}, $annot_hash{$gid}{AI}, $annot_hash{$gid}{category}, $annot_hash{$gid}{CHS}, $annot_hash{$gid}{tax});
         ## count GC
         my $GC = $cds_seqs{$gid}->seq() =~ tr/GCgc//;
-        print $OUTD "\t" . sprintf("%.2f", ($GC/$cds_seqs{$gid}->length())) . "\n";
+        print $OUTD "\t" . sprintf("%.4f", ($GC/$cds_seqs{$gid}->length())) . "\n";
       } else {
-        ## gene is not HGTc...
+        ## gene is not HGTc... gets '0'
         ## print details to $OUTD
-        print $OUTD join ("\t", $gid, $og_name, "0", "-","-","-","-","-");
+        print $OUTD join ("\t", $gid, $og_name, "0", $annot_hash{$gid}{hU}, $annot_hash{$gid}{AI}, $annot_hash{$gid}{category}, $annot_hash{$gid}{CHS}, $annot_hash{$gid}{tax});
         ## count GC
         my $GC = $cds_seqs{$gid}->seq() =~ tr/GCgc//;
-        print $OUTD "\t" . sprintf("%.2f", ($GC/$cds_seqs{$gid}->length())) . "\n";
+        print $OUTD "\t" . sprintf("%.4f", ($GC/$cds_seqs{$gid}->length())) . "\n";
       }
-    } else { ## gene does not have annotation
-    ## gene is not HGTc...
+    } else { ## if no annotations present
+    ## gene is not HGTc... gets '0'
     ## print details to $OUTD
-    print $OUTD join ("\t", $gid, $og_name, "0", "-","-","-","-","-");
+    print $OUTD join ("\t", $gid, $og_name, "0", "NA","NA","NA","NA","NA");
     ## count GC
     my $GC = $cds_seqs{$gid}->seq() =~ tr/GCgc//;
-    print $OUTD "\t" . sprintf("%.2f", ($GC/$cds_seqs{$gid}->length())) . "\n";
+    print $OUTD "\t" . sprintf("%.4f", ($GC/$cds_seqs{$gid}->length())) . "\n";
     }
   }
 
@@ -273,6 +268,17 @@ GROUP: while (my $line = <$GROUPS>) {
   if (%cmp) {
     die "[ERROR] Mismatch between protein and CDS seqids: check fasta headers\n\n";
   }
+
+  ## print some group stats to file
+  if ($annot) {
+    print $OUTG join ("\t", $og_name, scalar(@a), scalar(keys %HGTc_hash), (scalar(keys %HGTc_hash)/scalar(@a))) . "\n";
+  } else {
+    print $OUTG join ("\t", $og_name, scalar(@a)) . "\n";
+  }
+
+  ## at this point skip groups that are too big or too small
+  next GROUP if scalar(@a) > $max_seqs;
+  next GROUP if scalar(@a) < $min_seqs;
 
   ## run alignment
   if (system ("clustalo --infile=$outdir/clustal.pro --outfile=$outdir/prot_clustalo/$og_name.prot_aln.faa --force --threads=$threads") != 0) { die "[ERROR] Problem with clustalo!\n"; }
@@ -294,13 +300,6 @@ GROUP: while (my $line = <$GROUPS>) {
     print $DNA ">$header\n" . $seq_obj->seq() . "\n";
   }
   close $DNA;
-
-  ## print to file
-  if ($annot) {
-    print $OUTG join ("\t", $og_name, scalar(@a), scalar(keys %HGTc_hash), (scalar(keys %HGTc_hash)/scalar(@a))) . "\n";
-  } else {
-    print $OUTG join ("\t", $og_name, scalar(@a)) . "\n";
-  }
 }
 
 close $GROUPS;
