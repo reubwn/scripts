@@ -84,6 +84,8 @@ if (-e $outdir && -d $outdir) {
   mkdir "$outdir/dna_alns";
 }
 
+print STDERR "[INFO] Skipping alignment steps (-z)\n" if ($noalns);
+
 ## parse proteins and CDSs
 my (%protein_hash, %cds_hash);
 my @prot_fastas = @{ get_fasta($prot_path) };
