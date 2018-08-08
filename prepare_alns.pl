@@ -68,6 +68,7 @@ $outfile = "prepare_stats" unless ($outfile);
 ## make $outdir
 if (-e $outdir && -d $outdir) {
   if ($overwrite) {
+    print STDERR "[INFO] Dir $outdir already exists, removing...\n";
     rmtree([ "$outdir" ]);
     mkdir $outdir;
     mkdir "$outdir/prot_clustalo";
