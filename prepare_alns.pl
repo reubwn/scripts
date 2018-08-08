@@ -68,13 +68,13 @@ $outfile = "prepare_stats" unless ($outfile);
 ## make $outdir
 if (-e $outdir && -d $outdir) {
   if ($overwrite) {
-    print STDERR "[INFO] Dir $outdir already exists, removing...\n";
+    print STDERR "[INFO] Dir '$outdir' already exists, removing...\n";
     rmtree([ "$outdir" ]);
     mkdir $outdir;
     mkdir "$outdir/prot_clustalo";
     mkdir "$outdir/dna_alns";
   } else {
-    die "[ERROR] Dir $outdir already exists. Specify '-x' to overwrite it.\n";
+    die "[ERROR] Dir '$outdir' already exists. Specify '-x' to overwrite it.\n";
   }
 } else {
   mkdir $outdir;
@@ -87,23 +87,23 @@ my (%protein_hash, %cds_hash);
 my @prot_fastas = @{ get_fasta($prot_path) };
 print STDERR "[INFO] Reading protein sequences from:\n";
 foreach (@prot_fastas){
-  print STDERR "> " . colored($_, 'white on_blue') . "\n";
+  print STDERR "\r> " . colored($_, 'white on_blue'); $|=1;
   my $in = Bio::SeqIO->new ( -file => $_, -format => "fasta" );
   while ( my $seq_obj = $in->next_seq() ){
     $protein_hash{($seq_obj->display_id())} = $seq_obj;
   }
 }
-print STDERR "[INFO] Read in ".commify(scalar(keys %protein_hash))." protein sequences\n";
+print STDERR "\n[INFO] Read in ".commify(scalar(keys %protein_hash))." protein sequences\n";
 my @cds_fastas = @{ get_fasta($cds_path) };
 print STDERR "[INFO] Reading CDS sequences from:\n";
 foreach (@cds_fastas){
-  print STDERR "> " . colored($_, 'white on_blue') . "\n";
+  print STDERR "\r> " . colored($_, 'white on_blue'); $|=1;
   my $in = Bio::SeqIO->new ( -file => $_, -format => "fasta" );
   while ( my $seq_obj = $in->next_seq() ){
     $cds_hash{($seq_obj->display_id())} = $seq_obj;
   }
 }
-print STDERR "[INFO] Read in ".commify(scalar(keys %cds_hash))." CDS sequences\n\n";
+print STDERR "\n[INFO] Read in ".commify(scalar(keys %cds_hash))." CDS sequences\n\n";
 
 ## check there are some sequences
 if ((scalar(keys %protein_hash) == 0) || (scalar(keys %cds_hash) == 0)) {
