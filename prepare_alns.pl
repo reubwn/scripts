@@ -93,7 +93,7 @@ foreach (@prot_fastas){
     $protein_hash{($seq_obj->display_id())} = $seq_obj;
   }
 }
-print STDERR "\n[INFO] Read in ".commify(scalar(keys %protein_hash))." protein sequences\n";
+print STDERR "\n[INFO] Read in ".commify(scalar(keys %protein_hash))." protein sequences (".@prot_fastas." files)\n";
 my @cds_fastas = @{ get_fasta($cds_path) };
 print STDERR "[INFO] Reading CDS sequences from:\n";
 foreach (@cds_fastas){
@@ -103,7 +103,7 @@ foreach (@cds_fastas){
     $cds_hash{($seq_obj->display_id())} = $seq_obj;
   }
 }
-print STDERR "\n[INFO] Read in ".commify(scalar(keys %cds_hash))." CDS sequences\n\n";
+print STDERR "\n[INFO] Read in ".commify(scalar(keys %cds_hash))." CDS sequences (".@cds_fastas." files)\n";
 
 ## check there are some sequences
 if ((scalar(keys %protein_hash) == 0) || (scalar(keys %cds_hash) == 0)) {
@@ -113,7 +113,7 @@ if ((scalar(keys %protein_hash) == 0) || (scalar(keys %cds_hash) == 0)) {
 ## parse $annot if present
 my %annot_hash;
 if ($annot) {
-  print STDERR "[INFO] Collecting annotations from " . colored($annot, 'white on_blue') . "\n";
+  print STDERR "[INFO] Collecting annotations from \n>" . colored($annot, 'white on_blue') . "\n";
   open (my $ANNOT, $annot) or die $!;
   LINE: while (my $line = <$ANNOT>) {
     next LINE if $line =~ m/^\#/;
@@ -185,7 +185,7 @@ GROUP: while (my $line = <$GROUPS>) {
         ## gene is HGTc... gets '1'
         ## print details to $OUTP
         # print $OUTP join ("\t", $pid, $og_name, "1", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax});
-        push (@to_print, join ("\t", $pid, $og_name, "1", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax}));
+        push (@to_print, join ("\t", $pid, $og_name, "1", "temp", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax}));
         ## count residues
         foreach my $res (nsort @acids) {
           my $string = $protein_seqs{$pid}->seq();
@@ -194,7 +194,7 @@ GROUP: while (my $line = <$GROUPS>) {
           push (@to_print, "\t" . sprintf("%.4f", $count/length($string)));
         }
         # print $OUTP "\n";
-        # push (@to_print, "\n");
+        push (@to_print, "\n");
         ## annotate fasta headers
         $header = join (" ", $pid, (join (":", $annot_hash{$pid}{hU}, $annot_hash{$pid}{category}, $annot_hash{$pid}{tax})));
         ## put $pid into %HGTc_hash
@@ -206,7 +206,7 @@ GROUP: while (my $line = <$GROUPS>) {
         ## gene is not HGTc... gets '0' but still has some annotations
         ## print details to $OUTP
         # print $OUTP join ("\t", $pid, $og_name, "0", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax});
-        push (@to_print, join ("\t", $pid, $og_name, "0", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax}));
+        push (@to_print, join ("\t", $pid, $og_name, "0", "temp", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax}));
         ## count residues
         foreach my $res (nsort @acids) {
           my $string = $protein_seqs{$pid}->seq();
@@ -215,7 +215,7 @@ GROUP: while (my $line = <$GROUPS>) {
           push (@to_print, "\t" . sprintf("%.4f", $count/length($string)));
         }
         # print $OUTP "\n";
-        # push (@to_print, "\n");
+        push (@to_print, "\n");
         ## annotate fasta headers
         $header = $pid;
       }
@@ -223,7 +223,7 @@ GROUP: while (my $line = <$GROUPS>) {
       ## gene is not HGTc... gets '0' with no annotations
       ## print details to $OUTP
       # print $OUTP join ("\t", $pid, $og_name, "0", "NA","NA","NA","NA","NA");
-      push (@to_print, join ("\t", $pid, $og_name, "0", "NA","NA","NA","NA","NA"));
+      push (@to_print, join ("\t", $pid, $og_name, "0", "temp", "NA","NA","NA","NA","NA"));
       ## count residues
       foreach my $res (nsort @acids) {
         my $string = $protein_seqs{$pid}->seq();
@@ -232,7 +232,7 @@ GROUP: while (my $line = <$GROUPS>) {
         push (@to_print, "\t" . sprintf("%.4f", ($count/length($string))));
       }
       # print $OUTP "\n";
-      # push (@to_print, "\n");
+      push (@to_print, "\n");
       ## simple header
       $header = $pid;
     }
@@ -242,7 +242,7 @@ GROUP: while (my $line = <$GROUPS>) {
   close $PRO;
   ## print everything to $OUTP:
   my $prop_hgt = sprintf("%.4f", ($n_hgt/scalar(@a))); ## calc proportion of HGTc per OG
-  eval "s/temp/$prop_hgt\\n/ for \@to_print"; ## switch into array @to_print
+  eval "s/temp/$prop_hgt/ for \@to_print"; ## switch into array @to_print
   print $OUTP "@to_print" . "\n";
 
   ## fetch corresponding cds seqs as hash of Bio::Seq objects
