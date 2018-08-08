@@ -175,7 +175,7 @@ GROUP: while (my $line = <$GROUPS>) {
 
   ## fetch proteins, analyse and print to temp file
   my $n_hgt = 0;
-  my (%protein_seqs, %cds_seqs, @to_print);
+  my (%protein_seqs, %cds_seqs, @OUTP_print, @OUTD_print);
   @protein_seqs{@a} = @protein_hash{@a};
   open (my $PRO, ">$outdir/clustal.pro") or die $!;
   foreach my $pid (keys %protein_seqs) {
@@ -185,18 +185,14 @@ GROUP: while (my $line = <$GROUPS>) {
       ## if gene is HGTc (must have hU > 30 && category eq OUTGROUP with support > 90%)
       if ( ($annot_hash{$pid}{hU} > $hgt_threshold) and ($annot_hash{$pid}{category} eq "OUTGROUP") and ($annot_hash{$pid}{CHS} > $chs_threshold) ) {
         ## gene is HGTc... gets '1'
-        ## print details to $OUTP
-        # print $OUTP join ("\t", $pid, $og_name, "1", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax});
-        push (@to_print, join ("\t", $pid, $og_name, scalar(@a), "num", "prop", "1", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax}));
+        push (@OUTP_print, join ("\t", $pid, $og_name, scalar(@a), "num", "prop", "1", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax}));
         ## count residues
         foreach my $res (nsort @acids) {
           my $string = $protein_seqs{$pid}->seq();
           my $count = eval "\$string =~ tr/$res//";
-          # print $OUTP "\t" . sprintf("%.4f", $count/length($string));
-          push (@to_print, "\t" . sprintf("%.4f", $count/length($string)));
+          push (@OUTP_print, "\t" . sprintf("%.4f", $count/length($string)));
         }
-        # print $OUTP "\n";
-        push (@to_print, "\n");
+        push (@OUTP_print, "\n");
         ## annotate fasta headers
         $header = join (" ", $pid, (join (":", $annot_hash{$pid}{hU}, $annot_hash{$pid}{category}, $annot_hash{$pid}{tax})));
         ## put $pid into %HGTc_hash
@@ -206,35 +202,27 @@ GROUP: while (my $line = <$GROUPS>) {
 
       } else {
         ## gene is not HGTc... gets '0' but still has some annotations
-        ## print details to $OUTP
-        # print $OUTP join ("\t", $pid, $og_name, "0", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax});
-        push (@to_print, join ("\t", $pid, $og_name, scalar(@a), "num", "prop", "0", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax}));
+        push (@OUTP_print, join ("\t", $pid, $og_name, scalar(@a), "num", "prop", "0", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax}));
         ## count residues
         foreach my $res (nsort @acids) {
           my $string = $protein_seqs{$pid}->seq();
           my $count = eval "\$string =~ tr/$res//";
-          # print $OUTP "\t" . sprintf("%.4f", $count/length($string));
-          push (@to_print, "\t" . sprintf("%.4f", $count/length($string)));
+          push (@OUTP_print, "\t" . sprintf("%.4f", $count/length($string)));
         }
-        # print $OUTP "\n";
-        push (@to_print, "\n");
+        push (@OUTP_print, "\n");
         ## annotate fasta headers
         $header = $pid;
       }
     } else { ## if no annotations present
       ## gene is not HGTc... gets '0' with no annotations
-      ## print details to $OUTP
-      # print $OUTP join ("\t", $pid, $og_name, "0", "NA","NA","NA","NA","NA");
-      push (@to_print, join ("\t", $pid, $og_name, scalar(@a), "num", "prop", "0", "NA","NA","NA","NA","NA"));
+      push (@OUTP_print, join ("\t", $pid, $og_name, scalar(@a), "num", "prop", "0", "NA","NA","NA","NA","NA"));
       ## count residues
       foreach my $res (nsort @acids) {
         my $string = $protein_seqs{$pid}->seq();
         my $count = eval "\$string =~ tr/$res//";
-        # print $OUTP "\t" . sprintf("%.4f", ($count/length($string)));
-        push (@to_print, "\t" . sprintf("%.4f", ($count/length($string))));
+        push (@OUTP_print, "\t" . sprintf("%.4f", ($count/length($string))));
       }
-      # print $OUTP "\n";
-      push (@to_print, "\n");
+      push (@OUTP_print, "\n");
       ## simple header
       $header = $pid;
     }
@@ -244,10 +232,9 @@ GROUP: while (my $line = <$GROUPS>) {
   close $PRO;
   ## print everything to $OUTP:
   my $prop_hgt = sprintf("%.4f", ($n_hgt/scalar(@a))); ## calc proportion of HGTc per OG
-  eval "s/num/$n_hgt/ for \@to_print"; ## switch into array @to_print
-  eval "s/prop/$prop_hgt/ for \@to_print"; ## switch into array @to_print
-  print $OUTP join ("", @to_print);
-  # my $string = "@to_print"; printf $OUTP "%s", trim($string);
+  eval "s/num/$n_hgt/ for \@OUTP_print"; ## switch into array @OUTP_print
+  eval "s/prop/$prop_hgt/ for \@OUTP_print"; ## switch into array @OUTP_print
+  print $OUTP join ("", @OUTP_print);
 
   ## fetch corresponding cds seqs as hash of Bio::Seq objects
   @cds_seqs{@a} = @cds_hash{@a};
@@ -257,28 +244,29 @@ GROUP: while (my $line = <$GROUPS>) {
       ## if gene is HGTc (must have hU > 30 && category eq OUTGROUP with support > 90%)
       if ( ($annot_hash{$gid}{hU} > $hgt_threshold) and ($annot_hash{$gid}{category} eq "OUTGROUP") and ($annot_hash{$gid}{CHS} > $chs_threshold) ) {
         ## gene is HGTc... gets '1'
-        ## print details to $OUTD
-        print $OUTD join ("\t", $gid, $og_name, "1", $annot_hash{$gid}{hU}, $annot_hash{$gid}{AI}, $annot_hash{$gid}{category}, $annot_hash{$gid}{CHS}, $annot_hash{$gid}{tax});
+        push (@OUTD_print, join ("\t", $gid, $og_name, scalar(@a), "num", "prop", "1", $annot_hash{$gid}{hU}, $annot_hash{$gid}{AI}, $annot_hash{$gid}{category}, $annot_hash{$gid}{CHS}, $annot_hash{$gid}{tax}));
         ## count GC
         my $GC = $cds_seqs{$gid}->seq() =~ tr/GCgc//;
-        print $OUTD "\t" . sprintf("%.4f", ($GC/$cds_seqs{$gid}->length())) . "\n";
+        push (@OUTD_print, "\t" . sprintf("%.4f", ($GC/$cds_seqs{$gid}->length())) . "\n");
       } else {
         ## gene is not HGTc... gets '0'
-        ## print details to $OUTD
-        print $OUTD join ("\t", $gid, $og_name, "0", $annot_hash{$gid}{hU}, $annot_hash{$gid}{AI}, $annot_hash{$gid}{category}, $annot_hash{$gid}{CHS}, $annot_hash{$gid}{tax});
+        push (@OUTD_print, join ("\t", $gid, $og_name, scalar(@a), "num", "prop", "0", $annot_hash{$gid}{hU}, $annot_hash{$gid}{AI}, $annot_hash{$gid}{category}, $annot_hash{$gid}{CHS}, $annot_hash{$gid}{tax}));
         ## count GC
         my $GC = $cds_seqs{$gid}->seq() =~ tr/GCgc//;
-        print $OUTD "\t" . sprintf("%.4f", ($GC/$cds_seqs{$gid}->length())) . "\n";
+        push (@OUTD_print, "\t" . sprintf("%.4f", ($GC/$cds_seqs{$gid}->length())) . "\n");
       }
     } else { ## if no annotations present
     ## gene is not HGTc... gets '0'
-    ## print details to $OUTD
-    print $OUTD join ("\t", $gid, $og_name, "0", "NA","NA","NA","NA","NA");
+    push (@OUTD_print, join ("\t", $gid, $og_name, scalar(@a), "num", "prop", "0", "NA","NA","NA","NA","NA"));
     ## count GC
     my $GC = $cds_seqs{$gid}->seq() =~ tr/GCgc//;
-    print $OUTD "\t" . sprintf("%.4f", ($GC/$cds_seqs{$gid}->length())) . "\n";
+    push (@OUTD_print, "\t" . sprintf("%.4f", ($GC/$cds_seqs{$gid}->length())) . "\n");
     }
   }
+  ## print everything to $OUTP:
+  eval "s/num/$n_hgt/ for \@OUTD_print"; ## switch into array @OUTP_print
+  eval "s/prop/$prop_hgt/ for \@OUTD_print"; ## switch into array @OUTP_print
+  print $OUTD join ("", @OUTD_print);
 
   ## sanity check that keys in %protein_seqs are same as %cds_seqs
   my %cmp = map { $_ => 1 } keys %protein_seqs;
@@ -292,7 +280,7 @@ GROUP: while (my $line = <$GROUPS>) {
 
   ## print some group stats to file
   if ($annot) {
-    print $OUTG join ("\t", $og_name, scalar(@a), scalar(keys %HGTc_hash), (scalar(keys %HGTc_hash)/scalar(@a))) . "\n";
+    print $OUTG join ("\t", $og_name, scalar(@a), $n_hgt, $prop_hgt) . "\n";
   } else {
     print $OUTG join ("\t", $og_name, scalar(@a)) . "\n";
   }
