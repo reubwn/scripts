@@ -243,7 +243,7 @@ GROUP: while (my $line = <$GROUPS>) {
   ## print everything to $OUTP:
   my $prop_hgt = sprintf("%.4f", ($n_hgt/scalar(@a))); ## calc proportion of HGTc per OG
   eval "s/temp/$prop_hgt/ for \@to_print"; ## switch into array @to_print
-  print $OUTP "@to_print" . "\n";
+  printf $OUTP "<%s>\n", trim("@to_print");
 
   ## fetch corresponding cds seqs as hash of Bio::Seq objects
   @cds_seqs{@a} = @cds_hash{@a};
@@ -342,6 +342,12 @@ sub get_fasta {
     die "[ERROR] Nothing with extension fasta|faa|fna|fa found in $path\n";
   }
   return \@files;
+}
+
+sub trim {
+  my $s = shift;
+  $s =~ s/^\s+|\s+$//g;
+  return $s;
 }
 
 __END__
