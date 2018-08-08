@@ -25,17 +25,18 @@ OPTIONS
   -c|--cds         [FILE] : path to corresponding CDS sequences
   -m|--max         [INT]  : maximum number of seqs in OG, skips if > (100)
   -n|--min         [INT]  : minimum number of seqs in OG (2)
-  -t|--threads     [INT]  : number of clustalo aligning threads
   -a|--annot       [FILE] : annotate sequences with results from HGT analysis
   -u|--hU          [INT]  : hU threshold for defining HGTc (>30)
   -s|--CHS         [INT]  : CHS threshold for defining HGTc (>90\%)
+  -t|--threads     [INT]  : number of clustalo aligning threads
   -d|--outdir      [DIR]  : base dirname to write stuff ('prepare/')
   -o|--outfile     [STR]  : base filename for some simple stats ('prepare_stats')
   -x|--overwrite          : overwrite outdir and outfile
+  -z|--noalns             : skip alignment altogether (just generate stats)
   -h|--help               : print this message
 \n";
 
-my ($orthogroups, $prot_path, $cds_path, $annot, $outdir, $outfile, $overwrite, $help);
+my ($orthogroups, $prot_path, $cds_path, $annot, $outdir, $outfile, $overwrite, $noalns, $help);
 my $threads = 1;
 my $max_seqs = 100;
 my $min_seqs = 2;
@@ -55,6 +56,7 @@ GetOptions (
   'o|outfile:s'    => \$outfile,
   'd|outdir:s'     => \$outdir,
   'x|overwrite'   => \$overwrite,
+  'z|noalns'     => \$noalns,
   'h|help'        => \$help
 );
 
@@ -113,7 +115,7 @@ if ((scalar(keys %protein_hash) == 0) || (scalar(keys %cds_hash) == 0)) {
 ## parse $annot if present
 my %annot_hash;
 if ($annot) {
-  print STDERR "[INFO] Collecting annotations from \n>" . colored($annot, 'white on_blue') . "\n";
+  print STDERR "[INFO] Collecting annotations from \n> " . colored($annot, 'white on_blue') . "\n";
   open (my $ANNOT, $annot) or die $!;
   LINE: while (my $line = <$ANNOT>) {
     next LINE if $line =~ m/^\#/;
@@ -146,8 +148,8 @@ open (my $OUTD, ">$outdir/$outfile.dna.txt") or die $!;
 open (my $OUTP, ">$outdir/$outfile.protein.txt") or die $!;
 if ($annot) {
   print $OUTG join ("\t", "#NAME", "NUM_SEQS", "NUM_HGTc", "PROP_HGTc") . "\n";
-  print $OUTD join ("\t", "#NAME", "OG", "IS_HGTc", "PROP_HGTc", "hU", "AI", "BBSUMCAT", "CHS", "TAX", "GC") . "\n";
-  print $OUTP join ("\t", "#NAME", "OG", "IS_HGTc", "PROP_HGTc", "hU", "AI", "BBSUMCAT", "CHS", "TAX", nsort(@acids)) . "\n";
+  print $OUTD join ("\t", "#NAME", "OG", "OG_SIZE", "NUM_HGTc", "PROP_HGTc", "GENE_IS_HGTc", "hU", "AI", "BBSUMCAT", "CHS", "TAX", "GC") . "\n";
+  print $OUTP join ("\t", "#NAME", "OG", "OG_SIZE", "NUM_HGTc", "PROP_HGTc", "GENE_IS_HGTc", "hU", "AI", "BBSUMCAT", "CHS", "TAX", nsort(@acids)) . "\n";
 } else {
   print $OUTG join ("\t", "#NAME", "NUM_SEQS") . "\n";
   print $OUTD join ("\t", "#NAME", "OG", "GC") . "\n";
@@ -185,7 +187,7 @@ GROUP: while (my $line = <$GROUPS>) {
         ## gene is HGTc... gets '1'
         ## print details to $OUTP
         # print $OUTP join ("\t", $pid, $og_name, "1", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax});
-        push (@to_print, join ("\t", $pid, $og_name, "1", "temp", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax}));
+        push (@to_print, join ("\t", $pid, $og_name, scalar(@a), "num", "prop", "1", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax}));
         ## count residues
         foreach my $res (nsort @acids) {
           my $string = $protein_seqs{$pid}->seq();
@@ -206,7 +208,7 @@ GROUP: while (my $line = <$GROUPS>) {
         ## gene is not HGTc... gets '0' but still has some annotations
         ## print details to $OUTP
         # print $OUTP join ("\t", $pid, $og_name, "0", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax});
-        push (@to_print, join ("\t", $pid, $og_name, "0", "temp", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax}));
+        push (@to_print, join ("\t", $pid, $og_name, scalar(@a), "num", "prop", "0", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax}));
         ## count residues
         foreach my $res (nsort @acids) {
           my $string = $protein_seqs{$pid}->seq();
@@ -223,7 +225,7 @@ GROUP: while (my $line = <$GROUPS>) {
       ## gene is not HGTc... gets '0' with no annotations
       ## print details to $OUTP
       # print $OUTP join ("\t", $pid, $og_name, "0", "NA","NA","NA","NA","NA");
-      push (@to_print, join ("\t", $pid, $og_name, "0", "temp", "NA","NA","NA","NA","NA"));
+      push (@to_print, join ("\t", $pid, $og_name, scalar(@a), "num", "prop", "0", "NA","NA","NA","NA","NA"));
       ## count residues
       foreach my $res (nsort @acids) {
         my $string = $protein_seqs{$pid}->seq();
@@ -242,7 +244,8 @@ GROUP: while (my $line = <$GROUPS>) {
   close $PRO;
   ## print everything to $OUTP:
   my $prop_hgt = sprintf("%.4f", ($n_hgt/scalar(@a))); ## calc proportion of HGTc per OG
-  eval "s/temp/$prop_hgt/ for \@to_print"; ## switch into array @to_print
+  eval "s/num/$n_hgt/ for \@to_print"; ## switch into array @to_print
+  eval "s/prop/$prop_hgt/ for \@to_print"; ## switch into array @to_print
   print $OUTP join ("", @to_print);
   # my $string = "@to_print"; printf $OUTP "%s", trim($string);
 
@@ -297,6 +300,7 @@ GROUP: while (my $line = <$GROUPS>) {
   ## at this point skip groups that are too big or too small
   next GROUP if scalar(@a) > $max_seqs;
   next GROUP if scalar(@a) < $min_seqs;
+  next GROUP if ($noalns); ## skip alignment altogether
 
   ## run alignment
   if (system ("clustalo --infile=$outdir/clustal.pro --outfile=$outdir/prot_clustalo/$og_name.prot_aln.faa --force --threads=$threads") != 0) { die "[ERROR] Problem with clustalo!\n"; }
