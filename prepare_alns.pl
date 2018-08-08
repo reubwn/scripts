@@ -146,8 +146,8 @@ open (my $OUTD, ">$outdir/$outfile.dna.txt") or die $!;
 open (my $OUTP, ">$outdir/$outfile.protein.txt") or die $!;
 if ($annot) {
   print $OUTG join ("\t", "#NAME", "NUM_SEQS", "NUM_HGTc", "PROP_HGTc") . "\n";
-  print $OUTD join ("\t", "#NAME", "OG", "IS_HGTc", "hU", "AI", "BBSUMCAT", "CHS", "TAX", "GC", "PROP_HGTc") . "\n";
-  print $OUTP join ("\t", "#NAME", "OG", "IS_HGTc", "hU", "AI", "BBSUMCAT", "CHS", "TAX", nsort(@acids), "PROP_HGTc") . "\n";
+  print $OUTD join ("\t", "#NAME", "OG", "IS_HGTc", "PROP_HGTc", "hU", "AI", "BBSUMCAT", "CHS", "TAX", "GC") . "\n";
+  print $OUTP join ("\t", "#NAME", "OG", "IS_HGTc", "PROP_HGTc", "hU", "AI", "BBSUMCAT", "CHS", "TAX", nsort(@acids)) . "\n";
 } else {
   print $OUTG join ("\t", "#NAME", "NUM_SEQS") . "\n";
   print $OUTD join ("\t", "#NAME", "OG", "GC") . "\n";
@@ -241,7 +241,9 @@ GROUP: while (my $line = <$GROUPS>) {
   }
   close $PRO;
   ## print everything to $OUTP:
-  print $OUTP "@to_print" . (sprintf("%.4f", ($n_hgt/scalar(@a)))) . "\n";
+  my $prop_hgt = sprintf("%.4f", ($n_hgt/scalar(@a))); ## calc proportion of HGTc per OG
+  eval "s/temp/$prop_hgt\\n/ for \@to_print"; ## switch into array @to_print
+  print $OUTP "@to_print" . "\n";
 
   ## fetch corresponding cds seqs as hash of Bio::Seq objects
   @cds_seqs{@a} = @cds_hash{@a};
