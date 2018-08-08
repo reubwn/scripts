@@ -68,13 +68,13 @@ $outfile = "prepare_stats" unless ($outfile);
 ## make $outdir
 if (-e $outdir && -d $outdir) {
   if ($overwrite) {
-    print STDERR "[INFO] Dir '$outdir' already exists, removing...\n";
+    print STDERR "[INFO] Dir '$outdir/' already exists, removing...\n";
     rmtree([ "$outdir" ]);
     mkdir $outdir;
     mkdir "$outdir/prot_clustalo";
     mkdir "$outdir/dna_alns";
   } else {
-    die "[ERROR] Dir '$outdir' already exists. Specify '-x' to overwrite it.\n";
+    die "[ERROR] Dir '$outdir/' already exists. Specify '-x' to overwrite it.\n";
   }
 } else {
   mkdir $outdir;
