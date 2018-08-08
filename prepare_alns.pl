@@ -145,9 +145,9 @@ open (my $OUTG, ">$outdir/$outfile.groups.txt") or die $!;
 open (my $OUTD, ">$outdir/$outfile.dna.txt") or die $!;
 open (my $OUTP, ">$outdir/$outfile.protein.txt") or die $!;
 if ($annot) {
-  print $OUTG join ("\t", "#NAME", "NUM_SEQS", "NUM_HGT", "PROP_HGT") . "\n";
-  print $OUTD join ("\t", "#NAME", "OG", "HGTc", "hU", "AI", "BBSUMCAT", "CHS", "TAX", "GC") . "\n";
-  print $OUTP join ("\t", "#NAME", "OG", "HGTc", "hU", "AI", "BBSUMCAT", "CHS", "TAX", nsort(@acids)) . "\n";
+  print $OUTG join ("\t", "#NAME", "NUM_SEQS", "NUM_HGTc", "PROP_HGTc") . "\n";
+  print $OUTD join ("\t", "#NAME", "OG", "IS_HGTc", "hU", "AI", "BBSUMCAT", "CHS", "TAX", "GC", "PROP_HGTc") . "\n";
+  print $OUTP join ("\t", "#NAME", "OG", "IS_HGTc", "hU", "AI", "BBSUMCAT", "CHS", "TAX", nsort(@acids), "PROP_HGTc") . "\n";
 } else {
   print $OUTG join ("\t", "#NAME", "NUM_SEQS") . "\n";
   print $OUTD join ("\t", "#NAME", "OG", "GC") . "\n";
@@ -172,7 +172,8 @@ GROUP: while (my $line = <$GROUPS>) {
   print STDERR "\r[INFO] Working on OG \#$.: $og_name"; $|=1;
 
   ## fetch proteins, analyse and print to temp file
-  my (%protein_seqs, %cds_seqs);
+  my $n_hgt = 0;
+  my (%protein_seqs, %cds_seqs, @to_print);
   @protein_seqs{@a} = @protein_hash{@a};
   open (my $PRO, ">$outdir/clustal.pro") or die $!;
   foreach my $pid (keys %protein_seqs) {
@@ -183,44 +184,55 @@ GROUP: while (my $line = <$GROUPS>) {
       if ( ($annot_hash{$pid}{hU} > $hgt_threshold) and ($annot_hash{$pid}{category} eq "OUTGROUP") and ($annot_hash{$pid}{CHS} > $chs_threshold) ) {
         ## gene is HGTc... gets '1'
         ## print details to $OUTP
-        print $OUTP join ("\t", $pid, $og_name, "1", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax});
+        # print $OUTP join ("\t", $pid, $og_name, "1", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax});
+        push (@to_print, join ("\t", $pid, $og_name, "1", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax}));
         ## count residues
         foreach my $res (nsort @acids) {
           my $string = $protein_seqs{$pid}->seq();
           my $count = eval "\$string =~ tr/$res//";
-          print $OUTP "\t" . sprintf("%.4f", $count/length($string));
+          # print $OUTP "\t" . sprintf("%.4f", $count/length($string));
+          push (@to_print, "\t" . sprintf("%.4f", $count/length($string)));
         }
-        print $OUTP "\n";
+        # print $OUTP "\n";
+        # push (@to_print, "\n");
         ## annotate fasta headers
         $header = join (" ", $pid, (join (":", $annot_hash{$pid}{hU}, $annot_hash{$pid}{category}, $annot_hash{$pid}{tax})));
         ## put $pid into %HGTc_hash
         $HGTc_hash{$pid}++;
+        ## count NUM_HGTc per OG
+        $n_hgt++;
 
       } else {
         ## gene is not HGTc... gets '0' but still has some annotations
         ## print details to $OUTP
-        print $OUTP join ("\t", $pid, $og_name, "0", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax});
+        # print $OUTP join ("\t", $pid, $og_name, "0", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax});
+        push (@to_print, join ("\t", $pid, $og_name, "0", $annot_hash{$pid}{hU}, $annot_hash{$pid}{AI}, $annot_hash{$pid}{category}, $annot_hash{$pid}{CHS}, $annot_hash{$pid}{tax}));
         ## count residues
         foreach my $res (nsort @acids) {
           my $string = $protein_seqs{$pid}->seq();
           my $count = eval "\$string =~ tr/$res//";
-          print $OUTP "\t" . sprintf("%.4f", $count/length($string));
+          # print $OUTP "\t" . sprintf("%.4f", $count/length($string));
+          push (@to_print, "\t" . sprintf("%.4f", $count/length($string)));
         }
-        print $OUTP "\n";
+        # print $OUTP "\n";
+        # push (@to_print, "\n");
         ## annotate fasta headers
         $header = $pid;
       }
     } else { ## if no annotations present
       ## gene is not HGTc... gets '0' with no annotations
       ## print details to $OUTP
-      print $OUTP join ("\t", $pid, $og_name, "0", "NA","NA","NA","NA","NA");
+      # print $OUTP join ("\t", $pid, $og_name, "0", "NA","NA","NA","NA","NA");
+      push (@to_print, join ("\t", $pid, $og_name, "0", "NA","NA","NA","NA","NA"));
       ## count residues
       foreach my $res (nsort @acids) {
         my $string = $protein_seqs{$pid}->seq();
         my $count = eval "\$string =~ tr/$res//";
-        print $OUTP "\t" . sprintf("%.4f", ($count/length($string)));
+        # print $OUTP "\t" . sprintf("%.4f", ($count/length($string)));
+        push (@to_print, "\t" . sprintf("%.4f", ($count/length($string))));
       }
-      print $OUTP "\n";
+      # print $OUTP "\n";
+      # push (@to_print, "\n");
       ## simple header
       $header = $pid;
     }
@@ -228,6 +240,8 @@ GROUP: while (my $line = <$GROUPS>) {
     print $PRO ">$header\n" . $protein_seqs{$pid}->seq() . "\n";
   }
   close $PRO;
+  ## print everything to $OUTP:
+  print $OUTP "@to_print" . (sprintf("%.4f", ($n_hgt/scalar(@a)))) . "\n";
 
   ## fetch corresponding cds seqs as hash of Bio::Seq objects
   @cds_seqs{@a} = @cds_hash{@a};
