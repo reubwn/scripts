@@ -243,7 +243,8 @@ GROUP: while (my $line = <$GROUPS>) {
   ## print everything to $OUTP:
   my $prop_hgt = sprintf("%.4f", ($n_hgt/scalar(@a))); ## calc proportion of HGTc per OG
   eval "s/temp/$prop_hgt/ for \@to_print"; ## switch into array @to_print
-  my $string = "@to_print"; printf $OUTP "%s", trim($string);
+  print $OUTP join ("", @to_print);
+  # my $string = "@to_print"; printf $OUTP "%s", trim($string);
 
   ## fetch corresponding cds seqs as hash of Bio::Seq objects
   @cds_seqs{@a} = @cds_hash{@a};
