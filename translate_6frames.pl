@@ -25,6 +25,9 @@ OPTIONS:
   -h|--help         : prints this help message
 \n\n";
 
+## other args
+my ($fasta,$help);
+
 GetOptions (
   'f|fasta=s'       => \$fasta,
   'h|help'          => \$help,
