@@ -12,7 +12,7 @@ use Getopt::Long;
 
 my $usage = "
 translate_6frames.pl
-=============
+====================
 
 Translates a genome fasta into all 6 forward and reverse coding frames, e.g. for
 a 'BLASTX-like' analysis using HMMER.
