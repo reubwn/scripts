@@ -22,7 +22,7 @@ for my $i (0 .. $#ARGV){
 	my $in;
 	if ($ARGV[$i] eq "-"){
 		$in  = Bio::SeqIO->new( -fh => \*STDIN, -format => "fasta" );
-	} elsif ($ARGV[$i] =~ m/*gz$/) {
+	} elsif ($ARGV[$i] =~ m/gz$/) {
     open (my $zcat, "zcat $ARGV[$i] |") or die $!;
     $in  = Bio::SeqIO->new( -fh => $zcat, -format => "fasta" );
   } else {
