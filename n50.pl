@@ -20,10 +20,13 @@ for my $i (0 .. $#ARGV){
 	my ($tot,$num200,$num500,$num1kb,$num10kb,$ass_N50,$ass_N90,$ass_L50,$ass_L90,$nns,$soft,$gc,$nonATGCN,$atgc) = (0,0,0,0,0,0,0,0,0,0,0,0,0,0);
 
 	my $in;
-	if ($ARGV[0] eq "-"){
-		$in  = Bio::SeqIO->new( -fh => \*STDIN, -format => 'fasta' );
-	} else {
-		$in  = Bio::SeqIO->new( -file => $ARGV[$i], -format => 'fasta' );
+	if ($ARGV[$i] eq "-"){
+		$in  = Bio::SeqIO->new( -fh => \*STDIN, -format => "fasta" );
+	} elsif ($ARGV[$i] =~ m/*gz$/) {
+    open (my $zcat, "zcat $ARGV[$i] |") or die $!;
+    $in  = Bio::SeqIO->new( -fh => $zcat, -format => "fasta" );
+  } else {
+		$in  = Bio::SeqIO->new( -file => $ARGV[$i], -format => "fasta" );
 	}
 	while (	my $seq = $in->next_seq() ){
 		push (@scaff_lengths, $seq->length());
