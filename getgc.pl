@@ -34,8 +34,10 @@ my $in = Bio::SeqIO -> new ( -file => $fasta, -format => 'fasta' );
 while ( my $seq_obj = $in -> next_seq() ) {
   ## count G+C (inc soft masked gc)
   my $gc_count = $seq_obj->seq() =~ tr/GCgc//;
+
+  ## TEXT can be multiple columns if specified with "A\tB"
   if ($text) {
-    print STDOUT join ("\t", $seq_obj->display_id, ($gc_count/$seq_obj->length()), $text ) . "\n";
+    print STDOUT join ("\t", $seq_obj->display_id, ($gc_count/$seq_obj->length()), "$text" ) . "\n";
   } else {
     print STDOUT join ("\t", $seq_obj->display_id, ($gc_count/$seq_obj->length()) ) . "\n";
   }
