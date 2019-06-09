@@ -15,7 +15,7 @@ SYNOPSIS:
 
 OPTIONS:
   -f|--fasta [FILE]   : fasta file [required]
-  -t|--text  [STRING] : add TEXT as extra columns in output
+  -t|--text  [STRING] : add TEXT as extra columns in output (can be comma delim)
   -h|--help           : prints this help message
 \n";
 
@@ -37,7 +37,8 @@ while ( my $seq_obj = $in -> next_seq() ) {
 
   ## TEXT can be multiple columns if specified with "A\tB"
   if ($text) {
-    print STDOUT join ("\t", $seq_obj->display_id, ($gc_count/$seq_obj->length()), "$text" ) . "\n";
+    my @cols = split (m/,/, $text);
+    print STDOUT join ("\t", $seq_obj->display_id, ($gc_count/$seq_obj->length()), @cols ) . "\n";
   } else {
     print STDOUT join ("\t", $seq_obj->display_id, ($gc_count/$seq_obj->length()) ) . "\n";
   }
