@@ -67,6 +67,12 @@ print STDERR "[INFO] Additional fastaqual_select.pl parameters: '$par_select'\n"
 ## run hmmsearch
 `hmmsearch -o $prefix.hmmsearch.$evalue.out --tblout $prefix.hmmsearch.$evalue.tblout --noali -E $evalue $par_search $query $db`;
 
+## check results and die if none
+my $result = `grep -v "#" $prefix.hmmsearch.$evalue.tblout`;
+unless ($result) {
+  die "[INFO] No matches found! Stopping here\n";
+}
+
 ## get hits to faa
 `awk '{print \$1}' $prefix.hmmsearch.$evalue.tblout | fastaqual_select.pl -f $db -i - $par_select > $prefix.hmmsearch.$evalue.out.faa`;
 
