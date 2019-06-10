@@ -10,7 +10,7 @@ use Getopt::Long;
 
 my $usage = "
 SYNOPSIS:
-  Strips trailing asterisks (stop codons; "*") from protein sequences
+  Strips trailing asterisks (stop codons; '*') from protein sequences
   Also removes sequences with internal stop codons
 
 OPTIONS:
@@ -25,7 +25,10 @@ GetOptions (
   'f|fasta=s'     => \$fasta,
   'i|internal:s'  => \$internal,
   'h|help'        => \$help
-)
+);
+
+die $usage if $help;
+die $usage unless ($fasta);
 
 my (%stripped,%removed);
 
