@@ -40,14 +40,14 @@ while (my $seq_obj = $in->next_seq()) {
     if ($seq_string =~ m/\*/) { ## also has internal stop codon
       $removed{$seq_obj->display_id()}++; ## dont print it
     } else {
-      print STDOUT $seq_obj->display_id() . "\n" . $seq_string . "\n";
+      print STDOUT ">" . $seq_obj->display_id() . "\n" . $seq_string . "\n";
       $stripped{$seq_obj->display_id()}++;
     }
 
   } elsif ($seq_string =~ m/\*/) { ## stop codon is internal; don't print
     $removed{$seq_obj->display_id()}++; ## dont print it
   } else {
-    print STDOUT $seq_obj->display_id() . "\n" . $seq_obj->seq() . "\n";
+    print STDOUT ">" . $seq_obj->display_id() . "\n" . $seq_string . "\n";
   }
 }
 
