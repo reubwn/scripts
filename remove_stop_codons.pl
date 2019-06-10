@@ -34,12 +34,18 @@ my (%stripped,%removed);
 
 my $in = Bio::SeqIO -> new ( -file => $fasta, -format => 'fasta' );
 while (my $seq_obj = $in->next_seq()) {
-  if ($seq_obj->seq() =~ m/\*$/) { ## stop codon is terminal
-    (my $seq_string = $seq_obj->seq()) =~ s/\*$//;
-    print STDOUT $seq_obj->display_id() . "\n" . $seq_string . "\n";
-    $stripped{$seq_obj->display_id()}++;
-  } elsif ($seq_obj->seq() =~ m/\*/) { ## stop codon is internal; don't print
-    $removed{$seq_obj->display_id()}++;
+  my $seq_string = $seq_obj->seq();
+  if ($seq_string =~ m/\*$/) { ## has terminal stop codon
+    $seq_string =~ s/\*$//; ## remove it
+    if ($seq_string =~ m/\*/) { ## also has internal stop codon
+      $removed{$seq_obj->display_id()}++; ## dont print it
+    } else {
+      print STDOUT $seq_obj->display_id() . "\n" . $seq_string . "\n";
+      $stripped{$seq_obj->display_id()}++;
+    }
+
+  } elsif ($seq_string =~ m/\*/) { ## stop codon is internal; don't print
+    $removed{$seq_obj->display_id()}++; ## dont print it
   } else {
     print STDOUT $seq_obj->display_id() . "\n" . $seq_obj->seq() . "\n";
   }
