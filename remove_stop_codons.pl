@@ -39,7 +39,7 @@ my (%stripped, %removed);
 
 my $in;
 if ($fasta =~ m/gz$/) { ## read from gzip
-  $in = Bio::SeqIO -> new ( -file => "zcat $fasta |", -format => 'fasta' );
+  $in = Bio::SeqIO -> new ( -file => 'gunzip -c $fasta |', -format => 'fasta' );
 } else {
   $in = Bio::SeqIO -> new ( -file => $fasta, -format => 'fasta' );
 }
