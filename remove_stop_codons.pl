@@ -19,7 +19,7 @@ OPTIONS:
   -h|--help         : prints this help message
 \n";
 
-my ($fasta,$internal,$help);
+my ($fasta,$stop,$help);
 
 GetOptions (
   'f|fasta=s'     => \$fasta,
