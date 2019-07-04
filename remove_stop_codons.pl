@@ -30,7 +30,7 @@ GetOptions (
 die $usage if $help;
 die $usage unless ($fasta);
 
-my $search_string = quotemeta (\Q$stop\E)
+my $search_string = quotemeta (\Q$stop\E);
 
 my (%stripped,%removed);
 
