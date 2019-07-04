@@ -45,6 +45,10 @@ if ($fasta =~ m/gz$/) { ## read from gzip
 }
 
 if ($inplace) { ## do in-place replacement of file
+  print STDERR "[INFO] Doing in-place file replacement (backup saved to $fasta.bak)\n";
+  ## save a backup
+  `cp $fasta $fasta.bak`;
+
   open (my $TMP, ">$fasta.tmp") or die $!;
   while (my $seq_obj = $in->next_seq()) {
     my $seq_string = $seq_obj->seq();
@@ -64,7 +68,7 @@ if ($inplace) { ## do in-place replacement of file
     }
   }
   ## do the replacement
-  `mv $fasta $fasta.bak && mv $fasta.tmp $fasta`;
+  `mv $fasta.tmp $fasta`;
 
 } else { ## print to STDOUT
   while (my $seq_obj = $in->next_seq()) {
