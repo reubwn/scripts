@@ -92,7 +92,7 @@ ALN: foreach my $aln_file (@aln_files) {
     }
     my $dna_aln = aa_to_dna_aln($prot_aln, \%cds_seqs);
     my $dna_aln_filename = (basename ($aln_file, ".fa")) . "_dna.fa";
-    my $write_dna_aln = Bio::AlignIO -> new( -file => ">$outdir/$dna_aln_filename", -format => 'fasta' -verbose => -1 );
+    my $write_dna_aln = Bio::AlignIO -> new( -file => ">$outdir/$dna_aln_filename", -format => 'fasta', -verbose => -1 );
     $write_dna_aln -> write_aln($dna_aln);
   }
 }
