@@ -33,13 +33,13 @@ GetOptions (
   'd|dna=s'     => \$dna_path,
   'm|max:i'     => \$max_seqs,
   'n|min:i'     => \$min_seqs,
-  'd|outdir:s'  => \$outdir,
+  'o|outdir:s'  => \$outdir,
   'x|overwrite' => \$overwrite,
   'h|help'      => \$help
 );
 
 die $usage if ( $help );
-# die $usage unless ( $aa_path && $dna_path );
+die $usage unless ( $aa_path && $dna_path );
 
 ## parse CDSs
 my %cds_hash;
