@@ -39,7 +39,7 @@ GetOptions (
 );
 
 die $usage if ( $help );
-die $usage unless ( $aa_path && $dna_path );
+# die $usage unless ( $aa_path && $dna_path );
 
 ## parse CDSs
 my %cds_hash;
