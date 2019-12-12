@@ -51,4 +51,4 @@ foreach my $file (@files) {
   }
 }
 print STDERR "[INFO] Fetched ".commify(scalar(keys %cds_hash))." CDS seqs from ".commify(scalar(@files))." files in $dna_path\n";
-die "[ERROR] No sequences found in $proteinfile or $cdsfile!\n" if ((scalar(keys %protein_hash) == 0) || (scalar(keys %cds_hash) == 0));
+die "[ERROR] No sequences found in $dna_path!\n" if ( scalar(keys %cds_hash) == 0 );
