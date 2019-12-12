@@ -46,6 +46,9 @@ GetOptions (
 die $usage if ( $help );
 die $usage unless ( $aa_path && $dna_path );
 
+$aa_path =~ s/\/$//;
+$dna_path =~ s/\/$//;
+
 if ( -d $outdir ) {
   if ( $overwrite ) {
     `rm -r $outdir`;
@@ -97,7 +100,7 @@ ALN: foreach my $aln_file (@aln_files) {
   }
 }
 
-print STDOUT "\nFinished! " . `date`;
+print STDOUT "\n[INFO] Finished! " . `date`;
 
 ######################## SUBS
 
