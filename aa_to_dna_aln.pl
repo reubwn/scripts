@@ -73,7 +73,7 @@ foreach my $dna_file (@dna_files) {
 if ( scalar(keys %cds_hash) == 0 ) {
   die "[ERROR] No sequences found in $dna_path!\n";
 } else {
-  print STDOUT "[INFO] Fetched ".commify(scalar(keys %cds_hash))." CDS seqs from ".commify(scalar(@dna_files))." files in $dna_path\n";
+  print STDOUT "[INFO] Fetched ".commify(scalar(keys %cds_hash))." CDS seqs from ".commify(scalar(@dna_files))." files in $dna_path/\n";
 }
 
 ## cycle thru alignments
