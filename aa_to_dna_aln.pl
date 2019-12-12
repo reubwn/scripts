@@ -17,6 +17,7 @@ SYNOPSIS
 OPTIONS [*required]
   -a|--aa    *[PATH] : path to dir of aa alignments (fasta format)
   -d|--dna   *[PATH] : path to dir of unaligned dna sequences (fasta format)
+  -e|--ext    [STR]  : filename extension to glob from dna path ('fasta')
   -m|--max    [INT]  : maximum number of seqs in aa alignment, skips if > (100)
   -n|--min    [INT]  : minimum number of seqs in aa alignment (2)
   -o|--outdir [DIR]  : base dirname to write stuff ('aa_to_dna_aln_results/')
@@ -25,12 +26,14 @@ OPTIONS [*required]
 \n";
 
 my ($aa_path, $dna_path, $outdir, $overwrite, $help);
+my $extension = "fasta";
 my $max_seqs = 100;
 my $min_seqs = 2;
 
 GetOptions (
   'a|aa=s'      => \$aa_path,
   'd|dna=s'     => \$dna_path,
+  'e|ext:s'     => \$extension,
   'm|max:i'     => \$max_seqs,
   'n|min:i'     => \$min_seqs,
   'o|outdir:s'  => \$outdir,
@@ -43,7 +46,8 @@ die $usage unless ( $aa_path && $dna_path );
 
 ## parse CDSs
 my %cds_hash;
-my @files = glob ("$dna_path/*.fna");
+my @files = glob ("$dna_path/*.$extension");
+print STDERR "[INFO] Reading files from $dna_path/\*.$extension...\n";
 foreach my $file (@files) {
   my $in = Bio::SeqIO->new( -file => $file, -format => 'fasta' );
   while (my $seq = $in->next_seq() ) {
@@ -52,3 +56,13 @@ foreach my $file (@files) {
 }
 print STDERR "[INFO] Fetched ".commify(scalar(keys %cds_hash))." CDS seqs from ".commify(scalar(@files))." files in $dna_path\n";
 die "[ERROR] No sequences found in $dna_path!\n" if ( scalar(keys %cds_hash) == 0 );
+
+######################## SUBS
+
+sub commify {
+  my $text = reverse $_[0];
+  $text =~ s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/g;
+  return scalar reverse $text;
+}
+
+__END__
