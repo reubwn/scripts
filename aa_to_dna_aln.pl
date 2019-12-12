@@ -68,6 +68,11 @@ foreach my $aln_file (@aln_files) {
   ## fetch alignment and backtranslate to nucleotides
   my $get_prot_aln = Bio::AlignIO -> new( -file => $aln_file, -format => 'fasta' );
   my $prot_aln = $get_prot_aln -> next_aln();
+  my %cds_seqs;
+  foreach my $seq ( $prot_aln->each_seq() ) {
+    $cds_seqs{$seq->display_id()} = Bio::Seq->new( -display_id => $seq->display_id(), -seq => $cds_hash{$seq->display_id()} );
+  }
+  foreach ($prot_aln -> display_id)
   my $dna_aln = aa_to_dna_aln($prot_aln, \%cds_seqs);
   my $dna_aln_filename = (basename ($aln_file, ".fa")) . "_dna.fa";
   my $write_dna_aln = Bio::AlignIO -> new( -file => ">$dna_aln_filename", -format => 'fasta' );
