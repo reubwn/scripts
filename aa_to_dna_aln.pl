@@ -97,7 +97,7 @@ ALN: foreach my $aln_file (@aln_files) {
   }
 }
 
-print STDOUT "\nFinished" . `date`;
+print STDOUT "\nFinished! " . `date`;
 
 ######################## SUBS
 
