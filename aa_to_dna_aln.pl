@@ -24,8 +24,7 @@ OPTIONS [*required]
   -h|--help          : print this message
 \n";
 
-my ($aa_path, $dna_path, $outdir, $help);
-my $threads = 1;
+my ($aa_path, $dna_path, $outdir, $overwrite, $help);
 my $max_seqs = 100;
 my $min_seqs = 2;
 
