@@ -26,8 +26,9 @@ OPTIONS [*required]
   -h|--help          : print this message
 \n";
 
-my ($aa_path, $dna_path, $outdir, $overwrite, $help);
+my ($aa_path, $dna_path, $overwrite, $help);
 my $extension = "fasta";
+my $outdir = "aa_to_dna_aln_results";
 my $max_seqs = 100;
 my $min_seqs = 2;
 
@@ -44,6 +45,17 @@ GetOptions (
 
 die $usage if ( $help );
 die $usage unless ( $aa_path && $dna_path );
+
+if ( -d $outdir ) {
+  if ( $overwrite ) {
+    `rm -r $outdir`;
+    `mkdir $outdir`;
+  } else {
+    die "[ERROR] Dir $outdir already exists and overwrite set to false\n";
+  }
+} else {
+  `mkdir $outdir`;
+}
 
 ## parse CDSs
 my %cds_hash;
@@ -64,18 +76,24 @@ if ( scalar(keys %cds_hash) == 0 ) {
 ## cycle thru alignments
 my @aln_files = glob ("$aa_path/*.fa");
 print STDERR "[INFO] Reading files from $aa_path/\*.fa...\n";
-foreach my $aln_file (@aln_files) {
+ALN: foreach my $aln_file (@aln_files) {
   ## fetch alignment and backtranslate to nucleotides
   my $get_prot_aln = Bio::AlignIO -> new( -file => $aln_file, -format => 'fasta' );
   my $prot_aln = $get_prot_aln -> next_aln();
-  my %cds_seqs;
-  foreach my $seq ( $prot_aln->each_seq() ) {
-    $cds_seqs{$seq->display_id()} = Bio::Seq->new( -display_id => $seq->display_id(), -seq => $cds_hash{$seq->display_id()} );
+
+  ## skip if too many or too few seqs in alignment
+  if ( ($prot_aln->num_sequences < $min_seqs) || ($prot_aln->num_sequences > $max_seqs) ) {
+    next ALN;
+  } else {
+    my %cds_seqs;
+    foreach my $seq ( $prot_aln->each_seq() ) {
+      $cds_seqs{$seq->display_id()} = Bio::Seq->new( -display_id => $seq->display_id(), -seq => $cds_hash{$seq->display_id()} );
+    }
+    my $dna_aln = aa_to_dna_aln($prot_aln, \%cds_seqs);
+    my $dna_aln_filename = (basename ($aln_file, ".fa")) . "_dna.fa";
+    my $write_dna_aln = Bio::AlignIO -> new( -file => ">$outdir/$dna_aln_filename", -format => 'fasta' );
+    $write_dna_aln -> write_aln($dna_aln);
   }
-  my $dna_aln = aa_to_dna_aln($prot_aln, \%cds_seqs);
-  my $dna_aln_filename = (basename ($aln_file, ".fa")) . "_dna.fa";
-  my $write_dna_aln = Bio::AlignIO -> new( -file => ">$dna_aln_filename", -format => 'fasta' );
-  $write_dna_aln -> write_aln($dna_aln);
 }
 
 ######################## SUBS
