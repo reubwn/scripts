@@ -27,15 +27,17 @@ OPTIONS [*required]
 \n";
 
 my ($aa_path, $dna_path, $overwrite, $help);
-my $extension = "fasta";
+my $aa_extension = "fasta";
+my $dna_extension = "fasta";
 my $outdir = "aa_to_dna_aln_results";
 my $max_seqs = 100;
 my $min_seqs = 2;
 
 GetOptions (
   'a|aa=s'      => \$aa_path,
+  'b|aext:s'    => \$aa_extension,
   'd|dna=s'     => \$dna_path,
-  'e|ext:s'     => \$extension,
+  'e|dext:s'    => \$dna_extension,
   'm|max:i'     => \$max_seqs,
   'n|min:i'     => \$min_seqs,
   'o|outdir:s'  => \$outdir,
@@ -62,8 +64,8 @@ if ( -d $outdir ) {
 
 ## parse CDSs
 my %cds_hash;
-my @dna_files = glob ("$dna_path/*.$extension");
-print STDOUT "[INFO] Reading files from $dna_path/\*.$extension...\n";
+my @dna_files = glob ("$dna_path/*.$dna_extension");
+print STDOUT "[INFO] Reading files from $dna_path/\*.$dna_extension...\n";
 foreach my $dna_file (@dna_files) {
   my $in = Bio::SeqIO->new( -file => $dna_file, -format => 'fasta' );
   while (my $seq = $in->next_seq() ) {
@@ -77,8 +79,8 @@ if ( scalar(keys %cds_hash) == 0 ) {
 }
 
 ## cycle thru alignments
-my @aln_files = glob ("$aa_path/*.fa");
-print STDOUT "[INFO] Reading files from $aa_path/\*.fa...\n";
+my @aln_files = glob ("$aa_path/*.$aa_extension");
+print STDOUT "[INFO] Reading files from $aa_path/\*.$aa_extension... (".commify(scalar(@aln_files))." files)\n";
 ALN: foreach my $aln_file (@aln_files) {
   print STDOUT "\r[INFO] Working on file: $aln_file"; $|=1;
   ## fetch alignment and backtranslate to nucleotides
