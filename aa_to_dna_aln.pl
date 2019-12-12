@@ -6,6 +6,7 @@ use Getopt::Long;
 
 use Bio::SeqIO;
 use Bio::AlignIO;
+use File::Basename;
 use Bio::Align::Utilities qw(aa_to_dna_aln);
 use Data::Dumper;
 
@@ -46,16 +47,32 @@ die $usage unless ( $aa_path && $dna_path );
 
 ## parse CDSs
 my %cds_hash;
-my @files = glob ("$dna_path/*.$extension");
+my @dna_files = glob ("$dna_path/*.$extension");
 print STDERR "[INFO] Reading files from $dna_path/\*.$extension...\n";
-foreach my $file (@files) {
-  my $in = Bio::SeqIO->new( -file => $file, -format => 'fasta' );
+foreach my $dna_file (@dna_files) {
+  my $in = Bio::SeqIO->new( -file => $dna_file, -format => 'fasta' );
   while (my $seq = $in->next_seq() ) {
     $cds_hash{$seq->display_id()} = $seq->seq();
   }
 }
-print STDERR "[INFO] Fetched ".commify(scalar(keys %cds_hash))." CDS seqs from ".commify(scalar(@files))." files in $dna_path\n";
-die "[ERROR] No sequences found in $dna_path!\n" if ( scalar(keys %cds_hash) == 0 );
+if ( scalar(keys %cds_hash) == 0 ) {
+  die "[ERROR] No sequences found in $dna_path!\n";
+} else {
+  print STDERR "[INFO] Fetched ".commify(scalar(keys %cds_hash))." CDS seqs from ".commify(scalar(@dna_files))." files in $dna_path\n";
+}
+
+## cycle thru alignments
+my @aln_files = glob ("$aa_path/*.fa");
+print STDERR "[INFO] Reading files from $aa_path/\*.fa...\n";
+foreach my $aln_file (@aln_files) {
+  ## fetch alignment and backtranslate to nucleotides
+  my $get_prot_aln = Bio::AlignIO -> new( -file => $aln_file, -format => 'fasta' );
+  my $prot_aln = $get_prot_aln -> next_aln();
+  my $dna_aln = aa_to_dna_aln($prot_aln, \%cds_seqs);
+  my $dna_aln_filename = (basename ($aln_file, ".fa")) . "_dna.fa";
+  my $write_dna_aln = Bio::AlignIO -> new( -file => ">$dna_aln_filename", -format => 'fasta' );
+  $write_dna_aln -> write_aln($dna_aln);
+}
 
 ######################## SUBS
 
