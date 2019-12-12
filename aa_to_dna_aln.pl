@@ -12,13 +12,15 @@ use Data::Dumper;
 
 my $usage = "
 SYNOPSIS
-  Maps dna sequences onto aa alignments, for Ka/Ks, PAML etc.
-  Fasta headers must correspond between aa and dna sequences, otherwise the entry in the aa alignment will be skipped.
+  1. Maps dna sequences onto aa alignments, for Ka/Ks, PAML etc.
+  2. Fasta headers must correspond exactly between aa and dna sequences,
+     otherwise the missing entry in the dna alignment will be shown as a bunch of gaps ('---').
 
 OPTIONS [*required]
   -a|--aa    *[PATH] : path to dir of aa alignments (fasta format)
   -d|--dna   *[PATH] : path to dir of unaligned dna sequences (fasta format)
-  -e|--ext    [STR]  : filename extension to glob from dna path ('fasta')
+  -b|--aext   [STR]  : filename extension used to glob files from aa path ('\*.fasta')
+  -e|--dext   [STR]  : filename extension used to glob files from dna path ('\*.fasta')
   -m|--max    [INT]  : maximum number of seqs in aa alignment, skips if > (100)
   -n|--min    [INT]  : minimum number of seqs in aa alignment (2)
   -o|--outdir [DIR]  : base dirname to write stuff ('aa_to_dna_aln_results/')
