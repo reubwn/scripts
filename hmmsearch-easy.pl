@@ -107,6 +107,7 @@ if ($exclude_alt_same_locus) {
 ## then convert clustal to fasta
 `seqret -sequence $prefix.hmmalign.clustal -outseq $prefix.hmmalign.fasta`;
 
+## make a tree using FastTree or IQ-TREE if desired
 if ( $tree ) {
   if ( $tree eq "fasttree" ) {
     if ( system("fasttree -h &> /dev/null")!=0 ) {
