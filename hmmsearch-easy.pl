@@ -14,18 +14,19 @@ SYNOPSIS:
   seeds in the HMM file.
 
 OPTIONS:
+  -p|--prefix     [STRING] : output file prefix ['hmmsearch-easy']
   -q|--query      [FILE]   : query file (HMM format) [required]
   -d|--db         [FILE]   : sequence database (fasta format) [required]
   -a|--ali        [FILE]   : query file (aligned .sto or .fasta) [required]
+  -t|--tree       [STRING] : also produce a tree? ('iqtree' or 'fasttree') [default: none]
   -e|--evalue     [STRING] : hmmsearch reporting evalue threshold [1e-5]
      --par_search [STRING] : additional params to be passed to hmmsearch, e.g. --par_search='--domE 1e-20'
      --par_select [STRING] : additional regexp to be passed to fastaqual_select.pl, e.g. --par_select='-regexp t1'
   -x|--excl_alt            : exclude alternative transcripts from the same locus
-  -p|--prefix     [STRING] : output file prefix ['hmmsearch-easy']
   -h|--help                : prints this help message
 \n";
 
-my ($query,$db,$ali,$exclude_alt_same_locus,$help);
+my ($query,$db,$ali,$tree,$exclude_alt_same_locus,$help);
 my $par_search = "";
 my $par_select = "";
 my $evalue = "1e-5";
@@ -35,6 +36,7 @@ GetOptions (
   'q|query=s'     => \$query,
   'd|db=s'        => \$db,
   'a|ali=s'       => \$ali,
+  't|tree:s'      => \$tree,
   'e|evalue:s'    => \$evalue,
   'par_search:s'  => \$par_search,
   'par_select:s'  => \$par_select,
@@ -101,5 +103,29 @@ if ($exclude_alt_same_locus) {
 
 ## convert aligned *.sto to clustal
 `esl-reformat clustal $prefix.hmmalign.sto > $prefix.hmmalign.clustal`;
+
+## then convert clustal to fasta
+`seqret -sequence $prefix.hmmalign.clustal -outseq $prefix.hmmalign.fasta`;
+
+if ( $tree ) {
+  if ( $tree eq "fasttree" ) {
+    if ( system("fasttree -h &> /dev/null")!=0 ) {
+      die "[ERROR] FastTree returned non-zero exit status!\n";
+      die "[ERROR] Is FastTree installed and in \$PATH?\n";
+    } else {
+      `fasttree $prefix.hmmalign.fasta > $prefix.hmmalign.fasta.tree`;
+    }
+
+  } elsif ( $tree eq "iqtree" ) {
+    if ( system("iqtree -h &> /dev/null")!=0 ) {
+      die "[ERROR] IQ-TREE returned non-zero exit status!\n";
+      die "[ERROR] Is IQ-TREE installed and in \$PATH?\n";
+    } else {
+      `iqtree -s $prefix.hmmalign.fasta -nt 4 -bb 1000 -m TEST`;
+    }
+  } else {
+    die "[ERROR] Did not recognise tree command, please choose either 'fasttree' or 'iqtree'\n";
+  }
+}
 
 print STDERR "[INFO] Done " . `date`;
