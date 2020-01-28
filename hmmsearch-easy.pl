@@ -105,12 +105,12 @@ if ($exclude_alt_same_locus) {
 `esl-reformat clustal $prefix.hmmalign.sto > $prefix.hmmalign.clustal`;
 
 ## then convert clustal to fasta
-`seqret -sequence $prefix.hmmalign.clustal -outseq $prefix.hmmalign.fasta`;
+`seqret -sequence $prefix.hmmalign.clustal -outseq $prefix.hmmalign.fasta &> /dev/null`;
 
 ## make a tree using FastTree or IQ-TREE if desired
 if ( $tree ) {
   if ( $tree eq "fasttree" ) {
-    if ( system("fasttree -h &> /dev/null")!=0 ) {
+    if ( system("fasttree &> /dev/null")!=0 ) {
       die "[ERROR] FastTree returned non-zero exit status!\n";
       die "[ERROR] Is FastTree installed and in \$PATH?\n";
     } else {
