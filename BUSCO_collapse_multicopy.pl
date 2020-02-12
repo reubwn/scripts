@@ -95,6 +95,7 @@ foreach my $busco_id (nsort keys %full_table_hash) {
   print "$busco_id\n";
   if ( scalar(@{$full_table_hash{$busco_id}{Status}}) > 1 ) { ## BUSCO is duplicated
     print "In here?\n";
+    print "@{$full_table_hash{$busco_id}{Scores}}\n";
     ## select the BUSCO copy with the highest Score
     my @scores = @{$full_table_hash{$busco_id}{Scores}};
     my $index = findMaxValueIndex(\@scores);
