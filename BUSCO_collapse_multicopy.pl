@@ -92,14 +92,15 @@ close $TAB;
 print nsort Dumper(\%full_table_hash) if $debug;
 
 foreach my $busco_id (nsort keys %full_table_hash) {
-  print "$busco_id\n";
   if ( scalar(@{$full_table_hash{$busco_id}{Status}}) > 1 ) { ## BUSCO is duplicated
-    # print "In here?\n";
-    # print "@{$full_table_hash{$busco_id}{Scores}}\n";
     ## select the BUSCO copy with the highest Score
     my @scores = @{$full_table_hash{$busco_id}{Scores}};
     my $index = findMaxValueIndex(\@scores);
-    print "Index $index wins with score $scores[$index]\n";
+    ## fetch the winning Contig, Start and End
+    my $construct = $#$full_table_hash{$busco_id}{Contigs}[$index] . ":" . $#$full_table_hash{$busco_id}{Starts}[$index] . "-" . $#$full_table_hash{$busco_id}{Ends}[$index];
+
+    print STDERR "[DEBUG] [$busco_id] Index $index wins with score $scores[$index]\n" if $debug;
+    print STDERR "[DEBUG] [$busco_id] Winning construct is $construct\n" if $debug;
   }
 }
 
