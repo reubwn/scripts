@@ -97,7 +97,7 @@ foreach my $busco_id (nsort keys %full_table_hash) {
     ## select the BUSCO copy with the highest Score
     my @scores = @{$full_table_hash{$busco_id}{Scores}};
     my $index = findMaxValueIndex(\@scores);
-    print "Index $index wins with score $score[$index]\n";
+    print "Index $index wins with score $scores[$index]\n";
   }
 }
 
