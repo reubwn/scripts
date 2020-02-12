@@ -34,7 +34,7 @@ die $usage unless ($busco_path);
 ############
 
 my %extracted_proteins_hash;
-my @faa_files = glob ("$busco_path/augustus_output/extracted_proteins/*faa");
+my @faa_files = glob ("$busco_path/augustus_output/extracted_proteins/*faa*");
 foreach my $faa_file (@faa_files) {
   print STDERR "\r[INFO] Extracting proteins from $faa_file"; $|=1;
   my $in = Bio::SeqIO -> new ( -file => $faa_file, -format => "fasta");
