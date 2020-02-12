@@ -48,8 +48,13 @@ print STDERR "\n[INFO] Extracted ".scalar(keys %extracted_proteins_hash)." prote
 ## parse BUSCO table
 ####################
 
+my @full_table_file = glob ("$busco_path/full_table*tsv");
+if (@full_table_file != 1) {
+  die "[ERROR] There are either zero or multiple full_table files!\n";
+}
+
 my %full_table_hash;
-open (my $FULL, "$busco_path/full_table_*") or die $!;
+open (my $FULL, $full_table_file[0]) or die $!;
 while (<$FULL>) {
   if (m/^\#/) {
     next;
