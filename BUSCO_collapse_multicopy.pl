@@ -53,6 +53,7 @@ if (@full_table_file != 1) {
   die "[ERROR] There are either zero or multiple full_table files!\n";
 }
 
+my $count = 1;
 my %full_table_hash;
 open (my $FULL, $full_table_file[0]) or die $!;
 while (<$FULL>) {
@@ -71,10 +72,17 @@ while (<$FULL>) {
         'Length' => $F[6]
       }
     );
-    push ( @{ $full_table_hash{$.} }, \%busco_hash )
+    push ( @{ $full_table_hash{$F[0]}{Name} }, $F[0] );
+    push ( @{ $full_table_hash{$F[0]}{Status} }, $F[1] );
+    push ( @{ $full_table_hash{$F[0]}{Contig} }, $F[2] );
+    push ( @{ $full_table_hash{$F[0]}{Start} }, $F[3] );
+    push ( @{ $full_table_hash{$F[0]}{End} }, $F[4] );
+    push ( @{ $full_table_hash{$F[0]}{Score} }, $F[5] );
+    push ( @{ $full_table_hash{$F[0]}{Length} }, $F[6] );
+
   }
 }
 
-print STDERR "[INFO] Number keys in hash ".scalar(keys %full_table_hash)."\n";
+print STDERR "[INFO] Number keys in hash: ".scalar(keys %full_table_hash)."\n";
 ## Dumper
 print Dumper(\%full_table_hash) if $debug;
