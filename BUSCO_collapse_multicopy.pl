@@ -6,8 +6,9 @@ use strict;
 use warnings;
 
 use Bio::SeqIO;
-use Getopt::Long;
 use Data::Dumper;
+use Getopt::Long;
+use Sort::Naturally;
 
 my $usage = "
 SYNOPSIS:
@@ -37,9 +38,25 @@ my %extracted_proteins_hash;
 my @faa_files = glob ("$busco_path/augustus_output/extracted_proteins/*faa*");
 foreach my $faa_file (@faa_files) {
   print STDERR "\r[INFO] Extracting proteins from $faa_file"; $|=1;
+  ## BUSCO name from filename
+  (my $busco_id = $faa_file) =~ s/\.faa\.\d//;
   my $in = Bio::SeqIO -> new ( -file => $faa_file, -format => "fasta");
   while ( my $seq_obj = $in -> next_seq() ) {
-    $extracted_proteins_hash{$seq_obj->display_id()} = $seq_obj->seq(); ##key= seq name; val= seq
+    my $header = $seq_obj->display_id(); ##e.g. g1[ARIC00057:299830-304439]
+    if ($header =~ m/g\d+\[(\w+)\:(\d+)\-(\d+)\]/) {
+      my $contig = $1;
+      my $start = $2;
+      my $end = $3;
+      my $construct = "$contig:$start-$end";
+      push ( @{$extracted_proteins_hash{$busco_id}{Header}}, $seq_obj->display_id() );
+      push ( @{$extracted_proteins_hash{$busco_id}{Seq}}, $seq_obj->seq() );
+      push ( @{$extracted_proteins_hash{$busco_id}{Length}}, length($seq_obj->seq()) );
+      push ( @{$extracted_proteins_hash{$busco_id}{Contig}}, $contig );
+      push ( @{$extracted_proteins_hash{$busco_id}{Start}}, $start );
+      push ( @{$extracted_proteins_hash{$busco_id}{End}}, $end );
+      push ( @{$extracted_proteins_hash{$busco_id}{Construct}}, $construct );
+
+    }
   }
 }
 print STDERR "\n[INFO] Extracted ".scalar(keys %extracted_proteins_hash)." proteins from $busco_path/augustus_output/extracted_proteins/\n";
@@ -49,30 +66,17 @@ print STDERR "\n[INFO] Extracted ".scalar(keys %extracted_proteins_hash)." prote
 ####################
 
 my @full_table_file = glob ("$busco_path/full_table*tsv");
-if (@full_table_file != 1) {
-  die "[ERROR] There are either zero or multiple full_table files!\n";
-}
+die "[ERROR] There are either zero or multiple full_table files!\n" if (@full_table_file != 1);
 
 my $count = 1;
 my %full_table_hash;
-open (my $FULL, $full_table_file[0]) or die $!;
-while (<$FULL>) {
+open (my $TAB, $full_table_file[0]) or die $!;
+while (<$TAB>) {
   if (m/^\#/) {
     next;
   } else {
     chomp;
     my @F = split (m/\s+/, $_);
-    my %busco_hash = (
-      $F[0] => {
-        'Status' => $F[1],
-        'Contig' => $F[2],
-        'Start' => $F[3],
-        'End' => $F[4],
-        'Score' => $F[5],
-        'Length' => $F[6]
-      }
-    );
-    push ( @{ $full_table_hash{$F[0]}{Name} }, $F[0] );
     push ( @{ $full_table_hash{$F[0]}{Status} }, $F[1] );
     push ( @{ $full_table_hash{$F[0]}{Contig} }, $F[2] );
     push ( @{ $full_table_hash{$F[0]}{Start} }, $F[3] );
@@ -82,7 +86,14 @@ while (<$FULL>) {
 
   }
 }
+close $TAB;
 
-print STDERR "[INFO] Number keys in hash: ".scalar(keys %full_table_hash)."\n";
 ## Dumper
 print Dumper(\%full_table_hash) if $debug;
+
+foreach my $busco_id (nsort keys %full_table_hash) {
+  if ( $full_table_hash{$busco_id}{Status} eq "Duplicated" ) {
+    ## select the BUSCO copy with the highest Score
+
+  }
+}
