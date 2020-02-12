@@ -89,11 +89,28 @@ while (<$TAB>) {
 close $TAB;
 
 ## Dumper
-print Dumper(\%full_table_hash) if $debug;
+print nsort Dumper(\%full_table_hash) if $debug;
 
 foreach my $busco_id (nsort keys %full_table_hash) {
+  print "$busco_id\n";
   if ( $full_table_hash{$busco_id}{Status} eq "Duplicated" ) {
     ## select the BUSCO copy with the highest Score
-
+    my @scores = @{$full_table_hash{$busco_id}{Scores}};
+    my $index = findMaxValueIndex(\@scores);
+    print "Index $index wins with score $score[$index]\n";
   }
+}
+
+
+############ SUBS
+
+sub findMaxValueIndex {
+  my @array = @{$_[0]};
+  for ($i = 0, $index = 0, $max = 0; $i < scalar(@array); $i++) {
+    if ($array[$i] > $max) {
+      $max = $array[$i];
+      $index = $i;
+    }
+  }
+  return $index;
 }
