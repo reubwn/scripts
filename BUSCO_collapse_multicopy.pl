@@ -93,7 +93,7 @@ print nsort Dumper(\%full_table_hash) if $debug;
 
 foreach my $busco_id (nsort keys %full_table_hash) {
   print "$busco_id\n";
-  if ( $full_table_hash{$busco_id}{Status} eq "Duplicated" ) {
+  if ( scalar(@{$full_table_hash{$busco_id}{Status}}) > 1 ) { ## BUSCO is duplicated
     print "In here?\n";
     ## select the BUSCO copy with the highest Score
     my @scores = @{$full_table_hash{$busco_id}{Scores}};
