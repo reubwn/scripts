@@ -97,7 +97,7 @@ foreach my $busco_id (nsort keys %full_table_hash) {
     my @scores = @{$full_table_hash{$busco_id}{Scores}};
     my $index = findMaxValueIndex(\@scores);
     ## fetch the winning Contig, Start and End
-    my $construct = $@$full_table_hash{$busco_id}{Contigs}[$index] . ":" . $@$full_table_hash{$busco_id}{Starts}[$index] . "-" . $@$full_table_hash{$busco_id}{Ends}[$index];
+    my $construct = ${$full_table_hash{$busco_id}{Contigs}}[$index] . ":" . ${$full_table_hash{$busco_id}{Starts}}[$index] . "-" . ${$full_table_hash{$busco_id}{Ends}}[$index];
 
     print STDERR "[DEBUG] [$busco_id] Index $index wins with score $scores[$index]\n" if $debug;
     print STDERR "[DEBUG] [$busco_id] Winning construct is $construct\n" if $debug;
