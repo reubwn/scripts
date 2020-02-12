@@ -75,5 +75,6 @@ while (<$FULL>) {
   }
 }
 
+print STDERR "[INFO] Number keys in hash ".scalar(keys %full_table_hash)."\n";
 ## Dumper
 print Dumper(\%full_table_hash) if $debug;
