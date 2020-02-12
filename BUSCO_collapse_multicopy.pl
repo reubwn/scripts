@@ -66,9 +66,9 @@ while (<$FULL>) {
         'Length' => $F[6]
       }
     );
-    push ( @{$full_table_hash}, \%busco_hash )
+    push ( @{ $full_table_hash{$.} }, \%busco_hash )
   }
 }
 
 ## Dumper
-print Dumper(\%te_hash) if $debug;
+print Dumper(\%full_table_hash) if $debug;
