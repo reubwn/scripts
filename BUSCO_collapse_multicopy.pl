@@ -106,7 +106,8 @@ foreach my $busco_id (nsort keys %full_table_hash) {
 
 sub findMaxValueIndex {
   my @array = @{$_[0]};
-  for (my ($i,$index,$max) = (0,0,0); $i < scalar(@array); $i++) {
+  my ($i,$index,$max) = (0,0,0);
+  for ($i < scalar(@array); $i++) {
     if ($array[$i] > $max) {
       $max = $array[$i];
       $index = $i;
