@@ -78,11 +78,11 @@ while (<$TAB>) {
     chomp;
     my @F = split (m/\s+/, $_);
     push ( @{ $full_table_hash{$F[0]}{Status} }, $F[1] );
-    push ( @{ $full_table_hash{$F[0]}{Contig} }, $F[2] );
-    push ( @{ $full_table_hash{$F[0]}{Start} }, $F[3] );
-    push ( @{ $full_table_hash{$F[0]}{End} }, $F[4] );
-    push ( @{ $full_table_hash{$F[0]}{Score} }, $F[5] );
-    push ( @{ $full_table_hash{$F[0]}{Length} }, $F[6] );
+    push ( @{ $full_table_hash{$F[0]}{Contigs} }, $F[2] );
+    push ( @{ $full_table_hash{$F[0]}{Starts} }, $F[3] );
+    push ( @{ $full_table_hash{$F[0]}{Ends} }, $F[4] );
+    push ( @{ $full_table_hash{$F[0]}{Scores} }, $F[5] );
+    push ( @{ $full_table_hash{$F[0]}{Lengths} }, $F[6] );
 
   }
 }
@@ -94,8 +94,8 @@ print nsort Dumper(\%full_table_hash) if $debug;
 foreach my $busco_id (nsort keys %full_table_hash) {
   print "$busco_id\n";
   if ( scalar(@{$full_table_hash{$busco_id}{Status}}) > 1 ) { ## BUSCO is duplicated
-    print "In here?\n";
-    print "@{$full_table_hash{$busco_id}{Scores}}\n";
+    # print "In here?\n";
+    # print "@{$full_table_hash{$busco_id}{Scores}}\n";
     ## select the BUSCO copy with the highest Score
     my @scores = @{$full_table_hash{$busco_id}{Scores}};
     my $index = findMaxValueIndex(\@scores);
