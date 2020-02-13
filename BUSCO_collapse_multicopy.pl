@@ -114,8 +114,8 @@ if ( system("mkdir $busco_path/$output_dir") !=0 ) {
 if ( system("cp $busco_path/single_copy_busco_sequences_original/*.faa $busco_path/$output_dir") !=0 ) {
   die "[ERROR] Error in 'cp' command: $!\n";
 }
-## compress the backup
-if ( system("tar czf $busco_path/single_copy_busco_sequences_original.tgz $busco_path/single_copy_busco_sequences_original/") !=0 ) {
+## compress the backup and remove old folder
+if ( system("tar czf $busco_path/single_copy_busco_sequences_original.tgz $busco_path/single_copy_busco_sequences_original/ --remove-files && rmdir $busco_path/single_copy_busco_sequences_original/") !=0 ) {
   die "[ERROR] Error in 'tar' command: $!\n";
 }
 
