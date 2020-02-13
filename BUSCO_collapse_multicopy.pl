@@ -37,7 +37,7 @@ GetOptions (
 die $usage if $help;
 die $usage unless ($busco_path);
 
-$busco_path =~ s/\/\/$/\// if ( $busco_path =~ m/\/\/$/ );
+$busco_path =~ s/\/\//\// if ( $busco_path =~ m/\/\/$/ );
 
 ############
 ## get prots
