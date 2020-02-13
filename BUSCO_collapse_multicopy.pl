@@ -8,6 +8,7 @@ use warnings;
 use Bio::SeqIO;
 use Data::Dumper;
 use Getopt::Long;
+use File::Basename;
 use Sort::Naturally;
 
 my $usage = "
@@ -39,7 +40,8 @@ my @faa_files = glob ("$busco_path/augustus_output/extracted_proteins/*faa*");
 foreach my $faa_file (@faa_files) {
   print STDERR "\r[INFO] Extracting proteins from $faa_file"; $|=1;
   ## BUSCO name from filename
-  (my $busco_id = $faa_file) =~ s/\.faa\.\d//;
+  my $busco_id = basename($faa_file, qr/.faa/);
+  # (my $busco_id = $faa_file) =~ s/\.faa\.\d//;
   my $in = Bio::SeqIO -> new ( -file => $faa_file, -format => "fasta");
   while ( my $seq_obj = $in -> next_seq() ) {
     my $header = $seq_obj->display_id(); ## eg. g1[ARIC00057:299830-304439]
