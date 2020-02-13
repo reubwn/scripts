@@ -39,9 +39,8 @@ my %extracted_proteins_hash;
 my @faa_files = glob ("$busco_path/augustus_output/extracted_proteins/*faa*");
 foreach my $faa_file (@faa_files) {
   print STDERR "\r[INFO] Extracting proteins from $faa_file"; $|=1;
-  ## BUSCO name from filename
+  ## BUSCO ID from filename
   my $busco_id = fileparse($faa_file, qr/\.faa\.\d+$/);
-  # (my $busco_id = $faa_file) =~ s/\.faa\.\d//;
   my $in = Bio::SeqIO -> new ( -file => $faa_file, -format => "fasta");
   while ( my $seq_obj = $in -> next_seq() ) {
     my $header = $seq_obj->display_id(); ## eg. g1[ARIC00057:299830-304439]
@@ -50,9 +49,8 @@ foreach my $faa_file (@faa_files) {
       my $start = $2;
       my $end = $3;
       my $construct = "$contig:$start-$end"; ## eg. ARIC00057:299830-304439; these will be unique to each extracted protein
-      $extracted_proteins_hash{$busco_id}{Construct} = $construct;
-      $extracted_proteins_hash{$busco_id}{Seq} = $seq_obj->seq();
-      $extracted_proteins_hash{$busco_id}{Length} = $seq_obj->length();
+      $extracted_proteins_hash{$busco_id}{$construct}{Seq} = $seq_obj->seq();;
+      $extracted_proteins_hash{$busco_id}{$construct}{Length} = $seq_obj->length();
       # push ( @{$extracted_proteins_hash{$busco_id}{Header}}, $seq_obj->display_id() );
       # push ( @{$extracted_proteins_hash{$busco_id}{Seq}}, $seq_obj->seq() );
       # push ( @{$extracted_proteins_hash{$busco_id}{Length}}, length($seq_obj->seq()) );
@@ -77,12 +75,15 @@ print nsort Dumper(\%extracted_proteins_hash) if $debug;
 my @full_table_file = glob ("$busco_path/full_table*tsv");
 die "[ERROR] There are either zero or multiple full_table files!\n" if (@full_table_file != 1);
 
-my $count = 1;
+my $input_filename;
 my %full_table_hash;
 open (my $TAB, $full_table_file[0]) or die $!;
 while (<$TAB>) {
   if (m/^\#/) {
-    next;
+    if (m/\-i\s(\S+)\s//) {
+      $input_filename = $1;
+      print STDERR "[INFO] Input file for BUSCO run was: $input_filename\n";
+    } else { next; }
   } else {
     chomp;
     my @F = split (m/\s+/, $_);
@@ -115,7 +116,8 @@ foreach my $busco_id (nsort keys %full_table_hash) {
     print STDERR "[DEBUG] [$busco_id] Winning construct is $construct\n" if $debug;
 
     ## pull the highest-scoring seq out of %extracted_proteins_hash
-
+    print ">$busco_id:duplicated:$input_filename:$construct\n";
+    print $extracted_proteins_hash{$busco_id}{$construct}{Seq} . "\n"
   }
 }
 
