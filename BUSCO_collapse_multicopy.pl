@@ -139,7 +139,7 @@ foreach my $busco_id (nsort keys %full_table_hash) {
     print STDERR "[DEBUG] [$busco_id] Winning construct is $construct\n" if $debug;
 
     ## open file
-    open (my $FAA, ">$busco_path/$output_dir/$busco_id:D.faa") or die $!;
+    open (my $FAA, ">$busco_path/$output_dir/$busco_id.faa") or die $!;
     ## pull the highest-scoring seq out of %extracted_proteins_hash and print it
     print $FAA ">$busco_id:D[$index,$scores[$index]]:$input_filename:$construct\n";
     print $FAA $extracted_proteins_hash{$busco_id}{$construct}{Seq} . "\n";
