@@ -80,7 +80,7 @@ my %full_table_hash;
 open (my $TAB, $full_table_file[0]) or die $!;
 while (<$TAB>) {
   if (m/^\#/) {
-    if (m/\-i\s(\S+)\s//) {
+    if (m/\-i\s(\S+)\s/) {
       $input_filename = $1;
       print STDERR "[INFO] Input file for BUSCO run was: $input_filename\n";
     } else { next; }
