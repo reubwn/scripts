@@ -12,20 +12,26 @@ use File::Basename;
 use Sort::Naturally;
 
 my $usage = "
-SYNOPSIS:
-  Collapse multiple BUSCO copies to single copy by random selection
+SYNOPSIS
+  Collapse multiple BUSCO copies to single copy by selection of copy with highest
+  BUSCO score. Default behaviour is to rename the original dir 'single_copy_busco_sequences/'
+  and make a new one containing collapsed duplicated copies plus original single-copy
+  BUSCO proteins.
 
-OPTIONS:
-  -b|--busco [PATH] : path to BUSCO results directory [required]
-  -h|--help         : prints this help message
+OPTIONS
+  -d|--directory [PATH] : path to BUSCO results directory [required]
+  -o|--output  [STRING] : name for results dir [single_copy_busco_sequences]
+  -h|--help             : prints this help message
 \n";
 
 my ($busco_path, $help, $debug);
+my $output_dir = "single_copy_busco_sequences";
 
 GetOptions (
-  'b|busco=s' => \$busco_path,
-  'h|help'    => \$help,
-  'debug'     => \$debug
+  'd|directory=s' => \$busco_path,
+  'o|output:s' => \$output_dir,
+  'h|help' => \$help,
+  'debug' => \$debug
 );
 
 die $usage if $help;
@@ -51,14 +57,6 @@ foreach my $faa_file (@faa_files) {
       my $construct = "$contig:$start-$end"; ## eg. ARIC00057:299830-304439; these will be unique to each extracted protein
       $extracted_proteins_hash{$busco_id}{$construct}{Seq} = $seq_obj->seq();;
       $extracted_proteins_hash{$busco_id}{$construct}{Length} = $seq_obj->length();
-      # push ( @{$extracted_proteins_hash{$busco_id}{Header}}, $seq_obj->display_id() );
-      # push ( @{$extracted_proteins_hash{$busco_id}{Seq}}, $seq_obj->seq() );
-      # push ( @{$extracted_proteins_hash{$busco_id}{Length}}, length($seq_obj->seq()) );
-      # push ( @{$extracted_proteins_hash{$busco_id}{Contig}}, $contig );
-      # push ( @{$extracted_proteins_hash{$busco_id}{Start}}, $start );
-      # push ( @{$extracted_proteins_hash{$busco_id}{End}}, $end );
-      # push ( @{$extracted_proteins_hash{$busco_id}{Construct}}, $construct );
-      #### HERE: i think just restructure this to be key=Construct; val=Seq, which can then be directly accessed from the code below?
 
     }
   }
@@ -101,6 +99,29 @@ close $TAB;
 ## Dumper
 print nsort Dumper(\%full_table_hash) if $debug;
 
+print STDERR "[INFO] Stashing original single-copy BUSCOs...\n";
+## rename orignal folder
+if ( system("mv $busco_path/single_copy_busco_sequences $busco_path/single_copy_busco_sequences_original") !=0 ) {
+  die "[ERROR] Error in 'mv' command: $!\n";
+}
+## make a new dir with the old name (default)
+if ( system("mkdir $busco_path/$output_dir") !=0 ) {
+  die "[ERROR] Error in 'mkdir' command: $!\n";
+}
+## copy original single-copy BUSCOs back in
+if ( system("cp $busco_path/single_copy_busco_sequences_original/*.faa $busco_path/$output_dir") !=0 ) {
+  die "[ERROR] Error in 'cp' command: $!\n";
+}
+## compress the backup
+if ( system("tar czf $busco_path/single_copy_busco_sequences_original.tgz $busco_path/single_copy_busco_sequences_original/") !=0 ) {
+  die "[ERROR] Error in 'tar' command: $!\n";
+}
+
+#########################
+## print new BUSCO copies
+#########################
+
+my $count = 0;
 foreach my $busco_id (nsort keys %full_table_hash) {
   if ( scalar(@{$full_table_hash{$busco_id}{Status}}) > 1 ) { ## BUSCO is duplicated
     ## select the BUSCO copy with the highest Score
@@ -115,12 +136,18 @@ foreach my $busco_id (nsort keys %full_table_hash) {
     print STDERR "[DEBUG] [$busco_id] Index $index wins with score $scores[$index]\n" if $debug;
     print STDERR "[DEBUG] [$busco_id] Winning construct is $construct\n" if $debug;
 
-    ## pull the highest-scoring seq out of %extracted_proteins_hash
-    print ">$busco_id:duplicated:$input_filename:$construct\n";
-    print $extracted_proteins_hash{$busco_id}{$construct}{Seq} . "\n"
+    ## open file
+    open (my $FAA, ">$busco_path/$output_dir/$busco_id:D.faa") or die $!;
+    ## pull the highest-scoring seq out of %extracted_proteins_hash and print it
+    print $FAA ">$busco_id:D[$index,$scores[$index]]:$input_filename:$construct\n";
+    print $FAA $extracted_proteins_hash{$busco_id}{$construct}{Seq} . "\n"
+    close $FAA;
+    $count++;
   }
 }
 
+print STDERR "[INFO] Printed $count duplicated BUSCOs to $busco_path/$output_dir/\n";
+print STDERR "[INFO] Finished! "`date`;
 
 ############ SUBS
 
@@ -135,3 +162,5 @@ sub findMaxValueIndex {
   }
   return $index;
 }
+
+__END__
