@@ -147,7 +147,7 @@ foreach my $busco_id (nsort keys %full_table_hash) {
 }
 
 print STDERR "[INFO] Printed $count duplicated BUSCOs to $busco_path/$output_dir/\n";
-print STDERR "[INFO] Finished! "`date`;
+print STDERR "[INFO] Finished! " . `date`;
 
 ############ SUBS
 
