@@ -42,24 +42,31 @@ foreach my $faa_file (@faa_files) {
   (my $busco_id = $faa_file) =~ s/\.faa\.\d//;
   my $in = Bio::SeqIO -> new ( -file => $faa_file, -format => "fasta");
   while ( my $seq_obj = $in -> next_seq() ) {
-    my $header = $seq_obj->display_id(); ##e.g. g1[ARIC00057:299830-304439]
+    my $header = $seq_obj->display_id(); ## eg. g1[ARIC00057:299830-304439]
     if ($header =~ m/g\d+\[(\w+)\:(\d+)\-(\d+)\]/) {
       my $contig = $1;
       my $start = $2;
       my $end = $3;
-      my $construct = "$contig:$start-$end";
-      push ( @{$extracted_proteins_hash{$busco_id}{Header}}, $seq_obj->display_id() );
-      push ( @{$extracted_proteins_hash{$busco_id}{Seq}}, $seq_obj->seq() );
-      push ( @{$extracted_proteins_hash{$busco_id}{Length}}, length($seq_obj->seq()) );
-      push ( @{$extracted_proteins_hash{$busco_id}{Contig}}, $contig );
-      push ( @{$extracted_proteins_hash{$busco_id}{Start}}, $start );
-      push ( @{$extracted_proteins_hash{$busco_id}{End}}, $end );
-      push ( @{$extracted_proteins_hash{$busco_id}{Construct}}, $construct );
+      my $construct = "$contig:$start-$end"; ## eg. ARIC00057:299830-304439; these will be unique to each extracted protein
+      $extracted_proteins_hash{$busco_id}{Construct} = $construct;
+      $extracted_proteins_hash{$busco_id}{Seq} = $seq_obj->seq();
+      $extracted_proteins_hash{$busco_id}{Length} = $seq_obj->length();
+      # push ( @{$extracted_proteins_hash{$busco_id}{Header}}, $seq_obj->display_id() );
+      # push ( @{$extracted_proteins_hash{$busco_id}{Seq}}, $seq_obj->seq() );
+      # push ( @{$extracted_proteins_hash{$busco_id}{Length}}, length($seq_obj->seq()) );
+      # push ( @{$extracted_proteins_hash{$busco_id}{Contig}}, $contig );
+      # push ( @{$extracted_proteins_hash{$busco_id}{Start}}, $start );
+      # push ( @{$extracted_proteins_hash{$busco_id}{End}}, $end );
+      # push ( @{$extracted_proteins_hash{$busco_id}{Construct}}, $construct );
+      #### HERE: i think just restructure this to be key=Construct; val=Seq, which can then be directly accessed from the code below?
 
     }
   }
 }
 print STDERR "\n[INFO] Extracted ".scalar(keys %extracted_proteins_hash)." proteins from $busco_path/augustus_output/extracted_proteins/\n";
+
+## Dumper
+print nsort Dumper(\%extracted_proteins_hash) if $debug;
 
 ####################
 ## parse BUSCO table
@@ -97,10 +104,16 @@ foreach my $busco_id (nsort keys %full_table_hash) {
     my @scores = @{$full_table_hash{$busco_id}{Scores}};
     my $index = findMaxValueIndex(\@scores);
     ## fetch the winning Contig, Start and End
-    my $construct = ${$full_table_hash{$busco_id}{Contigs}}[$index] . ":" . ${$full_table_hash{$busco_id}{Starts}}[$index] . "-" . ${$full_table_hash{$busco_id}{Ends}}[$index];
+    my $contig = ${$full_table_hash{$busco_id}{Contigs}}[$index];
+    my $start = ${$full_table_hash{$busco_id}{Starts}}[$index];
+    my $end = ${$full_table_hash{$busco_id}{Ends}}[$index];
+    my $construct = "$contig:$start-$end"; ## format to be equivalent to eg. ARIC00057:299830-304439
 
     print STDERR "[DEBUG] [$busco_id] Index $index wins with score $scores[$index]\n" if $debug;
     print STDERR "[DEBUG] [$busco_id] Winning construct is $construct\n" if $debug;
+
+    ## pull the highest-scoring seq out of %extracted_proteins_hash
+
   }
 }
 
