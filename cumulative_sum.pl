@@ -59,7 +59,7 @@ foreach my $file_path (@fasta_files) {
 
 ## outfile
 my $OUT;
-if ( -f $append_filename ) {
+if ( $append_filename ) {
   print STDERR "[INFO] Appending to file '$append_filename'\n";
   open ($OUT, '>>', $append_filename) or die $!; ## add results to the bottom of existing file
 } else {
