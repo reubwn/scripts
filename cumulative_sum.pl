@@ -19,16 +19,18 @@ OPTIONS
   -d|--directory [PATH] : path to input directory [required]
   -s|--suffix  [STRING] : suffix used to glob fasta files [*.fasta]
   -o|--output  [STRING] : name for results file [cumulative_summary.txt]
+  -a|--append    [FILE] : append results to existing <FILE>, rather than open new one
   -h|--help             : prints this help message
 \n";
 
-my ($fasta_path, $suffix, $help, $debug);
+my ($fasta_path, $suffix, $append, $help, $debug);
 my $output_filename = "cumulative_summary.txt";
 
 GetOptions (
   'd|directory=s' => \$fasta_path,
   's|suffix:s' => \$suffix,
   'o|output:s' => \$output_filename,
+  'a|append' => \$append,
   'h|help' => \$help,
   'debug' => \$debug
 );
@@ -54,8 +56,15 @@ foreach my $file_path (@fasta_files) {
   }
 }
 
-open (my $OUT, $output_filename) or die $!;
+## outfile
+my $OUT;
+if ($append) {
+  open ($OUT, ">>$output_filename") or die $!; ## add results to the bottom of existing file
+} else {
+  open ($OUT, ">$output_filename") or die $!;
+}
 
+print STDERR "[INFO] Sorting and summing scaffold lengths...\n";
 foreach my $basename (nsort keys %results_hash) {
   print $OUT "$basename";
   my @lengths = sort {$b<=>$a} @{$results_hash{$basename}}; ## sort longest first
@@ -70,6 +79,7 @@ foreach my $basename (nsort keys %results_hash) {
   print $OUT "\n";
 }
 close $OUT;
+print STDERR "[INFO] Finished " . `date`;
 
 ######################### sub-routines
 
