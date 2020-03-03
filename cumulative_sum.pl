@@ -16,21 +16,22 @@ SYNOPSIS
   Generate data for cumulative scaffold summary plots.
 
 OPTIONS
-  -d|--directory [PATH] : path to input directory [required]
-  -s|--suffix  [STRING] : suffix used to glob fasta files [*.fasta]
+  -d|--directory [PATH] : path to input directory ['./']
+  -s|--suffix  [STRING] : suffix used to glob fasta files ['*.fasta']
   -o|--output  [STRING] : name for results file [cumulative_summary.txt]
   -a|--append    [FILE] : append results to existing <FILE>, rather than open new one
   -h|--help             : prints this help message
 \n";
 
-my ($fasta_path, $suffix, $append_filename, $help, $debug);
+my ($suffix, $append_filename, $help, $debug);
+my $fasta_path = "./";
 my $output_filename = "cumulative_summary.txt";
 
 GetOptions (
-  'd|directory=s' => \$fasta_path,
+  'd|directory:s' => \$fasta_path,
   's|suffix:s' => \$suffix,
   'o|output:s' => \$output_filename,
-  'a|append' => \$append_filename,
+  'a|append:s' => \$append_filename,
   'h|help' => \$help,
   'debug' => \$debug
 );
