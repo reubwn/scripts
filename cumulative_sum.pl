@@ -23,14 +23,14 @@ OPTIONS
   -h|--help             : prints this help message
 \n";
 
-my ($fasta_path, $suffix, $append, $help, $debug);
+my ($fasta_path, $suffix, $append_filename, $help, $debug);
 my $output_filename = "cumulative_summary.txt";
 
 GetOptions (
   'd|directory=s' => \$fasta_path,
   's|suffix:s' => \$suffix,
   'o|output:s' => \$output_filename,
-  'a|append' => \$append,
+  'a|append' => \$append_filename,
   'h|help' => \$help,
   'debug' => \$debug
 );
@@ -58,8 +58,9 @@ foreach my $file_path (@fasta_files) {
 
 ## outfile
 my $OUT;
-if ($append) {
-  open ($OUT, ">>$output_filename") or die $!; ## add results to the bottom of existing file
+if ($append_filename) {
+  print "[INFO] Appending to file '$append_filename'\n";
+  open ($OUT, ">>$append_filename") or die $!; ## add results to the bottom of existing file
 } else {
   open ($OUT, ">$output_filename") or die $!;
 }
