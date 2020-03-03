@@ -59,12 +59,12 @@ foreach my $file_path (@fasta_files) {
 
 ## outfile
 my $OUT;
-if ($append_filename) {
+if ( -f $append_filename ) {
   print STDERR "[INFO] Appending to file '$append_filename'\n";
-  open ($OUT, ">>$append_filename") or die $!; ## add results to the bottom of existing file
+  open ($OUT, '>>', $append_filename) or die $!; ## add results to the bottom of existing file
 } else {
   print STDERR "[INFO] Opening new file '$output_filename'\n";
-  open ($OUT, ">$output_filename") or die $!;
+  open ($OUT, '>', $output_filename) or die $!;
 }
 
 print STDERR "[INFO] Sorting and summing scaffold lengths...\n";
