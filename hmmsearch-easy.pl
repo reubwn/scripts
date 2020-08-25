@@ -70,7 +70,7 @@ print STDERR "[INFO] Additional fastaqual_select.pl parameters: '$par_select'\n"
 `hmmsearch -o $prefix.hmmsearch.$evalue.out --tblout $prefix.hmmsearch.$evalue.tblout --noali -E $evalue $par_search $query $db`;
 
 ## check results and die if none
-my $result = `grep -v "#" $prefix.hmmsearch.$evalue.tblout`;
+my $result = `grep -v "^#" $prefix.hmmsearch.$evalue.tblout`;
 unless ($result) {
   die "[INFO] No matches found! Stopping here\n";
 }
