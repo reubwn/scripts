@@ -63,7 +63,8 @@ if ($bak) {
   `gzip $tbl_file.bak`;
 } else {
   `mv $tbl_file.tmp $tbl_file`;
-  `rm $tbl_file.bak`;
 }
+
+print STDERR "Done. ".`date`;
 
 __END__
