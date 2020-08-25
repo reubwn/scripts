@@ -48,7 +48,7 @@ open (my $OUT, ">$tbl_file.tmp") or die $!;
 while (<$IN>) {
   chomp;
   if (m/locus_tag/) {
-    print $OUT "\t\t\tlocus_tag\t$locus_tag_prefix\_".sprintf("%0".$leadingzeroes."d",$n)."\n";
+    print $OUT "\t\t\tlocus_tag\t$locus_tag_prefix\_".sprintf("%0".$leading_zeroes."d",$n)."\n";
     $n++;
   } else {
     print $OUT "$_\n";
