@@ -36,6 +36,7 @@ my %strand_hash;
 open (my $IN1, $gff_file) or die $!;
 
 ## recurse GFF once
+print STDERR "[INFO] Building strand hash\n";
 while (my $line = <$IN1>) {
   chomp $line;
   if ($line =~ m/^#/) {
@@ -58,6 +59,7 @@ open (my $OUT, ">$gff_outfile") or die $!;
 print STDERR "[INFO] Writing to '$gff_outfile'\n";
 
 ## recurse GFF second time to make the edits
+print STDERR "[INFO] Checking GFF...\n";
 while (my $line = <$IN2>) {
   chomp $line;
   if ($line =~ m/^#/) {
