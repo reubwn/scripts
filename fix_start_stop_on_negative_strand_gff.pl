@@ -38,6 +38,9 @@ open (my $IN1, $gff_file) or die $!;
 ## recurse GFF once
 while (my $line = <$IN1>) {
   chomp $line;
+  if ($line =~ m/^#/) {
+    next;
+  }
   $line =~ s/;$//; ## trim trailing ';' if present
   my @F = split (/\s+/, $line);
 
@@ -53,8 +56,6 @@ close $IN1;
 open (my $IN2, $gff_file) or die $!;
 open (my $OUT, ">$gff_outfile") or die $!;
 print STDERR "[INFO] Writing to '$gff_outfile'\n";
-
-my %strand_hash;
 
 ## recurse GFF second time to make the edits
 while (my $line = <$IN2>) {
