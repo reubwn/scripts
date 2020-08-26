@@ -62,10 +62,10 @@ while (my $line = <$IN>) {
 
   ## find broken genes from list
   if ( $F[2] eq "gene" ) {
-    my $ID = $1 if ($F[8] =~ m/locus_tag=(.+)?$/); ## inherit ID from locus_tag
-    print STDERR "$ID\n" if ( $debug );
+    my $ID = $1 if ($F[8] =~ m/locus_tag=(.+?)(;|$)/); ## inherit ID from locus_tag
     if ( $broken_genes{$ID} ) {
       ## gene is broken
+      print STDERR "Found ID: $ID\n" if ( $debug );
       print $OUT $line . ";" . "pseudo=true\n"; ## only required for 'gene' feature
     } else {
       print $OUT "$line\n";

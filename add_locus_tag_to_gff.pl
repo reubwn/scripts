@@ -72,12 +72,12 @@ while (my $line = <$IN>) {
   }
   ## add transcript_id to mRNA features
   elsif ($F[2] eq "mRNA") {
-    my $ID = $1 if ($F[8] =~ m/ID=(.+?);/); ## inherit ID from ID
+    my $ID = $1 if ($F[8] =~ m/ID=(.+?)(;|$)/); ## inherit ID from ID
     print $OUT $line . ";" . "transcript_id=gnl|$locus_tag_prefix|$ID" . $mrna_suffix . "\n";
   }
   ## add protein_id to CDS features
   elsif ($F[2] eq "CDS") {
-    my $ID = $1 if ($F[8] =~ m/Parent=(.+)/); ## inherit ID from Parent
+    my $ID = $1 if ($F[8] =~ m/Parent=(.+?)(;|$)/); ## inherit ID from Parent
     print $OUT $line . ";" . "protein_id=gnl|$locus_tag_prefix|$ID\n";
   } else {
     print $OUT "$line\n";
