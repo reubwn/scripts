@@ -47,23 +47,13 @@ GetOptions (
 die $usage if $help;
 die $usage unless ($gff_file);
 
-my %broken_genes;
-if ( $pseudo_file ) {
-  open (my $P, $pseudo_file) or die $!;
-  while (<$P>) {
-    chomp;
-    $broken_genes{$_} = ();
-  }
-  close $P;
-  print STDERR "[INFO] Number of genes to be annotated 'pseudo=true': " . scalar(keys %broken_genes) . "\n";
-}
-
 ## locus tag enumerator
 my $enumerator = 1;
 
 ## IO
 open (my $IN, $gff_file) or die $!;
 open (my $OUT, ">$gff_outfile") or die $!;
+print STDERR "[INFO] Writing to '$gff_outfile'\n";
 
 while (my $line = <$IN>) {
   chomp $line;
@@ -95,5 +85,7 @@ while (my $line = <$IN>) {
 }
 close $IN;
 close $OUT;
+
+print STDERR "[INFO] Done " . `date`;
 
 __END__
