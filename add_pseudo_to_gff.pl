@@ -43,6 +43,7 @@ if ( $pseudo_file ) {
   }
   close $P;
   print STDERR "[INFO] Number of genes to be annotated 'pseudo=true': " . scalar(keys %broken_genes) . "\n";
+  print STDERR join (" ", keys %broken_genes) . "\n" if ( $debug );
 }
 
 ## IO
