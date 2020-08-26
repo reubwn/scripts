@@ -45,7 +45,7 @@ while (my $line = <$IN1>) {
   if ( $F[2] eq "mRNA" ) {
     my $ID = $1 if ($F[8] =~ m/ID=(.+?)(;|$)/); ## inherit ID from ID
     $strand_hash{$ID} = $F[6];
-
+  }
 }
 close $IN1;
 
