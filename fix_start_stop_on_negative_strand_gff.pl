@@ -73,7 +73,7 @@ while (my $line = <$IN2>) {
   if ( $F[2] eq "start_codon" ) {
     my $ID = $1 if ($F[8] =~ m/Parent=(.+?)(;|$)/); ## inherit ID from Parent
     if ($F[6] ne $strand_hash{$ID}) {
-      print STDERR "[INFO] Conflict found: strand for $ID:start is $F[6], but should be $strand_hash{$ID}\n" if ( $debug );
+      print STDERR "[INFO] Conflict found: strand for $ID:start is '$F[6]' but should be '$strand_hash{$ID}'\n" if ( $debug );
       print $OUT join ("\t", @F[0..5], $strand_hash{$ID}, @F[7..$#F]) . "\n";
     } else {
       print $OUT "$line\n";
@@ -81,7 +81,7 @@ while (my $line = <$IN2>) {
   } elsif ( $F[2] eq "stop_codon" ) {
     my $ID = $1 if ($F[8] =~ m/Parent=(.+?)(;|$)/); ## inherit ID from Parent
     if ($F[6] ne $strand_hash{$ID}) {
-      print STDERR "[INFO] Conflict found: strand for $ID:stop is $F[6], but should be $strand_hash{$ID}\n" if ( $debug );
+      print STDERR "[INFO] Conflict found: strand for $ID:stop is '$F[6]' but should be '$strand_hash{$ID}'\n" if ( $debug );
       print $OUT join ("\t", @F[0..5], $strand_hash{$ID}, @F[7..$#F]) . "\n";
     } else {
       print $OUT "$line\n";
