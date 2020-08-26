@@ -65,7 +65,7 @@ while (my $line = <$IN>) {
   if ( $F[2] eq "gene" ) {
     my $ID = $1 if ($F[8] =~ m/locus_tag=(.+?)(;|$)/); ## inherit ID from locus_tag
     print STDERR "Found locus_tag: $ID\r" if ( $debug );
-    if ( $broken_genes{$ID} ) {
+    if ( $broken_genes{'H9Q69_000736'} ) {
       ## gene is broken
       print STDERR "Found ID: $ID\n" if ( $debug );
       print $OUT $line . ";" . "pseudo=true\n"; ## only required for 'gene' feature
