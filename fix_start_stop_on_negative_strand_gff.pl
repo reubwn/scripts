@@ -56,10 +56,10 @@ close $IN1;
 ## IO
 open (my $IN2, $gff_file) or die $!;
 open (my $OUT, ">$gff_outfile") or die $!;
+print STDERR "[INFO] Checking GFF...\n";
 print STDERR "[INFO] Writing to '$gff_outfile'\n";
 
 ## recurse GFF second time to make the edits
-print STDERR "[INFO] Checking GFF...\n";
 while (my $line = <$IN2>) {
   chomp $line;
   if ($line =~ m/^#/) {
