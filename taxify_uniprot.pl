@@ -36,6 +36,13 @@ GetOptions (
 die $usage if $help;
 die $usage unless ($infile && $speclist && $path_to_nodes);
 
+## parse treefile:
+open (my $TREEFILE, $infile) or die $!;
+while (<$TREEFILE>) {
+  my @uniprot_ids ($_ =~ m/(\w+):/g);
+  print STDERR join ("\n", @uniprot_ids);
+}
+
 ## parse nodes and names:
 my (%nodes_hash, %names_hash, %rank_hash);
 
@@ -83,8 +90,6 @@ while (<$SPECLIST>) {
   $uniprot_hash{$F[0]} = $F[2];
 }
 print STDERR "[INFO] IDs parsed: ".commify(scalar(keys %uniprot_hash))."\n";
-
-
 
 ###### SUBS
 
