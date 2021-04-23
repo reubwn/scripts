@@ -21,7 +21,7 @@ OPTIONS:
 \n";
 
 my ($infile,$speclist,$path,$help);
-my $outfile = "$infile.tax.treefile";
+my $outfile = "tax.treefile";
 my $depth_taxon = 0;
 
 GetOptions (
@@ -91,7 +91,7 @@ while (<$TREEFILE>) {
   my @uniprot_ids = ($_ =~ m/([OPQ][0-9][A-Z0-9]{3}[0-9]_[A-Z0-9]{1,5}|[A-NR-Z][0-9][A-Z][A-Z0-9]{2}[0-9]{1,2}_[A-Z0-9]{1,5})/g);
   foreach (@uniprot_ids) {
     my @a = split ("_", $_);
-    my $tax_string = tax_walk_to_get_rank_to_phylum($uniprot_hash{$a[1]});
+    my $tax_string = tax_walk_to_get_rank_to_species($uniprot_hash{$a[1]});
     print STDERR join (" ", $_, $a[1], $tax_string) . "\n";
   }
 }
