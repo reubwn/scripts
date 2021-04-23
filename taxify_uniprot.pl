@@ -20,7 +20,7 @@ OPTIONS:
   -h|--help                : prints this help message
 \n";
 
-my ($infile,$speclist,$path_to_nodes,$help);
+my ($infile,$speclist,$path,$help);
 my $outfile = "$infile.tax.treefile";
 my $depth_taxon = 0;
 
@@ -28,18 +28,18 @@ GetOptions (
   'i|infile=s'   => \$infile,
   'o|outfile:s'  => \$outfile,
   's|speclist=s' => \$speclist,
-  'p|path=s'     => \$path_to_nodes,
+  'p|path=s'     => \$path,
   'd|depth:i'    => \$depth_taxon,
   'h|help'       => \$help,
 );
 
 die $usage if $help;
-die $usage unless ($infile && $speclist && $path_to_nodes);
+die $usage unless ($infile && $speclist && $path);
 
 ## parse treefile:
 open (my $TREEFILE, $infile) or die $!;
 while (<$TREEFILE>) {
-  my @uniprot_ids ($_ =~ m/(\w+):/g);
+  my @uniprot_ids = ($_ =~ m/(\w+):/g);
   print STDERR join ("\n", @uniprot_ids);
 }
 
