@@ -39,7 +39,7 @@ die $usage unless ($infile && $speclist && $path);
 ## parse treefile:
 open (my $TREEFILE, $infile) or die $!;
 while (<$TREEFILE>) {
-  my @uniprot_ids = ($_ =~ m/([OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}_[A-Z0-9]{1,5})/g);
+  my @uniprot_ids = ($_ =~ m/([OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9][A-Z][A-Z0-9]{2}[0-9]{1,2}_[A-Z0-9]{1,5})/g);
   print STDERR join ("\n", @uniprot_ids);
 }
 
