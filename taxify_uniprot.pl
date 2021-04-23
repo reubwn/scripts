@@ -69,19 +69,19 @@ if (-e "$path/merged.dmp") {
 }
 print STDERR "[INFO] Nodes parsed: ".commify(scalar(keys %nodes_hash))."\n";
 
-## parse UniRef90 taxlist.txt:
-my %uniprot_hash;
-
-print STDERR "[INFO] Parsing UniProt taxonomy IDs from '$taxlist'...\n";
-open (my $TAXLIST, $taxlist) or die $!;
-while (<$TAXLIST>) {
-  chomp;
-  my @F = split (m/\s+/, $_);
-  $uniprot_hash{$F[0]} = $F[1];
-}
-close $TAXLIST;
-
-print STDERR "[INFO] UniProt taxids parsed: ".commify(scalar(keys %uniprot_hash))."\n";
+# ## parse UniRef90 taxlist.txt:
+# my %uniprot_hash;
+#
+# print STDERR "[INFO] Parsing UniProt taxonomy IDs from '$taxlist'...\n";
+# open (my $TAXLIST, $taxlist) or die $!;
+# while (<$TAXLIST>) {
+#   chomp;
+#   my @F = split (m/\s+/, $_);
+#   $uniprot_hash{$F[0]} = $F[1];
+# }
+# close $TAXLIST;
+#
+# print STDERR "[INFO] UniProt taxids parsed: ".commify(scalar(keys %uniprot_hash))."\n";
 
 ## parse treefile:
 open (my $TREEFILE, $infile) or die $!;
