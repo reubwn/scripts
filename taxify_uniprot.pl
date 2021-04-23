@@ -76,9 +76,8 @@ print STDERR "[INFO] Parsing UniRef taxonomy IDs from '$taxlist'...\n";
 open (my $TAXLIST, $taxlist) or die $!;
 while (<$TAXLIST>) {
   chomp;
-  my @a = split (m/\s+/, $_);
-  my @b = split (m/\_/, $a[0]);
-  $uniprot_hash{$b[1]} = $a[1];
+  my @F = split (m/\s+/, $_);
+  $uniprot_hash{$F[0]} = $F[1];
 }
 close $TAXLIST;
 
@@ -92,12 +91,24 @@ while (<$TREEFILE>) {
   foreach (@uniprot_ids) {
     my @a = split ("_", $_);
     # my $tax_string = tax_walk_to_get_rank_to_species($uniprot_hash{$a[1]});
-    print STDERR join (" ", $_, $a[1], $uniprot_hash{$a[1]}, tax_walk_to_get_rank_to_species($uniprot_hash{$a[1]})) . "\n";
-    # print STDERR join (" ", $_, $a[1], $uniprot_hash{$a[1]}) . "\n";
+    if (($uniprot_hash{$a[1]} =~ m/\d+/) && (check_taxid_has_parent($uniprot_hash{$a[1]}) == 0)) {
+      print STDERR join (" ", $_, $a[1], $uniprot_hash{$a[1]}, tax_walk_to_get_rank_to_species($uniprot_hash{$a[1]})) . "\n";
+    } else {
+      print STDERR join (" ", $_, $a[1], $uniprot_hash{$a[1]}, "Invalid TaxID") . "\n";
+    }
   }
 }
 
 ###### SUBS
+
+sub check_taxid_has_parent {
+  my $taxid = $_[0];
+  my $result = 0;
+  unless ($nodes_hash{$taxid}) {
+    $result = 1;
+  }
+  return $result; ## 0 = taxid exists; 1 = taxid does not exist
+}
 
 sub tax_walk_to_get_rank_to_species {
   my $taxid = $_[0];
