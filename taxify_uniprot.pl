@@ -93,7 +93,7 @@ while (<$TREEFILE>) {
   foreach (@uniprot_ids) {
     my $match = `grep -wF $_ $taxlist`;
     my @a = split (m/\s+/, $match);
-    if (($uniprot_hash{$a[1]} =~ m/\d+/) && (check_taxid_has_parent($a[1]) == 0)) {
+    if (($a[1] =~ m/\d+/) && (check_taxid_has_parent($a[1]) == 0)) {
       print STDERR join (" ", $_, $a[0], $a[1], tax_walk_to_get_rank_to_species($a[1])) . "\n";
     } else {
       print STDERR join (" ", $_, $a[0], $a[1], "Invalid TaxID") . "\n";
