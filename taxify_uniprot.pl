@@ -14,27 +14,27 @@ SYNOPSIS:
 OPTIONS:
   -i|--infile     [FILE]   :
   -o|--outfile    [FILE]   :
-  -s|--speclist   [FILE]   :
+  -s|--taxlist   [FILE]   :
   -p|--path       [STRING] :
   -d|--depth      [INT]    : how deep to print taxonomy string (default: full string)
   -h|--help                : prints this help message
 \n";
 
-my ($infile,$speclist,$path,$help);
+my ($infile,$taxlist,$path,$help);
 my $outfile = "tax.treefile";
 my $depth_taxon = 0;
 
 GetOptions (
   'i|infile=s'   => \$infile,
   'o|outfile:s'  => \$outfile,
-  's|speclist=s' => \$speclist,
+  's|taxlist=s' => \$taxlist,
   'p|path=s'     => \$path,
   'd|depth:i'    => \$depth_taxon,
   'h|help'       => \$help,
 );
 
 die $usage if $help;
-die $usage unless ($infile && $speclist && $path);
+die $usage unless ($infile && $taxlist && $path);
 
 ## parse nodes and names:
 my (%nodes_hash, %names_hash, %rank_hash);
@@ -69,20 +69,20 @@ if (-e "$path/merged.dmp") {
 }
 print STDERR "[INFO] Nodes parsed: ".commify(scalar(keys %nodes_hash))."\n";
 
-## parse speclist.txt (from https://www.uniprot.org/docs/speclist):
+## parse UniRef90 taxlist.txt:
 my %uniprot_hash;
 
-print STDERR "[INFO] Parsing UniProt taxonomy IDs from '$speclist'...\n";
-open (my $SPECLIST, $speclist) or die $!;
-while (<$SPECLIST>) {
+print STDERR "[INFO] Parsing UniRef taxonomy IDs from '$taxlist'...\n";
+open (my $TAXLIST, $taxlist) or die $!;
+while (<$TAXLIST>) {
   chomp;
-  my @F = split (m/\s+/, $_);
-  next if scalar(@F) < 3;
-  next if $F[2] !~ m/\d+\:$/;
-  $F[2] =~ s/://; ## remove trailing colon
-  $uniprot_hash{$F[0]} = $F[2];
+  my @a = split (m/\s+/, $_);
+  my @b = split (m/\_/, $a[0]);
+  $uniprot_hash{$b[1]} = $a[1];
 }
-print STDERR "[INFO] IDs parsed: ".commify(scalar(keys %uniprot_hash))."\n";
+close $TAXLIST;
+
+print STDERR "[INFO] UniRef taxids parsed: ".commify(scalar(keys %uniprot_hash))."\n";
 
 ## parse treefile:
 open (my $TREEFILE, $infile) or die $!;
@@ -92,8 +92,8 @@ while (<$TREEFILE>) {
   foreach (@uniprot_ids) {
     my @a = split ("_", $_);
     # my $tax_string = tax_walk_to_get_rank_to_species($uniprot_hash{$a[1]});
-    # print STDERR join (" ", $_, $a[1], $uniprot_hash{$a[1]}, tax_walk_to_get_rank_to_species($uniprot_hash{$a[1]})) . "\n";
-    print STDERR join (" ", $_, $a[1], $uniprot_hash{$a[1]}) . "\n";
+    print STDERR join (" ", $_, $a[1], $uniprot_hash{$a[1]}, tax_walk_to_get_rank_to_species($uniprot_hash{$a[1]})) . "\n";
+    # print STDERR join (" ", $_, $a[1], $uniprot_hash{$a[1]}) . "\n";
   }
 }
 
