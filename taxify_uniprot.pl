@@ -92,7 +92,8 @@ while (<$TREEFILE>) {
   foreach (@uniprot_ids) {
     my @a = split ("_", $_);
     # my $tax_string = tax_walk_to_get_rank_to_species($uniprot_hash{$a[1]});
-    print STDERR join (" ", $_, $a[1], $uniprot_hash{$a[1]}, tax_walk_to_get_rank_to_species($uniprot_hash{$a[1]})) . "\n";
+    # print STDERR join (" ", $_, $a[1], $uniprot_hash{$a[1]}, tax_walk_to_get_rank_to_species($uniprot_hash{$a[1]})) . "\n";
+    print STDERR join (" ", $_, $a[1], $uniprot_hash{$a[1]}) . "\n";
   }
 }
 
