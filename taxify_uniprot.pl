@@ -21,7 +21,7 @@ OPTIONS:
 
 my ($infile,$taxlist,$path,$help);
 my $out_suffix = "tax.treefile";
-my $depth_taxon = 0;
+my $depth_taxon = "phylum";
 
 GetOptions (
   'i|infile=s'  => \$infile,
@@ -83,9 +83,15 @@ while (<$TREEFILE_READ>) {
     my $match = `grep -m1 -wF $a[0] $taxlist`;
     my @b = split (m/\s+/, $match);
     if (($b[1] =~ m/\d+/) && (check_taxid_has_parent($b[1]) == 0)) {
-      my $replace_string = $a[0] . "_" . $a[1] . " [OX=$b[1];TAX=" . tax_walk_to_get_rank_to_species($b[1]) . "]";
-      $tax_hash{$orig_string} = $replace_string;
-      print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), $b[1], tax_walk_to_get_rank_to_species($b[1])) . "\n";
+      if ($depth_taxon eq "species") {
+        my $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_species($b[1]), $b[1]);
+        $tax_hash{$orig_string} = $replace_string;
+        print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), $b[1], tax_walk_to_get_rank_to_species($b[1])) . "\n";
+      } else {
+        my $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_phylum($b[1]), $b[1]);
+        $tax_hash{$orig_string} = $replace_string;
+        print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), $b[1], tax_walk_to_get_rank_to_phylum($b[1])) . "\n";
+      }
     } else {
       print STDERR join (" ", join("_",$a[0],$a[1]), $b[1], "Invalid TaxID") . "\n";
     }
@@ -119,11 +125,46 @@ sub check_taxid_has_parent {
   return $result; ## 0 = taxid exists; 1 = taxid does not exist
 }
 
+sub tax_walk_to_get_rank_to_phylum {
+  my $taxid = $_[0];
+  my $parent = $nodes_hash{$taxid};
+  my $parent_rank = $rank_hash{$parent};
+  my ($superkingdom,$kingdom,$phylum,) = ("undef","undef","undef");
+
+  while (1) {
+    if ($parent_rank eq "phylum") {
+      $phylum = $names_hash{$parent};
+      #print "Found phylum: $phylum\n";
+      $parent = $nodes_hash{$parent};
+      $parent_rank = $rank_hash{$parent};
+      next;
+    } elsif ($parent_rank eq "kingdom") {
+      $kingdom = $names_hash{$parent};
+      #print "Found phylum: $kingdom\n";
+      $parent = $nodes_hash{$parent};
+      $parent_rank = $rank_hash{$parent};
+      next;
+    } elsif ($parent_rank eq "superkingdom") {
+      $superkingdom = $names_hash{$parent};
+      #print "Found phylum: $superkingdom\n";
+      last;
+    } elsif ($parent == 1) {
+      last;
+    } else {
+      $parent = $nodes_hash{$parent};
+      $parent_rank = $rank_hash{$parent};
+    }
+  }
+  my $result = join ("_",$superkingdom,$kingdom,$phylum);
+  $result =~ s/\s+/\_/g; ## replace spaces with underscores
+  return $result;
+}
+
 sub tax_walk_to_get_rank_to_species {
   my $taxid = $_[0];
   my $parent = $nodes_hash{$taxid};
   my $parent_rank = $rank_hash{$parent};
-  my ($species,$genus,$family,$order,$class,$phylum,$kingdom,$superkingdom) = ("undef","undef","undef","undef","undef","undef","undef","undef");
+  my ($superkingdom,$kingdom,$phylum,$class,$order,$family,$genus,$species) = ("undef","undef","undef","undef","undef","undef","undef","undef");
 
   while (1) {
     if ($parent_rank eq "species") {
@@ -171,7 +212,7 @@ sub tax_walk_to_get_rank_to_species {
       $parent_rank = $rank_hash{$parent};
     }
   }
-  my $result = join (";",$superkingdom,$kingdom,$phylum,$class,$order,$family,$genus,$species);
+  my $result = join ("_",$superkingdom,$kingdom,$phylum,$class,$order,$family,$genus,$species);
   $result =~ s/\s+/\_/g; ## replace spaces with underscores
   return $result;
 }
