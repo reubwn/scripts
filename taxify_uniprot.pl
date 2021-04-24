@@ -12,25 +12,24 @@ SYNOPSIS:
   Annotates a treefile containing UniRef sequence IDs with taxonomy information.
 
 OPTIONS:
-  -i|--infile     [FILE]   :
-  -o|--outfile    [FILE]   :
-  -s|--taxlist   [FILE]   :
-  -p|--path       [STRING] :
-  -d|--depth      [INT]    : how deep to print taxonomy string (default: full string)
+  -i|--infile     [FILE]   : input treefile
+  -o|--out_suffix [FILE]   : suffix to be added to modified treefile ['.tax.treefile']
+  -t|--taxlist    [FILE]   : UniProt taxid file, formatted 'uniprotid TAB taxid'
+  -p|--path       [STRING] : path to nodes.dmp and names.dmp tax files
   -h|--help                : prints this help message
 \n";
 
 my ($infile,$taxlist,$path,$help);
-my $outfile = "tax.treefile";
+my $out_suffix = "tax.treefile";
 my $depth_taxon = 0;
 
 GetOptions (
-  'i|infile=s'   => \$infile,
-  'o|outfile:s'  => \$outfile,
+  'i|infile=s'  => \$infile,
+  'o|out_suffix:s' => \$out_suffix,
   's|taxlist=s' => \$taxlist,
-  'p|path=s'     => \$path,
-  'd|depth:i'    => \$depth_taxon,
-  'h|help'       => \$help,
+  'p|path=s'    => \$path,
+  'd|depth:i'   => \$depth_taxon,
+  'h|help'      => \$help,
 );
 
 die $usage if $help;
@@ -69,33 +68,23 @@ if (-e "$path/merged.dmp") {
 }
 print STDERR "[INFO] Nodes parsed: ".commify(scalar(keys %nodes_hash))."\n";
 
-# ## parse UniRef90 taxlist.txt:
-# my %uniprot_hash;
-#
-# print STDERR "[INFO] Parsing UniProt taxonomy IDs from '$taxlist'...\n";
-# open (my $TAXLIST, $taxlist) or die $!;
-# while (<$TAXLIST>) {
-#   chomp;
-#   my @F = split (m/\s+/, $_);
-#   $uniprot_hash{$F[0]} = $F[1];
-# }
-# close $TAXLIST;
-#
-# print STDERR "[INFO] UniProt taxids parsed: ".commify(scalar(keys %uniprot_hash))."\n";
-
 ## parse treefile:
+print STDERR "[INFO] Getting UniProt IDs from '$infile'...\n";
+
 my %tax_hash;
 open (my $TREEFILE_READ, $infile) or die $!;
 while (<$TREEFILE_READ>) {
   ## regex to capture UniProt ID string
-  my @uniprot_string = ($_ =~ m/([OPQ][0-9][A-Z0-9]{3}[0-9]_[A-Z0-9]{1,5}_\d+\-\d+|[A-NR-Z][0-9][A-Z][A-Z0-9]{2}[0-9]{1,2}_[A-Z0-9]{1,5}_\d+\-\d+)/g);
-  foreach (@uniprot_string) {
-    my @a = split ("_", $_);
+  my @uniprot_strings = ($_ =~ m/([OPQ][0-9][A-Z0-9]{3}[0-9]_[A-Z0-9]{1,5}_\d+\-\d+|[A-NR-Z][0-9][A-Z][A-Z0-9]{2}[0-9]{1,2}_[A-Z0-9]{1,5}_\d+\-\d+)/g);
+  print STDERR "[INFO] Number of UniProt IDs in treefile: " . commify(scalar(@uniprot_strings)) . "\n";
+  foreach my $orig_string (@uniprot_strings) {
+    my @a = split ("_", $orig_string);
     ## grep UniProt ID from UniProt taxid file
     my $match = `grep -wF $a[0] $taxlist`;
     my @b = split (m/\s+/, $match);
     if (($b[1] =~ m/\d+/) && (check_taxid_has_parent($b[1]) == 0)) {
-      $tax_hash{$_} = tax_walk_to_get_rank_to_species($b[1]);
+      my $replace_string = $a[0] . "_" . $a[1] . " [OX=$b[1];TAX=" . tax_walk_to_get_rank_to_species($b[1]) . "]";
+      $tax_hash{$orig_string} = $replace_string;
       print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), $b[1], tax_walk_to_get_rank_to_species($b[1])) . "\n";
     } else {
       print STDERR join (" ", join("_",$a[0],$a[1]), $b[1], "Invalid TaxID") . "\n";
@@ -108,9 +97,11 @@ close $TREEFILE_READ;
 my $regex = join ("|", keys %tax_hash);
 $regex = qr/$regex/;
 
-## open treefile again and make the substitution
+## open treefile again and make the substitution:
+print STDERR "[INFO] Printing new tree to '$infile.$out_suffix'...\n";
+
 open (my $TREEFILE_WRITE, $infile) or die $!;
-open (my $OUT, $outfile) or die $!;
+open (my $OUT, ">$infile.$out_suffix") or die $!;
 while (my $tree = <$TREEFILE_WRITE>) {
   $tree =~ s/($regex)/$tax_hash{$1}/g;
   print $OUT $tree;
