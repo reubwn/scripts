@@ -10,6 +10,7 @@ use Getopt::Long;
 my $usage = "
 SYNOPSIS:
   Annotates a treefile containing UniRef sequence IDs with taxonomy information.
+  Specifically, it replaces the mnemonic UniProt species code with a tax string (and optional taxid) to either species or phylum (default) level. 
 
 OPTIONS:
   -i|--infile     [FILE]   : input treefile
