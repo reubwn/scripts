@@ -104,14 +104,18 @@ while (<$TREEFILE_READ>) {
 }
 close $TREEFILE_READ;
 
-my $regex = join ("|", keys)
+## set up regex
+my $regex = join ("|", keys %tax_hash);
+$regex = qr/$regex/;
+
+## open treefile again and make the substitution
 open (my $TREEFILE_WRITE, $infile) or die $!;
-while (<$TREEFILE_WRITE>) {
-
-
+open (my $OUT, $outfile) or die $!;
+while (my $tree = <$TREEFILE_WRITE>) {
+  $tree =~ s/($regex)/$tax_hash{$1}/g;
+  print $OUT $tree;
 }
-
-
+close $TREEFILE_WRITE;
 
 ###### SUBS
 
