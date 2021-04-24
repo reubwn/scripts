@@ -90,14 +90,15 @@ while (<$TREEFILE_READ>) {
   ## regex to capture UniProt ID string
   my @uniprot_string = ($_ =~ m/([OPQ][0-9][A-Z0-9]{3}[0-9]_[A-Z0-9]{1,5}_\d+\-\d+|[A-NR-Z][0-9][A-Z][A-Z0-9]{2}[0-9]{1,2}_[A-Z0-9]{1,5}_\d+\-\d+)/g);
   foreach (@uniprot_string) {
-    my @a = split ("_", $_); HERE!!!
-    my $match = `grep -wF $_ $taxlist`;
-    my @a = split (m/\s+/, $match);
-    if (($a[1] =~ m/\d+/) && (check_taxid_has_parent($a[1]) == 0)) {
-      $tax_hash{$a[0]} = tax_walk_to_get_rank_to_species($a[1]);
-      print STDERR join (" ", $_, $a[0], $a[1], tax_walk_to_get_rank_to_species($a[1])) . "\n";
+    my @a = split ("_", $_);
+    ## grep UniProt ID from UniProt taxid file
+    my $match = `grep -wF $a[0] $taxlist`;
+    my @b = split (m/\s+/, $match);
+    if (($b[1] =~ m/\d+/) && (check_taxid_has_parent($b[1]) == 0)) {
+      $tax_hash{$_} = tax_walk_to_get_rank_to_species($b[1]);
+      print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), $b[1], tax_walk_to_get_rank_to_species($b[1])) . "\n";
     } else {
-      print STDERR join (" ", $_, $a[0], $a[1], "Invalid TaxID") . "\n";
+      print STDERR join (" ", join("_",$a[0],$a[1]), $b[1], "Invalid TaxID") . "\n";
     }
   }
 }
