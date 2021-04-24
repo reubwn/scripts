@@ -87,25 +87,30 @@ while (<$TREEFILE_READ>) {
     ## grep UniProt ID from UniProt taxid file
     my $match = `grep -m1 -wF $a[0] $tax_list`;
     my @b = split (m/\s+/, $match);
-    if (($b[1] =~ m/\d+/) && (check_taxid_has_parent($b[1]) == 0)) {
-      if ($tax_depth eq "species") {
-        print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), $b[1], tax_walk_to_get_rank_to_species($b[1])) . "\n";
-        if ( $tax_number ) {
-          $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_species($b[1]), $b[1]);
+    if ( $b[1] ) {
+      if (($b[1] =~ m/\d+/) && (check_taxid_has_parent($b[1]) == 0)) {
+        if ($tax_depth eq "species") {
+          print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), $b[1], tax_walk_to_get_rank_to_species($b[1])) . "\n";
+          if ( $tax_number ) {
+            $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_species($b[1]), $b[1]);
+          } else {
+            $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_species($b[1]));
+          }
         } else {
-          $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_species($b[1]));
+          print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), $b[1], tax_walk_to_get_rank_to_phylum($b[1])) . "\n";
+          if ( $tax_number ) {
+            $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_phylum($b[1]), $b[1]);
+          } else {
+            $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_phylum($b[1]));
+          }
         }
       } else {
-        print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), $b[1], tax_walk_to_get_rank_to_phylum($b[1])) . "\n";
-        if ( $tax_number ) {
-          $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_phylum($b[1]), $b[1]);
-        } else {
-          $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_phylum($b[1]));
-        }
+        print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), "Invalid taxid") . "\n";
       }
     } else {
-      print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), "Invalid TaxID") . "\n";
+      print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), "No taxid found") . "\n";
     }
+
     ## replacement string hash
     $tax_hash{$orig_string} = $replace_string;
   }
