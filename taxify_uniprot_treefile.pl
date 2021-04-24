@@ -16,24 +16,27 @@ OPTIONS:
   -o|--out_suffix [FILE]   : suffix to be added to modified treefile ['.tax.treefile']
   -p|--taxdb      [STRING] : path to nodes.dmp and names.dmp tax files
   -t|--taxids     [FILE]   : UniProt taxid file, formatted 'uniprotid TAB taxid'
+  -d|--taxdepth   [STRING] : depth of taxonomy returned, can be 'phylum' or 'species' ['phylum']
+  -n|--taxnumber           : include taxid integer in string? [no]
   -h|--help                : prints this help message
 \n";
 
-my ($infile,$taxlist,$path,$help);
+my ($infile,$path,$tax_list,$tax_number,$help);
 my $out_suffix = "tax.treefile";
-my $depth_taxon = "phylum";
+my $tax_depth = "phylum";
 
 GetOptions (
   'i|infile=s'  => \$infile,
   'o|out_suffix:s' => \$out_suffix,
   'p|taxdb=s'   => \$path,
-  't|taxids=s'  => \$taxlist,
-  'd|depth:i'   => \$depth_taxon,
+  't|taxids=s'  => \$tax_list,
+  'd|depth:i'   => \$tax_depth,
+  'n|taxnumber' => \$tax_number,
   'h|help'      => \$help,
 );
 
 die $usage if $help;
-die $usage unless ($infile && $taxlist && $path);
+die $usage unless ($infile && $tax_list && $path);
 
 ## parse nodes and names:
 my (%nodes_hash, %names_hash, %rank_hash);
@@ -80,18 +83,28 @@ while (<$TREEFILE_READ>) {
   foreach my $orig_string (@uniprot_strings) {
     my @a = split ("_", $orig_string);
     ## grep UniProt ID from UniProt taxid file
-    my $match = `grep -m1 -wF $a[0] $taxlist`;
+    my $match = `grep -m1 -wF $a[0] $tax_list`;
     my @b = split (m/\s+/, $match);
     if (($b[1] =~ m/\d+/) && (check_taxid_has_parent($b[1]) == 0)) {
-      if ($depth_taxon eq "species") {
-        my $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_species($b[1]), $b[1]);
-        $tax_hash{$orig_string} = $replace_string;
+      my $replace_string;
+      if ($tax_depth eq "species") {
         print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), $b[1], tax_walk_to_get_rank_to_species($b[1])) . "\n";
+        if ( $tax_number ) {
+          $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_species($b[1]), $b[1]);
+        } else {
+          $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_species($b[1]));
+        }
       } else {
-        my $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_phylum($b[1]), $b[1]);
-        $tax_hash{$orig_string} = $replace_string;
         print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), $b[1], tax_walk_to_get_rank_to_phylum($b[1])) . "\n";
+        if ( $tax_number ) {
+          $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_phylum($b[1]), $b[1]);
+        } else {
+          $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_phylum($b[1]));
+        }
       }
+
+      ## replacement string hash
+      $tax_hash{$orig_string} = $replace_string;
     } else {
       print STDERR join (" ", join("_",$a[0],$a[1]), $b[1], "Invalid TaxID") . "\n";
     }
