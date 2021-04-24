@@ -14,8 +14,8 @@ SYNOPSIS:
 OPTIONS:
   -i|--infile     [FILE]   : input treefile
   -o|--out_suffix [FILE]   : suffix to be added to modified treefile ['.tax.treefile']
-  -t|--taxlist    [FILE]   : UniProt taxid file, formatted 'uniprotid TAB taxid'
-  -p|--path       [STRING] : path to nodes.dmp and names.dmp tax files
+  -p|--taxdb      [STRING] : path to nodes.dmp and names.dmp tax files
+  -t|--taxids     [FILE]   : UniProt taxid file, formatted 'uniprotid TAB taxid'
   -h|--help                : prints this help message
 \n";
 
@@ -26,8 +26,8 @@ my $depth_taxon = 0;
 GetOptions (
   'i|infile=s'  => \$infile,
   'o|out_suffix:s' => \$out_suffix,
-  't|taxlist=s' => \$taxlist,
-  'p|path=s'    => \$path,
+  'p|taxdb=s'   => \$path,
+  't|taxids=s'  => \$taxlist,
   'd|depth:i'   => \$depth_taxon,
   'h|help'      => \$help,
 );
@@ -80,7 +80,7 @@ while (<$TREEFILE_READ>) {
   foreach my $orig_string (@uniprot_strings) {
     my @a = split ("_", $orig_string);
     ## grep UniProt ID from UniProt taxid file
-    my $match = `grep -wF $a[0] $taxlist`;
+    my $match = `grep -m1 -wF $a[0] $taxlist`;
     my @b = split (m/\s+/, $match);
     if (($b[1] =~ m/\d+/) && (check_taxid_has_parent($b[1]) == 0)) {
       my $replace_string = $a[0] . "_" . $a[1] . " [OX=$b[1];TAX=" . tax_walk_to_get_rank_to_species($b[1]) . "]";
