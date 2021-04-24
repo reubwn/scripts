@@ -84,22 +84,33 @@ print STDERR "[INFO] Nodes parsed: ".commify(scalar(keys %nodes_hash))."\n";
 # print STDERR "[INFO] UniProt taxids parsed: ".commify(scalar(keys %uniprot_hash))."\n";
 
 ## parse treefile:
-open (my $TREEFILE, $infile) or die $!;
-while (<$TREEFILE>) {
-  ## regex to capture UniProt IDs and species identification code
-  # my @uniprot_ids = ($_ =~ m/([OPQ][0-9][A-Z0-9]{3}[0-9]_[A-Z0-9]{1,5}|[A-NR-Z][0-9][A-Z][A-Z0-9]{2}[0-9]{1,2}_[A-Z0-9]{1,5})/g);
-  ## regex to capture UniProt IDs
-  my @uniprot_ids = ($_ =~ m/([OPQ][0-9][A-Z0-9]{3}[0-9]|[A-NR-Z][0-9][A-Z][A-Z0-9]{2}[0-9]{1,2})/g);
-  foreach (@uniprot_ids) {
+my %tax_hash;
+open (my $TREEFILE_READ, $infile) or die $!;
+while (<$TREEFILE_READ>) {
+  ## regex to capture UniProt ID string
+  my @uniprot_string = ($_ =~ m/([OPQ][0-9][A-Z0-9]{3}[0-9]_[A-Z0-9]{1,5}_\d+\-\d+|[A-NR-Z][0-9][A-Z][A-Z0-9]{2}[0-9]{1,2}_[A-Z0-9]{1,5}_\d+\-\d+)/g);
+  foreach (@uniprot_string) {
+    my @a = split ("_", $_); HERE!!!
     my $match = `grep -wF $_ $taxlist`;
     my @a = split (m/\s+/, $match);
     if (($a[1] =~ m/\d+/) && (check_taxid_has_parent($a[1]) == 0)) {
+      $tax_hash{$a[0]} = tax_walk_to_get_rank_to_species($a[1]);
       print STDERR join (" ", $_, $a[0], $a[1], tax_walk_to_get_rank_to_species($a[1])) . "\n";
     } else {
       print STDERR join (" ", $_, $a[0], $a[1], "Invalid TaxID") . "\n";
     }
   }
 }
+close $TREEFILE_READ;
+
+my $regex = join ("|", keys)
+open (my $TREEFILE_WRITE, $infile) or die $!;
+while (<$TREEFILE_WRITE>) {
+
+
+}
+
+
 
 ###### SUBS
 
