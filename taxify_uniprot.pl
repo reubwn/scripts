@@ -26,7 +26,7 @@ my $depth_taxon = 0;
 GetOptions (
   'i|infile=s'  => \$infile,
   'o|out_suffix:s' => \$out_suffix,
-  's|taxlist=s' => \$taxlist,
+  't|taxlist=s' => \$taxlist,
   'p|path=s'    => \$path,
   'd|depth:i'   => \$depth_taxon,
   'h|help'      => \$help,
