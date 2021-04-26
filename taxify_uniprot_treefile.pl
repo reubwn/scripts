@@ -98,7 +98,7 @@ foreach my $current_file (@treefiles) {
   open (my $TREEFILE_READ, $current_file) or die $!;
   while (<$TREEFILE_READ>) {
     ## this regex *should* capture most UniProt accessions and gene IDs, plus the (_\d+\-\d+){0,1} suffix added by hmmalign/IQTREE
-    while ($_ =~ m/(\w{1,5}_\w{1,5}(?<=[A-Z])(_\d+\-\d+){0,1}|[OPQ][0-9][A-Z0-9]{3}[0-9]_[A-Z0-9]{1,5}(_\d+\-\d+){0,1}|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}_[A-Z0-9]{1,5}(_\d+\-\d+){0,1})/g) {
+    while ($_ =~ m/([A-Z0-9]{1,5}_(?=[A-Z0-9]+?[A-Z])[A-Z0-9]{1,5}(_\d+\-\d+){0,1}|[OPQ][0-9][A-Z0-9]{3}[0-9]_[A-Z0-9]{1,5}(_\d+\-\d+){0,1}|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}_[A-Z0-9]{1,5}(_\d+\-\d+){0,1})/g) {
       push (@uniprot_strings, $1);
     }
     ## explanation
