@@ -76,12 +76,6 @@ if (-e "$path/merged.dmp") {
 }
 print STDERR "[INFO] Nodes parsed: ".commify(scalar(keys %nodes_hash))."\n";
 
-## parse treefile:
-print STDERR "[INFO] Getting UniProt IDs from '$infile'...\n";
-
-my %tax_hash;
-my @uniprot_strings;
-
 my @treefiles;
 if ( $infile ) {
   push (@treefiles, $infile);
@@ -97,6 +91,10 @@ if ( $infile ) {
 }
 
 foreach my $current_file (@treefiles) {
+
+  my %tax_hash;
+  my @uniprot_strings;
+  
   open (my $TREEFILE_READ, $current_file) or die $!;
   while (<$TREEFILE_READ>) {
     ## this regex *should* capture most UniProt accessions and gene IDs, plus the (_\d+\-\d+){0,1} suffix added by hmmalign/IQTREE
