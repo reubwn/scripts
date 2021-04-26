@@ -89,6 +89,7 @@ while (<$TREEFILE_READ>) {
   # while ($_ =~ m/([A-Z0-9]{1,5}(?<=[A-Z])_[A-Z0-9]{1,5}|[OPQ][0-9][A-Z0-9]{3}[0-9]_[A-Z0-9]{1,5}|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}_[A-Z0-9]{1,5})/g) {
   #   push (@uniprot_strings, $1);
   # }
+  ## this regex *should* capture most UniProt accessions and gene IDs, plus the (_\d+\-\d+){0,1} suffix added by hmmalign/IQTREE
   while ($_ =~ m/([A-Z0-9]{1,5}(?<=[A-Z])_[A-Z0-9]{1,5}(_\d+\-\d+){0,1}|[OPQ][0-9][A-Z0-9]{3}[0-9]_[A-Z0-9]{1,5}(_\d+\-\d+){0,1}|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}_[A-Z0-9]{1,5}(_\d+\-\d+){0,1})/g) {
     push (@uniprot_strings, $1);
   }
@@ -105,7 +106,8 @@ foreach my $orig_string (@uniprot_strings) {
   my $match = `grep -m1 -wF $a[1] $spec_list`;
   if ( $match ) {
     my @b = split (m/\s+/, $match);
-    $taxid = ($b[2] =~ s/:$//);
+    $taxid = $b[2];
+    $taxid =~ s/://;
   } else {
     ## else parse UniProt accession for taxid
     $match = `grep -m1 -wF $a[0] $tax_list`;
