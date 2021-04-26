@@ -16,13 +16,14 @@ OPTIONS:
   -i|--infile     [FILE]   : input treefile
   -o|--out_suffix [FILE]   : suffix to be added to modified treefile ['.tax.treefile']
   -p|--taxdb      [STRING] : path to nodes.dmp and names.dmp tax files
-  -t|--taxids     [FILE]   : UniProt taxid file, formatted 'uniprotid TAB taxid'
+  -t|--taxlist    [FILE]   : UniProt taxid file, formatted 'uniprotid TAB taxid'
+  -s|--speclist   [FILE]   : UniProt species identification codes file ()
   -d|--taxdepth   [STRING] : depth of taxonomy returned, can be 'phylum' or 'species' ['phylum']
   -n|--taxnumber           : include taxid integer in string? [no]
   -h|--help                : prints this help message
 \n";
 
-my ($infile,$path,$tax_list,$tax_number,$help);
+my ($infile,$path,$tax_list,$spec_list,$tax_number,$help);
 my $out_suffix = "tax.treefile";
 my $tax_depth = "phylum";
 
@@ -30,7 +31,8 @@ GetOptions (
   'i|infile=s'  => \$infile,
   'o|out_suffix:s' => \$out_suffix,
   'p|taxdb=s'   => \$path,
-  't|taxids=s'  => \$tax_list,
+  't|taxlist=s' => \$tax_list,
+  's|speclist=s' => \$spec_list,
   'd|depth:i'   => \$tax_depth,
   'n|taxnumber' => \$tax_number,
   'h|help'      => \$help,
@@ -72,52 +74,111 @@ if (-e "$path/merged.dmp") {
 }
 print STDERR "[INFO] Nodes parsed: ".commify(scalar(keys %nodes_hash))."\n";
 
+## parse UniProt species list:
+## use this FIRST and then grep from taxid file if no match is found - much faster!
+
 ## parse treefile:
 print STDERR "[INFO] Getting UniProt IDs from '$infile'...\n";
 
 my %tax_hash;
+my @uniprot_strings;
+
 open (my $TREEFILE_READ, $infile) or die $!;
 while (<$TREEFILE_READ>) {
-  ## regex to capture UniProt ID string
-  my @uniprot_strings = ($_ =~ m/([OPQ][0-9][A-Z0-9]{3}[0-9]_[A-Z0-9]{1,5}_\d+\-\d+|[A-NR-Z][0-9][A-Z][A-Z0-9]{2}[0-9]{1,2}_[A-Z0-9]{1,5}_\d+\-\d+)/g);
-  print STDERR "[INFO] Number of UniProt IDs in treefile: " . commify(scalar(@uniprot_strings)) . "\n";
-
-  foreach my $orig_string (@uniprot_strings) {
-    my @a = split ("_", $orig_string);
-    my $replace_string = join ("_", $a[0], $a[1]); ## default is to include the UniProt species code
-    
-    ## grep UniProt ID from UniProt taxid file
-    my $match = `grep -m1 -wF $a[0] $tax_list`;
-    my @b = split (m/\s+/, $match);
-    if ( $b[1] ) {
-      if (($b[1] =~ m/\d+/) && (check_taxid_has_parent($b[1]) == 0)) {
-        if ($tax_depth eq "species") {
-          print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), $b[1], tax_walk_to_get_rank_to_species($b[1])) . "\n";
-          if ( $tax_number ) {
-            $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_species($b[1]), $b[1]);
-          } else {
-            $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_species($b[1]));
-          }
-        } else {
-          print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), $b[1], tax_walk_to_get_rank_to_phylum($b[1])) . "\n";
-          if ( $tax_number ) {
-            $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_phylum($b[1]), $b[1]);
-          } else {
-            $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_phylum($b[1]));
-          }
-        }
-      } else {
-        print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), "Invalid taxid") . "\n";
-      }
-    } else {
-      print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), "No taxid found") . "\n";
-    }
-
-    ## replacement string hash
-    $tax_hash{$orig_string} = $replace_string;
+  ## this regex *should* capture most UniProt accessions and gene IDs
+  # while ($_ =~ m/([A-Z0-9]{1,5}(?<=[A-Z])_[A-Z0-9]{1,5}|[OPQ][0-9][A-Z0-9]{3}[0-9]_[A-Z0-9]{1,5}|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}_[A-Z0-9]{1,5})/g) {
+  #   push (@uniprot_strings, $1);
+  # }
+  while ($_ =~ m/([A-Z0-9]{1,5}(?<=[A-Z])_[A-Z0-9]{1,5}(_\d+\-\d+){0,1}|[OPQ][0-9][A-Z0-9]{3}[0-9]_[A-Z0-9]{1,5}(_\d+\-\d+){0,1}|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}_[A-Z0-9]{1,5}(_\d+\-\d+){0,1})/g) {
+    push (@uniprot_strings, $1);
   }
 }
 close $TREEFILE_READ;
+print STDERR "[INFO] Number of UniProt IDs scooped from treefile: ".commify(scalar(@uniprot_strings))."\n";
+
+foreach my $orig_string (@uniprot_strings) {
+  ## default is the original ID
+  my $taxid;
+  my @a = split ("_", $orig_string);
+  my $replace_string = join ("_", $a[0], $a[1]); ## default is to include the UniProt species code
+  ## try to grep from speclist using species ID first for speed
+  my $match = `grep -m1 -wF $a[1] $spec_list`;
+  if ( $match ) {
+    my @b = split (m/\s+/, $match);
+    $taxid = ($b[2] =~ s/:$//);
+  } else {
+    ## else parse UniProt accession for taxid
+    $match = `grep -m1 -wF $a[0] $tax_list`;
+    my @b = split (m/\s+/, $match);
+    $taxid = $b[1];
+  }
+  ## pull taxonomy string from taxdb
+  if ( $taxid ) {
+    if (($taxid =~ m/\d+/) && (check_taxid_has_parent($taxid) == 0)) {
+      if ($tax_depth eq "species") {
+        print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), $taxid, tax_walk_to_get_rank_to_species($taxid)) . "\n";
+        if ( $tax_number ) {
+          $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_species($taxid), $taxid);
+        } else {
+          $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_species($taxid));
+        }
+      } else {
+        print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), $taxid, tax_walk_to_get_rank_to_phylum($taxid)) . "\n";
+        if ( $tax_number ) {
+          $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_phylum($taxid), $taxid);
+        } else {
+          $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_phylum($taxid));
+        }
+      }
+    } else {
+      print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), "Invalid taxid") . "\n";
+    }
+  } else {
+    print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), "No taxid found") . "\n";
+  }
+  ## replacement string hash
+  $tax_hash{$orig_string} = $replace_string;
+}
+
+#   ## regex to capture UniProt ID string
+#   my @uniprot_strings = ($_ =~ m/([OPQ][0-9][A-Z0-9]{3}[0-9]_[A-Z0-9]{1,5}_\d+\-\d+|[A-NR-Z][0-9][A-Z][A-Z0-9]{2}[0-9]{1,2}_[A-Z0-9]{1,5}_\d+\-\d+)/g);
+#   print STDERR "[INFO] Number of UniProt IDs in treefile: " . commify(scalar(@uniprot_strings)) . "\n";
+#
+#   foreach my $orig_string (@uniprot_strings) {
+#     my @a = split ("_", $orig_string);
+#     my $replace_string = join ("_", $a[0], $a[1]); ## default is to include the UniProt species code
+#
+#     ## grep UniProt ID from UniProt taxid file
+#     my $match = `grep -m1 -wF $a[0] $tax_list`;
+#     my @b = split (m/\s+/, $match);
+#     if ( $b[1] ) {
+#       if (($b[1] =~ m/\d+/) && (check_taxid_has_parent($b[1]) == 0)) {
+#         if ($tax_depth eq "species") {
+#           print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), $b[1], tax_walk_to_get_rank_to_species($b[1])) . "\n";
+#           if ( $tax_number ) {
+#             $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_species($b[1]), $b[1]);
+#           } else {
+#             $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_species($b[1]));
+#           }
+#         } else {
+#           print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), $b[1], tax_walk_to_get_rank_to_phylum($b[1])) . "\n";
+#           if ( $tax_number ) {
+#             $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_phylum($b[1]), $b[1]);
+#           } else {
+#             $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_phylum($b[1]));
+#           }
+#         }
+#       } else {
+#         print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), "Invalid taxid") . "\n";
+#       }
+#     } else {
+#       print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), "No taxid found") . "\n";
+#     }
+#
+#     ## replacement string hash
+#     $tax_hash{$orig_string} = $replace_string;
+#   }
+# }
 
 ## set up regex
 my $regex = join ("|", keys %tax_hash);
