@@ -17,7 +17,7 @@ OPTIONS:
   -o|--out_suffix [FILE]   : suffix to be added to modified treefile ['.tax.treefile']
   -p|--taxdb      [STRING] : path to nodes.dmp and names.dmp tax files
   -t|--taxlist    [FILE]   : UniProt taxid file, formatted 'uniprotid TAB taxid'
-  -s|--speclist   [FILE]   : UniProt species identification codes file ()
+  -s|--speclist   [FILE]   : UniProt species identification codes file (https://www.uniprot.org/docs/speclist)
   -d|--taxdepth   [STRING] : depth of taxonomy returned, can be 'phylum' or 'species' ['phylum']
   -n|--taxnumber           : include taxid integer in string? [no]
   -h|--help                : prints this help message
@@ -85,14 +85,14 @@ my @uniprot_strings;
 
 open (my $TREEFILE_READ, $infile) or die $!;
 while (<$TREEFILE_READ>) {
-  ## this regex *should* capture most UniProt accessions and gene IDs
-  # while ($_ =~ m/([A-Z0-9]{1,5}(?<=[A-Z])_[A-Z0-9]{1,5}|[OPQ][0-9][A-Z0-9]{3}[0-9]_[A-Z0-9]{1,5}|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}_[A-Z0-9]{1,5})/g) {
-  #   push (@uniprot_strings, $1);
-  # }
   ## this regex *should* capture most UniProt accessions and gene IDs, plus the (_\d+\-\d+){0,1} suffix added by hmmalign/IQTREE
   while ($_ =~ m/(\w{1,5}_\w{1,5}(?<=[A-Z])(_\d+\-\d+){0,1}|[OPQ][0-9][A-Z0-9]{3}[0-9]_[A-Z0-9]{1,5}(_\d+\-\d+){0,1}|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}_[A-Z0-9]{1,5}(_\d+\-\d+){0,1})/g) {
     push (@uniprot_strings, $1);
   }
+  ## explanation
+  ## m/(\w{1,5}_\w{1,5}(?<=[A-Z]) ## match gene ID followed by species ID, requires at least one letter e.g. CASP2_RAT
+  ## (_\d+\-\d+){0,1} ## maybe match hmmalign stuff
+  ## |[OPQ][0-9][A-Z0-9]{3}[0-9]_[A-Z0-9]{1,5}(_\d+\-\d+){0,1}|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}_[A-Z0-9]{1,5}(_\d+\-\d+){0,1})/g ## or match UniProt ID
 }
 close $TREEFILE_READ;
 print STDERR "[INFO] Number of UniProt IDs scooped from treefile: ".commify(scalar(@uniprot_strings))."\n";
