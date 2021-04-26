@@ -142,46 +142,6 @@ foreach my $orig_string (@uniprot_strings) {
   $tax_hash{$orig_string} = $replace_string;
 }
 
-#   ## regex to capture UniProt ID string
-#   my @uniprot_strings = ($_ =~ m/([OPQ][0-9][A-Z0-9]{3}[0-9]_[A-Z0-9]{1,5}_\d+\-\d+|[A-NR-Z][0-9][A-Z][A-Z0-9]{2}[0-9]{1,2}_[A-Z0-9]{1,5}_\d+\-\d+)/g);
-#   print STDERR "[INFO] Number of UniProt IDs in treefile: " . commify(scalar(@uniprot_strings)) . "\n";
-#
-#   foreach my $orig_string (@uniprot_strings) {
-#     my @a = split ("_", $orig_string);
-#     my $replace_string = join ("_", $a[0], $a[1]); ## default is to include the UniProt species code
-#
-#     ## grep UniProt ID from UniProt taxid file
-#     my $match = `grep -m1 -wF $a[0] $tax_list`;
-#     my @b = split (m/\s+/, $match);
-#     if ( $b[1] ) {
-#       if (($b[1] =~ m/\d+/) && (check_taxid_has_parent($b[1]) == 0)) {
-#         if ($tax_depth eq "species") {
-#           print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), $b[1], tax_walk_to_get_rank_to_species($b[1])) . "\n";
-#           if ( $tax_number ) {
-#             $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_species($b[1]), $b[1]);
-#           } else {
-#             $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_species($b[1]));
-#           }
-#         } else {
-#           print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), $b[1], tax_walk_to_get_rank_to_phylum($b[1])) . "\n";
-#           if ( $tax_number ) {
-#             $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_phylum($b[1]), $b[1]);
-#           } else {
-#             $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_phylum($b[1]));
-#           }
-#         }
-#       } else {
-#         print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), "Invalid taxid") . "\n";
-#       }
-#     } else {
-#       print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), "No taxid found") . "\n";
-#     }
-#
-#     ## replacement string hash
-#     $tax_hash{$orig_string} = $replace_string;
-#   }
-# }
-
 ## set up regex
 my $regex = join ("|", keys %tax_hash);
 $regex = qr/$regex/;
