@@ -102,9 +102,9 @@ foreach my $current_file (@treefiles) {
       push (@uniprot_strings, $1);
     }
     ## explanation
-    ## m/(\w{1,5}_\w{1,5}(?<=[A-Z]) ## match gene ID followed by species ID, requires at least one letter e.g. CASP2_RAT
+    ## [A-Z0-9]{1,5}_(?=[A-Z0-9]+?[A-Z])[A-Z0-9]{1,5} ## match gene ID followed by species ID, requires at least one uppercase letter in the species ID e.g. CASP2_RAT
     ## (_\d+\-\d+){0,1} ## maybe match hmmalign stuff
-    ## |[OPQ][0-9][A-Z0-9]{3}[0-9]_[A-Z0-9]{1,5}(_\d+\-\d+){0,1}|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}_[A-Z0-9]{1,5}(_\d+\-\d+){0,1})/g ## or match UniProt ID
+    ## |[OPQ][0-9][A-Z0-9]{3}[0-9]_[A-Z0-9]{1,5}(_\d+\-\d+){0,1}|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}_[A-Z0-9]{1,5}(_\d+\-\d+){0,1} ## or match UniProt ID
   }
   close $TREEFILE_READ;
   print STDERR "[INFO] Number of UniProt IDs scooped from treefile '$current_file': ".commify(scalar(@uniprot_strings))."\n";
