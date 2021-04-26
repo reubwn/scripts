@@ -94,7 +94,7 @@ foreach my $current_file (@treefiles) {
 
   my %tax_hash;
   my @uniprot_strings;
-  
+
   open (my $TREEFILE_READ, $current_file) or die $!;
   while (<$TREEFILE_READ>) {
     ## this regex *should* capture most UniProt accessions and gene IDs, plus the (_\d+\-\d+){0,1} suffix added by hmmalign/IQTREE
@@ -132,16 +132,16 @@ foreach my $current_file (@treefiles) {
         if ($tax_depth eq "species") {
           print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), $taxid, tax_walk_to_get_rank_to_species($taxid)) . "\n";
           if ( $tax_number ) {
-            $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_species($taxid), $taxid);
+            $replace_string = join ("_", $a[0], $a[1], tax_walk_to_get_rank_to_species($taxid), $taxid);
           } else {
-            $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_species($taxid));
+            $replace_string = join ("_", $a[0], $a[1], tax_walk_to_get_rank_to_species($taxid));
           }
         } else {
           print STDERR " --> " . join (" ", join("_",$a[0],$a[1]), $taxid, tax_walk_to_get_rank_to_phylum($taxid)) . "\n";
           if ( $tax_number ) {
-            $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_phylum($taxid), $taxid);
+            $replace_string = join ("_", $a[0], $a[1], tax_walk_to_get_rank_to_phylum($taxid), $taxid);
           } else {
-            $replace_string = join ("_", $a[0], tax_walk_to_get_rank_to_phylum($taxid));
+            $replace_string = join ("_", $a[0], $a[1], tax_walk_to_get_rank_to_phylum($taxid));
           }
         }
       } else {
