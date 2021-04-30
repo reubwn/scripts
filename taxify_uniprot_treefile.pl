@@ -113,7 +113,7 @@ foreach my $current_file (@treefiles) {
   foreach my $orig_string (@uniprot_strings) {
     ## default is the original ID
     my $taxid;
-    my @a = split ("_", $orig_string);
+    my @a = split (m/[_\.]/, $orig_string); ## split on underscore or point
     my $replace_string = join ("_", $a[0], $a[1]); ## default is to include the UniProt species code
     ## try to grep from speclist using species ID first for speed
     my $match = `grep -m1 -wF $a[1] $spec_list`;
