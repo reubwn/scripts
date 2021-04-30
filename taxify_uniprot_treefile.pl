@@ -114,7 +114,12 @@ foreach my $current_file (@treefiles) {
     ## default is the original ID
     my $taxid;
     my @a = split (m/[_\.]/, $orig_string); ## split on underscore or point
-    my $replace_string = join ("_", $a[0], $a[1]); ## default is to include the UniProt species code
+    my $replace_string;
+    if ($orig_string =~ m/[OPQ][0-9][A-Z0-9]{3}[0-9]\.\d(_\d+\-\d+){0,1}|[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}\.\d(_\d+\-\d+){0,1}/) {
+      $replace_string = $a[0];
+    } else {
+      $replace_string = join ("_", $a[0], $a[1]); ## default is to include the UniProt species code
+    }
     ## try to grep from speclist using species ID first for speed
     my $match = `grep -m1 -wF $a[1] $spec_list`;
     if ( $match ) {
