@@ -13,7 +13,7 @@ use File::Path 'rmtree';
 
 my $usage = "
 SYNOPSIS:
-  Parses Orthofinder output file \"OrthologousGroups.txt\" for groups corresponding to input criteria.
+  Parses Orthofinder output file \"Orthogroups.txt\" for groups corresponding to input criteria.
   Construct the 'select' string like so: \"ID1=X,ID2=Y,IDN=Z\", where ID1 is the unique species ID
   corresponding to the entity on the lefthandside of the delimiter given by -d (default is '|'), and
   X is the number of members from species 1 you want to select groups containing.
@@ -23,8 +23,8 @@ OUTPUTS:
   with fasta files containing sequence data of selected groups.
 
 OPTIONS:
-  -i|--in     [FILE] : OrthologousGroups.txt file [required]
-  -f|--fasta  [FILE] : path to directory of fasta files used to construct OrthologousGroups.txt [required]
+  -i|--in     [FILE] : Orthogroups.txt file [required]
+  -f|--fasta  [FILE] : path to directory of fasta files used to construct Orthogroups.txt [required]
   -d|--delim  [STR]  : delimiter used in the protein naming structure [assumes an OrthoMCL-style schema of \"SPECIES_ID|PROTEIN_ID\"]
   -s|--select [STR]  : select string, eg. \"ID1=1,ID2=1,IDN=1\" would return 1:1 orthologous groups
   -n|--noseqs        : don't print sequences; just count the groups
@@ -34,7 +34,7 @@ OPTIONS:
 
 EXAMPLES:
   Select ONLY those groups where species ARIC and AVAG have 4 members each, and species RMAG and RMAC have 2 members each:
-    >> ./orthofinder_selectGroups.pl -i OrthologousGroups.txt -f fastas/ -s \"ARIC=4,AVAG=4,RMAG=2,RMAC=2\"
+    >> ./orthofinder_selectGroups.pl -i Orthogroups.txt -f fastas/ -s \"ARIC=4,AVAG=4,RMAG=2,RMAC=2\"
 \n";
 
 my ($in,$fastas,$select,$noseqsplease,$only,$out,$help);
