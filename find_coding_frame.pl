@@ -32,3 +32,11 @@ GetOptions (
 
 die $usage if ( $help );
 die $usage unless ( $aa_file && $dna_file );
+
+## parse protein seqs
+my %prot_hash;
+my $aa_file_fh = Bio::SeqIO -> new ( -file => $aa_file, -format => "fasta" );
+while ( my $seq_obj = $aa_file_fh -> next_seq() ) {
+  $prot_hash{$seq_obj->display_id()} = $seq_obj->seq();
+}
+print STDERR "[INFO] Got ".scalar(keys %prot_hash)." protein seqs from '$aa_file'\n";
