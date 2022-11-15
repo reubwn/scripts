@@ -69,9 +69,20 @@ foreach my $gid (nsort keys %prot_hash) {
 
     ## check if any match exactly
     my ($m0,$m1,$m2) = ('','','');
+    my $substring;
+    my $modulo;
     if ( $pseq_obj->seq() eq $dseq_translation_1 ) {
+      print $dseq_obj->length() % 3;
+      $substring = substr($dseq_obj->seq(), 1);
+      print ength($substring) % 3;
+      # if ( length($substring) % 3 != 0) {
+      #
+      # }
       $m1 = "<==";
     } elsif ( $pseq_obj->seq() eq $dseq_translation_2 ) {
+      print $dseq_obj->length() % 3;
+      $substring = substr($dseq_obj->seq(), 2);
+      print ength($substring) % 3;
       $m2 = "<==";
     } else {
       $m0 = "<==";
