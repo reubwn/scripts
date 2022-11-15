@@ -7,6 +7,7 @@ use Getopt::Long;
 use Bio::Seq;
 use Bio::SeqIO;
 use File::Basename;
+use Sort::Naturally;
 use Data::Dumper;
 
 my $usage = "
@@ -50,7 +51,7 @@ while ( my $seq_obj = $dna_file_fh -> next_seq() ) {
 }
 print STDERR "[INFO] Got ".scalar(keys %transcripts_hash)." protein seqs from '$dna_file'\n";
 
-foreach my $gid (keys %prot_hash) {
+foreach my $gid (nsort keys %prot_hash) {
   my $pseq_obj = $prot_hash{$gid};
   my $dseq_obj = $transcripts_hash{$gid};
   my $dseq_translation = $dseq_obj->translate()->seq();
