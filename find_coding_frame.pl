@@ -74,7 +74,7 @@ foreach my $gid (nsort keys %prot_hash) {
     if ( $pseq_obj->seq() eq $dseq_translation_1 ) {
       print $dseq_obj->length() % 3;
       $substring = substr($dseq_obj->seq(), 1);
-      print ength($substring) % 3;
+      print length($substring) % 3;
       # if ( length($substring) % 3 != 0) {
       #
       # }
