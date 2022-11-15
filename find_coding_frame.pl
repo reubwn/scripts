@@ -54,7 +54,7 @@ print STDERR "[INFO] Got ".scalar(keys %transcripts_hash)." protein seqs from '$
 foreach my $gid (nsort keys %prot_hash) {
   my $pseq_obj = $prot_hash{$gid};
   my $dseq_obj = $transcripts_hash{$gid};
-  my $dseq_translation_0 = $dseq_obj->translate()->seq();
+  my $dseq_translation_0 = $dseq_obj->translate( -frame => 0 )->seq();
   $dseq_translation_0 =~ s/\*$//; ## remove terminator '*'
   # print $gid . "\t" . $pseq_obj->seq() . "\n";
   # print $gid . "\t" . $dseq_translation . "\n";
@@ -67,10 +67,10 @@ foreach my $gid (nsort keys %prot_hash) {
     my $dseq_translation_2 = $dseq_obj->translate( -frame => 2 )->seq();
     $dseq_translation_2 =~ s/\*$//; ## remove terminator '*'
 
-    print $gid . "\t" . $pseq_obj->seq() . "\n";
-    print $gid . "\t" . $dseq_translation_0 . "\n";
-    print $gid . "\t" . $dseq_translation_1 . "\n";
-    print $gid . "\t" . $dseq_translation_2 . "\n";
+    print $gid . "\tPRED\t" . $pseq_obj->seq() . "\n";
+    print $gid . "\tFRA0\t" . $dseq_translation_0 . "\n";
+    print $gid . "\tFRA1\t" . $dseq_translation_1 . "\n";
+    print $gid . "\tFRA2\t" . $dseq_translation_2 . "\n";
     print "\n";
 
   }
