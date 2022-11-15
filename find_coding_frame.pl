@@ -54,15 +54,24 @@ print STDERR "[INFO] Got ".scalar(keys %transcripts_hash)." protein seqs from '$
 foreach my $gid (nsort keys %prot_hash) {
   my $pseq_obj = $prot_hash{$gid};
   my $dseq_obj = $transcripts_hash{$gid};
-  my $dseq_translation = $dseq_obj->translate()->seq();
-  $dseq_translation =~ s/\*$//; ## remove terminator '*'
-  print $gid . "\t" . $pseq_obj->seq() . "\n";
-  print $gid . "\t" . $dseq_translation . "\n";
-  print "\n";
+  my $dseq_translation_0 = $dseq_obj->translate()->seq();
+  $dseq_translation_0 =~ s/\*$//; ## remove terminator '*'
+  # print $gid . "\t" . $pseq_obj->seq() . "\n";
+  # print $gid . "\t" . $dseq_translation . "\n";
+  # print "\n";
 
-  if ($pseq_obj->seq() ne $dseq_translation) {
+  if ($pseq_obj->seq() ne $dseq_translation_0) {
+    ## get alternative coding frames
+    my $dseq_translation_1 = $dseq_obj->translate( -frame => 1 )->seq();
+    $dseq_translation_1 =~ s/\*$//; ## remove terminator '*'
+    my $dseq_translation_2 = $dseq_obj->translate( -frame => 2 )->seq();
+    $dseq_translation_2 =~ s/\*$//; ## remove terminator '*'
+
     print $gid . "\t" . $pseq_obj->seq() . "\n";
-    print $gid . "\t" . $dseq_translation . "\n";
+    print $gid . "\t" . $dseq_translation_0 . "\n";
+    print $gid . "\t" . $dseq_translation_1 . "\n";
+    print $gid . "\t" . $dseq_translation_2 . "\n";
     print "\n";
+
   }
 }
