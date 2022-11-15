@@ -72,17 +72,17 @@ foreach my $gid (nsort keys %prot_hash) {
     my $substring;
     my $modulo;
     if ( $pseq_obj->seq() eq $dseq_translation_1 ) {
-      print $dseq_obj->length() % 3;
+      print $dseq_obj->length() % 3 . "\n";
       $substring = substr($dseq_obj->seq(), 1);
-      print length($substring) % 3;
+      print length($substring) % 3 . "\n";
       # if ( length($substring) % 3 != 0) {
       #
       # }
       $m1 = "<==";
     } elsif ( $pseq_obj->seq() eq $dseq_translation_2 ) {
-      print $dseq_obj->length() % 3;
+      print $dseq_obj->length() % 3 . "\n";
       $substring = substr($dseq_obj->seq(), 2);
-      print length($substring) % 3;
+      print length($substring) % 3 . "\n";
       $m2 = "<==";
     } else {
       $m0 = "<==";
