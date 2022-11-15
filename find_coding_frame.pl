@@ -55,6 +55,6 @@ foreach my $gid (keys %prot_hash) {
   my $dseq_obj = $transcripts_hash{$gid};
   # my $dseq_translation_obj = $dseq_obj -> translate();
   print $gid . "\t" . $pseq_obj->seq() . "\n";
-  print $gid . "\t" . $dseq_translation_obj->translate(-complete => 1)->seq() . "\n";
+  print $gid . "\t" . $dseq_obj->translate( -complete => 1 )->seq() . "\n";
   print "\n";
 }
