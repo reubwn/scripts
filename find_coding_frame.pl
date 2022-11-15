@@ -59,7 +59,7 @@ foreach my $gid (keys %prot_hash) {
   # print $gid . "\t" . $dseq_translation . "\n";
   # print "\n";
 
-  if ($pseq_obj->seq() != $dseq_translation) {
+  if ($pseq_obj->seq() ne $dseq_translation) {
     print $gid . "\t" . $pseq_obj->seq() . "\n";
     print $gid . "\t" . $dseq_translation . "\n";
     print "\n";
