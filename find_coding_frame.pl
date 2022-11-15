@@ -53,8 +53,9 @@ print STDERR "[INFO] Got ".scalar(keys %transcripts_hash)." protein seqs from '$
 foreach my $gid (keys %prot_hash) {
   my $pseq_obj = $prot_hash{$gid};
   my $dseq_obj = $transcripts_hash{$gid};
-  # my $dseq_translation_obj = $dseq_obj -> translate();
+  my $dseq_translation = $dseq_obj->translate()->seq();
+  $dseq_translation =~ s/\*$//; ## remove terminator '*'
   print $gid . "\t" . $pseq_obj->seq() . "\n";
-  print $gid . "\t" . ($dseq_obj->translate()->seq() =~ s/\*$//) . "\n";
+  print $gid . "\t" . $dseq_translation . "\n";
   print "\n";
 }
