@@ -55,9 +55,9 @@ foreach my $gid (keys %prot_hash) {
   my $dseq_obj = $transcripts_hash{$gid};
   my $dseq_translation = $dseq_obj->translate()->seq();
   $dseq_translation =~ s/\*$//; ## remove terminator '*'
-  # print $gid . "\t" . $pseq_obj->seq() . "\n";
-  # print $gid . "\t" . $dseq_translation . "\n";
-  # print "\n";
+  print $gid . "\t" . $pseq_obj->seq() . "\n";
+  print $gid . "\t" . $dseq_translation . "\n";
+  print "\n";
 
   if ($pseq_obj->seq() ne $dseq_translation) {
     print $gid . "\t" . $pseq_obj->seq() . "\n";
