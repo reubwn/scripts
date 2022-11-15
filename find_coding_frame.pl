@@ -60,17 +60,27 @@ foreach my $gid (nsort keys %prot_hash) {
   # print $gid . "\t" . $dseq_translation . "\n";
   # print "\n";
 
-  if ($pseq_obj->seq() ne $dseq_translation_0) {
+  if ( $pseq_obj->seq() ne $dseq_translation_0 ) {
     ## get alternative coding frames
     my $dseq_translation_1 = $dseq_obj->translate( -frame => 1 )->seq();
     $dseq_translation_1 =~ s/\*$//; ## remove terminator '*'
     my $dseq_translation_2 = $dseq_obj->translate( -frame => 2 )->seq();
     $dseq_translation_2 =~ s/\*$//; ## remove terminator '*'
 
-    print $gid . "\tPRED\t" . $pseq_obj->seq() . "\n";
-    print $gid . "\tFRA0\t" . $dseq_translation_0 . "\n";
-    print $gid . "\tFRA1\t" . $dseq_translation_1 . "\n";
-    print $gid . "\tFRA2\t" . $dseq_translation_2 . "\n";
+    ## check if any match exactly
+    my ($m0,$m1,$m2) = ('','','');
+    if ( $pseq_obj->seq() eq $dseq_translation_1 ) {
+      $m1 = "<==";
+    } elsif ( $pseq_obj->seq() eq $dseq_translation_2 ) {
+      $m2 = "<==";
+    } else {
+      $m0 = "<==";
+    }
+
+    print $gid . "\tPRED\t\t" . $pseq_obj->seq() . "\n";
+    print $gid . "\tFRA0\t$m0\t" . $dseq_translation_0 . "\n";
+    print $gid . "\tFRA1\t$m1\t" . $dseq_translation_1 . "\n";
+    print $gid . "\tFRA2\t$m2\t" . $dseq_translation_2 . "\n";
     print "\n";
 
   }
