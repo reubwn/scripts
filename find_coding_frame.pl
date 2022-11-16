@@ -83,7 +83,7 @@ foreach my $gid (nsort keys %prot_hash) {
       print $tseq_obj->length() % 3 . "\n";
       print length($trimmed_seq_string) % 3 . "\n";
       print "#aa in prot: ".$pseq_obj->length()."\n";
-      print "#codons in trimmed: ".(length($trimmed_seq_string/3)."\n";
+      print "#codons in trimmed: ".(length($trimmed_seq_string)/3)."\n";
       $m1 = "<==";
       $fr1++;
 
