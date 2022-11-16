@@ -19,16 +19,18 @@ OPTIONS [*required]
   -a|--aa       *[FILE] : aa sequences (fasta format)
   -d|--dna      *[FILE] : cDNA sequences (fasta format)
   -o|--outprefix [STR]  : outfile prefix ('<INFILE>_inframe.fna')
+  -l|--logfile          : print stats to logfile [no]
   -h|--help             : print this message
 \n";
 
-my ($aa_file, $dna_file, $help);
+my ($aa_file, $dna_file, $logfile, $help);
 my $outprefix = "trimmed";
 
 GetOptions (
   'a|aa=s'      => \$aa_file,
   'd|dna=s'     => \$dna_file,
   'o|outprefix:s'  => \$outprefix,
+  'l|logfile'   => \$logfile,
   'h|help'      => \$help
 );
 
@@ -54,21 +56,24 @@ print STDERR "[INFO] Got ".commify(scalar(keys %transcripts_hash))." transcript 
 ## trimmed transcripts
 my %results_hash;
 my ($processed,$unchanged,$fr0,$fr1,$fr2) = (0,0,0,0,0);
-open (my $LOG, ">$outprefix.stats") or die "$!\n";
-print $LOG "gene_id\taa_len\tnum_codons\tseq_match\tframe\ttrim_start\ttrim_end\tterm_codon\tnum_codons_trimmed\n";
+my $LOG;
+if ($logfile) {
+  open (my $LOG, ">$outprefix.stats") or die "$!\n";
+  print $LOG "gene_id\taa_len\tnum_codons\tseq_match\tframe\ttrim_start\ttrim_end\tterm_codon\tnum_codons_trimmed\n";
+}
 
 ## cycle thru gene ids
 print STDERR "[INFO] Cycling thru protein seqs (transcripts w/o corresponding protein seq will be ignored)...\n";
 foreach my $gid (nsort keys %prot_hash) {
   my $pseq_obj = $prot_hash{$gid};
   my $tseq_obj = $transcripts_hash{$gid};
-  print $LOG join ("\t", $gid,$pseq_obj->length,($tseq_obj->length/3))."\t";
+  print $LOG join ("\t", $gid,$pseq_obj->length,($tseq_obj->length/3))."\t" if ($logfile);
 
   ## translate frame 0 and remove terminator '*'
   (my $tseq_translation_fr0 = $tseq_obj->translate( -frame => 0 )->seq()) =~ s/\*$//;
 
   if ( $pseq_obj->seq() ne $tseq_translation_fr0 ) {
-    print $LOG "N\t";
+    print $LOG "N\t" if ($logfile);
     ## get alternative coding frames
     my $tseq_translation_fr1 = $tseq_obj->translate( -frame => 1 )->seq();
     $tseq_translation_fr1 =~ s/\*$//; ## remove terminator '*'
@@ -89,7 +94,7 @@ foreach my $gid (nsort keys %prot_hash) {
       }
       ## push results and log
       $results_hash{$gid} = $trimmed_seq_string;
-      print $LOG join("\t", "+1","1",(($tseq_obj->length-1) % 3),$term,(length($trimmed_seq_string)/3));
+      print $LOG join("\t", "+1","1",(($tseq_obj->length-1) % 3),$term,(length($trimmed_seq_string)/3)) if ($logfile);
       $fr1++;
 
     } elsif ( $pseq_obj->seq() eq $tseq_translation_fr2 ) {
@@ -104,7 +109,7 @@ foreach my $gid (nsort keys %prot_hash) {
       }
       ## push results and log
       $results_hash{$gid} = $trimmed_seq_string;
-      print $LOG join("\t", "+2","2",(($tseq_obj->length-1) % 3),$term,(length($trimmed_seq_string)/3));
+      print $LOG join("\t", "+2","2",(($tseq_obj->length-1) % 3),$term,(length($trimmed_seq_string)/3)) if ($logfile);
       $fr2++;
 
     } else {
@@ -119,10 +124,10 @@ foreach my $gid (nsort keys %prot_hash) {
       }
       ## push results and log
       $results_hash{$gid} = $trimmed_seq_string;
-      print $LOG join("\t", "0","0",(($tseq_obj->length) % 3),$term,(length($trimmed_seq_string)/3));
+      print $LOG join("\t", "0","0",(($tseq_obj->length) % 3),$term,(length($trimmed_seq_string)/3)) if ($logfile);
       $fr0++;
     }
-    print $LOG "\n";
+    print $LOG "\n" if ($logfile);
 
   } else {
     ## translation is good
@@ -136,7 +141,7 @@ foreach my $gid (nsort keys %prot_hash) {
     }
     ## push results and log
     $results_hash{$gid} = $trimmed_seq_string;
-    print $LOG join("\t", "Y","0","0",(($tseq_obj->length) % 3),$term,(length($trimmed_seq_string)/3)) . "\n";
+    print $LOG join("\t", "Y","0","0",(($tseq_obj->length) % 3),$term,(length($trimmed_seq_string)/3)) . "\n" if ($logfile);
     $unchanged++;
   }
 
@@ -147,7 +152,7 @@ foreach my $gid (nsort keys %prot_hash) {
     $| = 1;
   }
 }
-close $LOG;
+close $LOG if ($logfile);
 
 print STDERR "\n";
 print STDERR "[INFO] Num CDS in-frame and exactly matching: ".commify($unchanged)." (".percentage($unchanged,$processed)."\%)\n";
