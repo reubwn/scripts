@@ -52,7 +52,7 @@ while ( my $seq_obj = $transcripts_fh -> next_seq() ) {
 print STDERR "[INFO] Got ".commify(scalar(keys %transcripts_hash))." transcript seqs from '$dna_file'\n";
 
 ## trimmed transcripts
-my %results;
+my %results_hash;
 my ($processed,$unchanged,$fr0,$fr1,$fr2) = (0,0,0,0,0);
 open (my $LOG, ">find_coding.stats") or die "$!\n";
 print $LOG "gene_id\taa_len\tnum_codons\tseq_match\tframe\ttrim_start\ttrim_end\tterm_codon\tnum_codons_trimmed\n";
@@ -156,8 +156,8 @@ print STDERR "[INFO] Finished ".`date`."\n";
 
 ## print trimmed sequences
 open (my $RESULTS, ">$outprefix.fna") or die $!;
-foreach my $gid (nsort keys %results) {
-  print $RESULTS ">$gid\n$results{$gid}\n";
+foreach my $gid (nsort keys %results_hash) {
+  print $RESULTS ">$gid\n$results_hash{$gid}\n";
 }
 close $RESULTS;
 
