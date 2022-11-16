@@ -51,13 +51,14 @@ while ( my $seq_obj = $transcripts_fh -> next_seq() ) {
 }
 print STDERR "[INFO] Got ".scalar(keys %transcripts_hash)." protein seqs from '$dna_file'\n";
 
-my %results_hash
+## trimmed transcripts
+my %results_hash;
 
 ## cycle thru gene ids
 foreach my $gid (nsort keys %prot_hash) {
   my $pseq_obj = $prot_hash{$gid};
   my $tseq_obj = $transcripts_hash{$gid};
-  (my $tseq_translation_fr0 = $tseq_obj->translate( -frame => 0 )->seq()) =~ s/\*$//;;
+  (my $tseq_translation_fr0 = $tseq_obj->translate( -frame => 0 )->seq()) =~ s/\*$//;
   # $tseq_translation_fr0 =~ s/\*$//; ## remove terminator '*'
   print $gid . "\t" . $pseq_obj->seq() . "\n";
   print $gid . "\t" . $tseq_translation . "\n";
