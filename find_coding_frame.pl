@@ -148,10 +148,11 @@ foreach my $gid (nsort keys %prot_hash) {
 }
 close $LOG;
 
-print STDERR "[INFO] Num CDS in-frame and exactly matching: " . commify($unchanged) . "\n";
-print STDERR "[INFO] Num CDS in-frame but not exactly matching: " . commify($fr0) . "\n";
-print STDERR "[INFO] Num CDS out-of-frame +1: " . commify($fr1) . "\n";
-print STDERR "[INFO] Num CDS out-of-frame +2: " . commify($fr2) . "\n";
+print STDERR "\n";
+print STDERR "[INFO] Num CDS in-frame and exactly matching: ".commify($unchanged)."(".percentage($unchanged,$processed).")\n";
+print STDERR "[INFO] Num CDS in-frame but not exactly matching: ".commify($fr0)."(".percentage($fr0,$processed).")\n";
+print STDERR "[INFO] Num CDS out-of-frame +1: ".commify($fr1)."(".percentage($fr1,$processed).")\n";
+print STDERR "[INFO] Num CDS out-of-frame +2: ".commify($fr2)."(".percentage($fr2,$processed).")\n";
 print STDERR "[INFO] Finished ".`date`."\n";
 
 ## print trimmed sequences
@@ -167,4 +168,14 @@ sub commify {
     my $text = reverse $_[0];
     $text =~ s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/g;
     return scalar reverse $text;
+}
+
+sub percentage {
+    my $numerator = $_[0];
+    my $denominator = $_[1];
+    my $places = "\%.2f"; ## default is two decimal places
+    if (exists $_[2]){$places = "\%.".$_[2]."f";};
+    my $float = (($numerator / $denominator)*100);
+    my $rounded = sprintf("$places",$float);
+    return $rounded;
 }
