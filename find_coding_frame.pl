@@ -61,7 +61,7 @@ foreach my $gid (nsort keys %prot_hash) {
   (my $tseq_translation_fr0 = $tseq_obj->translate( -frame => 0 )->seq()) =~ s/\*$//;
   # $tseq_translation_fr0 =~ s/\*$//; ## remove terminator '*'
   print $gid . "\t" . $pseq_obj->seq() . "\n";
-  print $gid . "\t" . $tseq_translation . "\n";
+  print $gid . "\t" . $tseq_translation_fr0 . "\n";
   print "\n";
 
   if ( $pseq_obj->seq() ne $tseq_translation_fr0 ) {
@@ -73,19 +73,19 @@ foreach my $gid (nsort keys %prot_hash) {
 
     ## check if any match exactly
     my ($m0,$m1,$m2) = ('','','');
-    my $trimmed_dseq;
+    my $trimmed_seq;
     if ( $pseq_obj->seq() eq $tseq_translation_fr1 ) {
       ## correct frame is +1
       print $tseq_obj->length() % 3 . "\n";
-      $trimmed_dseq = substr($tseq_obj->seq(), 1, (($tseq_obj->length-1) - (($tseq_obj->length-1) % 3)));
-      print length($substring) % 3 . "\n";
+      $trimmed_seq = substr($tseq_obj->seq(), 1, (($tseq_obj->length-1) - (($tseq_obj->length-1) % 3)));
+      print length($trimmed_seq) % 3 . "\n";
       $m1 = "<==";
 
     } elsif ( $pseq_obj->seq() eq $tseq_translation_fr2 ) {
       ## correct frame is +1
       print $tseq_obj->length() % 3 . "\n";
-      $trimmed_dseq = substr($tseq_obj->seq(), 2, (($tseq_obj->length-2) - (($tseq_obj->length-2) % 3)));
-      print length($substring) % 3 . "\n";
+      $trimmed_seq = substr($tseq_obj->seq(), 2, (($tseq_obj->length-2) - (($tseq_obj->length-2) % 3)));
+      print length($trimmed_seq) % 3 . "\n";
       $m2 = "<==";
 
     } else {
