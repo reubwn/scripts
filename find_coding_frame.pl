@@ -84,7 +84,7 @@ foreach my $gid (nsort keys %prot_hash) {
       ## check for termination codon
       my $term = "No";
       if ($trimmed_seq_string =~ m/(TAG|TAA|TGA)$/) {
-        $term = substr($trimmed_seq_string,length($trimmed_seq_string),length($trimmed_seq_string)-2);
+        $term = substr($trimmed_seq_string,length($trimmed_seq_string)-2,length($trimmed_seq_string));
         $trimmed_seq_string =~ s/(TAG|TAA|TGA)$//;
       }
       ## push results and log
@@ -99,7 +99,7 @@ foreach my $gid (nsort keys %prot_hash) {
       ## check for termination codon
       my $term = "No";
       if ($trimmed_seq_string =~ m/(TAG|TAA|TGA)$/) {
-        $term = substr($trimmed_seq_string,length($trimmed_seq_string),length($trimmed_seq_string)-2);
+        $term = substr($trimmed_seq_string,length($trimmed_seq_string)-2,length($trimmed_seq_string));
         $trimmed_seq_string =~ s/(TAG|TAA|TGA)$//;
       }
       ## push results and log
@@ -114,7 +114,7 @@ foreach my $gid (nsort keys %prot_hash) {
       ## check for termination codon
       my $term = "No";
       if ($trimmed_seq_string =~ m/(TAG|TAA|TGA)$/) {
-        $term = substr($trimmed_seq_string,length($trimmed_seq_string),length($trimmed_seq_string)-2);
+        $term = substr($trimmed_seq_string,length($trimmed_seq_string)-2,length($trimmed_seq_string));
         $trimmed_seq_string =~ s/(TAG|TAA|TGA)$//;
       }
       ## push results and log
@@ -131,7 +131,7 @@ foreach my $gid (nsort keys %prot_hash) {
     ## check for termination codon
     my $term = "No";
     if ($trimmed_seq_string =~ m/(TAG|TAA|TGA)$/) {
-      $term = substr($trimmed_seq_string,length($trimmed_seq_string),length($trimmed_seq_string)-2);
+      $term = substr($trimmed_seq_string,length($trimmed_seq_string)-2,length($trimmed_seq_string));
       $trimmed_seq_string =~ s/(TAG|TAA|TGA)$//;
     }
     ## push results and log
