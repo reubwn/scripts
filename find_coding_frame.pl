@@ -23,7 +23,7 @@ OPTIONS [*required]
 \n";
 
 my ($aa_file, $dna_file, $help);
-my $outprefix = "_inframe.fna";
+my $outprefix = "trimmed";
 
 GetOptions (
   'a|aa=s'      => \$aa_file,
@@ -41,7 +41,7 @@ my $aa_fh = Bio::SeqIO -> new ( -file => $aa_file, -format => "fasta" );
 while ( my $seq_obj = $aa_fh -> next_seq() ) {
   $prot_hash{$seq_obj->display_id()} = $seq_obj;
 }
-print STDERR "[INFO] Got ".scalar(keys %prot_hash)." protein seqs from '$aa_file'\n";
+print STDERR "[INFO] Got ".commify(scalar(keys %prot_hash))." protein seqs from '$aa_file'\n";
 
 ## get nuc seqs
 my %transcripts_hash;
@@ -49,14 +49,14 @@ my $transcripts_fh = Bio::SeqIO -> new ( -file => $dna_file, -format => "fasta" 
 while ( my $seq_obj = $transcripts_fh -> next_seq() ) {
   $transcripts_hash{$seq_obj->display_id()} = $seq_obj;
 }
-print STDERR "[INFO] Got ".scalar(keys %transcripts_hash)." protein seqs from '$dna_file'\n";
+print STDERR "[INFO] Got ".commify(scalar(keys %transcripts_hash))." transcript seqs from '$dna_file'\n";
 
 ## trimmed transcripts
 my %stats_hash;
 my %results_hash;
-my ($unchanged,$fr0,$fr1,$fr2) = (0,0,0,0);
+my ($processed,$unchanged,$fr0,$fr1,$fr2) = (0,0,0,0,0);
 open (my $LOG, ">find_coding.stats") or die "$!\n";
-print $LOG "gene_id\taa_len\tcodons_len\tmatch\tframe\ttrim_start\ttrim_end\tterm_codon\tnew_codons_len\n";
+print $LOG "gene_id\taa_len\tnum_codons\tseq_match\tframe\ttrim_start\ttrim_end\tterm_codon\tnum_codons_trimmed\n";
 
 ## cycle thru gene ids
 foreach my $gid (nsort keys %prot_hash) {
@@ -139,7 +139,27 @@ foreach my $gid (nsort keys %prot_hash) {
     print $LOG join("\t", "Y","0","0",(($tseq_obj->length) % 3),$term,(length($trimmed_seq_string)/3)) . "\n";
     $unchanged++;
   }
+
+  ## progress
+  $processed++;
+  if ($processed % 1000 == 0){
+    print STDERR "\r[INFO] Processed ".commify($processed)." queries...";
+    $| = 1;
+  }
 }
 close $LOG;
 
-# foreach my $gid (nsort )
+## print trimmed sequences
+open (my $RESULTS, ">$outprefix.fna") or die $!;
+foreach my $gid (nsort keys %results) {
+  print $RESULTS ">$gid\n$results{$gid}\n";
+}
+close $RESULTS;
+
+#############
+
+sub commify {
+    my $text = reverse $_[0];
+    $text =~ s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/g;
+    return scalar reverse $text;
+}
