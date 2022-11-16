@@ -149,10 +149,10 @@ foreach my $gid (nsort keys %prot_hash) {
 close $LOG;
 
 print STDERR "\n";
-print STDERR "[INFO] Num CDS in-frame and exactly matching: ".commify($unchanged)."(".percentage($unchanged,$processed).")\n";
-print STDERR "[INFO] Num CDS in-frame but not exactly matching: ".commify($fr0)."(".percentage($fr0,$processed).")\n";
-print STDERR "[INFO] Num CDS out-of-frame +1: ".commify($fr1)."(".percentage($fr1,$processed).")\n";
-print STDERR "[INFO] Num CDS out-of-frame +2: ".commify($fr2)."(".percentage($fr2,$processed).")\n";
+print STDERR "[INFO] Num CDS in-frame and exactly matching: ".commify($unchanged)." (".percentage($unchanged,$processed)."\%)\n";
+print STDERR "[INFO] Num CDS in-frame but not exactly matching: ".commify($fr0)." (".percentage($fr0,$processed)."\%)\n";
+print STDERR "[INFO] Num CDS out-of-frame +1: ".commify($fr1)." (".percentage($fr1,$processed)."\%)\n";
+print STDERR "[INFO] Num CDS out-of-frame +2: ".commify($fr2)." (".percentage($fr2,$processed)."\%)\n";
 print STDERR "[INFO] Finished ".`date`."\n";
 
 ## print trimmed sequences
