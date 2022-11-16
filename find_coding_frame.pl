@@ -58,7 +58,7 @@ open (my $LOG, ">find_coding.stats") or die "$!\n";
 print $LOG "gene_id\taa_len\tnum_codons\tseq_match\tframe\ttrim_start\ttrim_end\tterm_codon\tnum_codons_trimmed\n";
 
 ## cycle thru gene ids
-print STDERR "[INFO] Cycling thru protein seqs (transcripts w/o corresponding protein seq will be ignored)\n";
+print STDERR "[INFO] Cycling thru protein seqs (transcripts w/o corresponding protein seq will be ignored)...\n";
 foreach my $gid (nsort keys %prot_hash) {
   my $pseq_obj = $prot_hash{$gid};
   my $tseq_obj = $transcripts_hash{$gid};
