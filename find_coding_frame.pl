@@ -136,7 +136,7 @@ foreach my $gid (nsort keys %prot_hash) {
     }
     ## push results and log
     $results_hash{$gid} = $trimmed_seq_string;
-    print $LOG join("\t", "Y","0","0",(($tseq_obj->length) % 3),$term,(length($trimmed_seq_string)/3));
+    print $LOG join("\t", "Y","0","0",(($tseq_obj->length) % 3),$term,(length($trimmed_seq_string)/3)) . "\n";
     $unchanged++;
   }
 }
