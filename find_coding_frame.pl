@@ -56,7 +56,7 @@ my %stats_hash;
 my %results_hash;
 my ($unchanged,$fr0,$fr1,$fr2) = (0,0,0,0);
 open (my $LOG, ">find_coding.stats") or die "$!\n";
-print $LOG "gene_id\taa_len\tcodons_len\tmatch\tframe\ttrim_start\ttrim_end\tnew_codons_len\n";
+print $LOG "gene_id\taa_len\tcodons_len\tmatch\tframe\ttrim_start\ttrim_end\tterm_codon\tnew_codons_len\n";
 
 ## cycle thru gene ids
 foreach my $gid (nsort keys %prot_hash) {
@@ -79,55 +79,47 @@ foreach my $gid (nsort keys %prot_hash) {
     my ($m0,$m1,$m2) = ('','','');
     if ( $pseq_obj->seq() eq $tseq_translation_fr1 ) {
       ## correct frame is +1
-      print $LOG "+1\t1\t" . (($tseq_obj->length-1) % 3) . "\t";
       ## trim 1 bp from start, and N from end to ensure % 3 == 0
       my $trimmed_seq_string = substr($tseq_obj->seq(), 1, (($tseq_obj->length-1) - (($tseq_obj->length-1) % 3)));
-      $results_hash{$gid} = $trimmed_seq_string;
+      ## check for termination codon
+      if ($trimmed_seq_string =~ m/(TAG|TAA|TGA)$/) {
+        print "$trimmed_seq_string\n";
+        $trimmed_seq_string =~ s/(TAG|TAA|TGA)$//;
+        print "$trimmed_seq_string\n";
+      } else {
 
-      # print $tseq_obj->length() % 3 . "\n";
-      # print length($trimmed_seq_string) % 3 . "\n";
-      # print "#aa in prot: ".$pseq_obj->length()."\n";
-      # print "#codons in trimmed: ".(length($trimmed_seq_string)/3)."\n";
-      # $m1 = "<==";
+      }
+      ## push results and log
+      $results_hash{$gid} = $trimmed_seq_string;
+      print $LOG join("\t", "+1","1",(($tseq_obj->length-1) % 3),(length($trimmed_seq_string)/3));
       $fr1++;
 
     } elsif ( $pseq_obj->seq() eq $tseq_translation_fr2 ) {
       ## correct frame is +2
-      print $LOG "+2\t2\t" . (($tseq_obj->length-2) % 3) . "\t";
       ## trim 2 bp from start, and N from end to ensure % 3 == 0
       my $trimmed_seq_string = substr($tseq_obj->seq(), 2, (($tseq_obj->length-2) - (($tseq_obj->length-2) % 3)));
+      ## push results and log
       $results_hash{$gid} = $trimmed_seq_string;
-
-      # print $tseq_obj->length() % 3 . "\n";
-      # print length($trimmed_seq_string) % 3 . "\n";
-      # print "#aa in prot: ".$pseq_obj->length()."\n";
-      # print "#codons in trimmed: ".(length($trimmed_seq_string)/3)."\n";
-      # $m2 = "<==";
+      print $LOG join("\t", "+2","2",(($tseq_obj->length-1) % 3),(length($trimmed_seq_string)/3));
       $fr2++;
 
     } else {
       ## leave as frame 0
-      print $LOG "0\t0\t" . (($tseq_obj->length) % 3) . "\t";
       ## still trim N from end to ensure % 3 == 0
       my $trimmed_seq_string = substr($tseq_obj->seq(), 0, ($tseq_obj->length - ($tseq_obj->length % 3)));
+      ## push results and log
       $results_hash{$gid} = $trimmed_seq_string;
-      # $m0 = "<==";
+      print $LOG join("\t", "0","0",(($tseq_obj->length) % 3),(length($trimmed_seq_string)/3));
       $fr0++;
     }
     print $LOG "\n";
 
-    # print $gid . "\tPRED\t\t" . $pseq_obj->seq() . "\n";
-    # print $gid . "\tFRA0\t$m0\t" . $tseq_translation_fr0 . "\n";
-    # print $gid . "\tFRA1\t$m1\t" . $tseq_translation_fr1 . "\n";
-    # print $gid . "\tFRA2\t$m2\t" . $tseq_translation_fr2 . "\n";
-    # print "\n";
-
   } else {
     ## translation is good
-    print $LOG "Y\t0\t0\t" . (($tseq_obj->length) % 3)."\n";
     ## but still might need to trim from end to ensure % 3 == 0
     my $trimmed_seq_string = substr($tseq_obj->seq(), 0, ($tseq_obj->length - ($tseq_obj->length % 3)));
     $results_hash{$gid} = $trimmed_seq_string;
+    print $LOG join("\t", "Y","0","0",(($tseq_obj->length) % 3),(length($trimmed_seq_string)/3));
     $unchanged++;
   }
 }
