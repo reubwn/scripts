@@ -37,60 +37,65 @@ die $usage unless ( $aa_file && $dna_file );
 
 ## get protein seqs
 my %prot_hash;
-my $aa_file_fh = Bio::SeqIO -> new ( -file => $aa_file, -format => "fasta" );
-while ( my $seq_obj = $aa_file_fh -> next_seq() ) {
+my $aa_fh = Bio::SeqIO -> new ( -file => $aa_file, -format => "fasta" );
+while ( my $seq_obj = $aa_fh -> next_seq() ) {
   $prot_hash{$seq_obj->display_id()} = $seq_obj;
 }
 print STDERR "[INFO] Got ".scalar(keys %prot_hash)." protein seqs from '$aa_file'\n";
 
 ## get nuc seqs
 my %transcripts_hash;
-my $dna_file_fh = Bio::SeqIO -> new ( -file => $dna_file, -format => "fasta" );
-while ( my $seq_obj = $dna_file_fh -> next_seq() ) {
+my $transcripts_fh = Bio::SeqIO -> new ( -file => $dna_file, -format => "fasta" );
+while ( my $seq_obj = $transcripts_fh -> next_seq() ) {
   $transcripts_hash{$seq_obj->display_id()} = $seq_obj;
 }
 print STDERR "[INFO] Got ".scalar(keys %transcripts_hash)." protein seqs from '$dna_file'\n";
 
+my %results_hash
+
+## cycle thru gene ids
 foreach my $gid (nsort keys %prot_hash) {
   my $pseq_obj = $prot_hash{$gid};
-  my $dseq_obj = $transcripts_hash{$gid};
-  my $dseq_translation_0 = $dseq_obj->translate( -frame => 0 )->seq();
-  $dseq_translation_0 =~ s/\*$//; ## remove terminator '*'
-  # print $gid . "\t" . $pseq_obj->seq() . "\n";
-  # print $gid . "\t" . $dseq_translation . "\n";
-  # print "\n";
+  my $tseq_obj = $transcripts_hash{$gid};
+  (my $tseq_translation_fr0 = $tseq_obj->translate( -frame => 0 )->seq()) =~ s/\*$//;;
+  # $tseq_translation_fr0 =~ s/\*$//; ## remove terminator '*'
+  print $gid . "\t" . $pseq_obj->seq() . "\n";
+  print $gid . "\t" . $tseq_translation . "\n";
+  print "\n";
 
-  if ( $pseq_obj->seq() ne $dseq_translation_0 ) {
+  if ( $pseq_obj->seq() ne $tseq_translation_fr0 ) {
     ## get alternative coding frames
-    my $dseq_translation_1 = $dseq_obj->translate( -frame => 1 )->seq();
-    $dseq_translation_1 =~ s/\*$//; ## remove terminator '*'
-    my $dseq_translation_2 = $dseq_obj->translate( -frame => 2 )->seq();
-    $dseq_translation_2 =~ s/\*$//; ## remove terminator '*'
+    my $tseq_translation_fr1 = $tseq_obj->translate( -frame => 1 )->seq();
+    $tseq_translation_fr1 =~ s/\*$//; ## remove terminator '*'
+    my $tseq_translation_fr2 = $tseq_obj->translate( -frame => 2 )->seq();
+    $tseq_translation_fr2 =~ s/\*$//; ## remove terminator '*'
 
     ## check if any match exactly
     my ($m0,$m1,$m2) = ('','','');
-    my $substring;
-    my $modulo;
-    if ( $pseq_obj->seq() eq $dseq_translation_1 ) {
-      print $dseq_obj->length() % 3 . "\n";
-      $substring = substr($dseq_obj->seq(), 1, (($dseq_obj->length-1) - (($dseq_obj->length-1) % 3)));
+    my $trimmed_dseq;
+    if ( $pseq_obj->seq() eq $tseq_translation_fr1 ) {
+      ## correct frame is +1
+      print $tseq_obj->length() % 3 . "\n";
+      $trimmed_dseq = substr($tseq_obj->seq(), 1, (($tseq_obj->length-1) - (($tseq_obj->length-1) % 3)));
       print length($substring) % 3 . "\n";
       $m1 = "<==";
 
-    } elsif ( $pseq_obj->seq() eq $dseq_translation_2 ) {
-      print $dseq_obj->length() % 3 . "\n";
-      $substring = substr($dseq_obj->seq(), 2, (($dseq_obj->length-2) - (($dseq_obj->length-2) % 3)));
+    } elsif ( $pseq_obj->seq() eq $tseq_translation_fr2 ) {
+      ## correct frame is +1
+      print $tseq_obj->length() % 3 . "\n";
+      $trimmed_dseq = substr($tseq_obj->seq(), 2, (($tseq_obj->length-2) - (($tseq_obj->length-2) % 3)));
       print length($substring) % 3 . "\n";
       $m2 = "<==";
 
     } else {
+      ## leave as frame 0
       $m0 = "<==";
     }
 
     print $gid . "\tPRED\t\t" . $pseq_obj->seq() . "\n";
-    print $gid . "\tFRA0\t$m0\t" . $dseq_translation_0 . "\n";
-    print $gid . "\tFRA1\t$m1\t" . $dseq_translation_1 . "\n";
-    print $gid . "\tFRA2\t$m2\t" . $dseq_translation_2 . "\n";
+    print $gid . "\tFRA0\t$m0\t" . $tseq_translation_fr0 . "\n";
+    print $gid . "\tFRA1\t$m1\t" . $tseq_translation_fr1 . "\n";
+    print $gid . "\tFRA2\t$m2\t" . $tseq_translation_fr2 . "\n";
     print "\n";
 
   }
