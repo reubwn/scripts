@@ -56,7 +56,7 @@ print STDERR "[INFO] Got ".commify(scalar(keys %transcripts_hash))." transcript 
 ## trimmed transcripts
 my %results_hash;
 my ($processed,$unchanged,$fr0,$fr1,$fr2) = (0,0,0,0,0);
-(my $basename = $aa_file) =~ s{^.*/|\.[^.]+$}{}g;
+(my $basename = $dna_file) =~ s{^.*/|\.[^.]+$}{}g;
 my $LOG;
 if ($logfile) {
   open (my $LOG, ">$basename"."_$outsuffix.stats") or die "$!\n";
