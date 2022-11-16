@@ -16,20 +16,20 @@ SYNOPSIS
   Protein names must match cDNA (transcripts) names exactly.
 
 OPTIONS [*required]
-  -a|--aa       *[FILE] : aa sequences (fasta format)
-  -d|--dna      *[FILE] : cDNA sequences (fasta format)
-  -o|--outprefix [STR]  : outfile prefix ('<INFILE>_inframe.fna')
-  -l|--logfile          : print stats to logfile [no]
-  -h|--help             : print this message
+  -a|--aa      *[FILE] : aa sequences (fasta format)
+  -d|--dna     *[FILE] : cDNA sequences (fasta format)
+  -o|--out      [STR]  : outfile suffix ('<INFILE>_trimmed.fna')
+  -l|--logfile         : print stats to logfile [no]
+  -h|--help            : print this message
 \n";
 
 my ($aa_file, $dna_file, $logfile, $help);
-my $outprefix = "trimmed";
+my $outsuffix = "trimmed";
 
 GetOptions (
   'a|aa=s'      => \$aa_file,
   'd|dna=s'     => \$dna_file,
-  'o|outprefix:s'  => \$outprefix,
+  'o|out:s'     => \$outsuffix,
   'l|logfile'   => \$logfile,
   'h|help'      => \$help
 );
@@ -56,9 +56,10 @@ print STDERR "[INFO] Got ".commify(scalar(keys %transcripts_hash))." transcript 
 ## trimmed transcripts
 my %results_hash;
 my ($processed,$unchanged,$fr0,$fr1,$fr2) = (0,0,0,0,0);
+(my $basename = $aa_file) =~ s{^.*/|\.[^.]+$}{}g;
 my $LOG;
 if ($logfile) {
-  open (my $LOG, ">$outprefix.stats") or die "$!\n";
+  open (my $LOG, ">$basename"."_$outsuffix.stats") or die "$!\n";
   print $LOG "gene_id\taa_len\tnum_codons\tseq_match\tframe\ttrim_start\ttrim_end\tterm_codon\tnum_codons_trimmed\n";
 }
 
@@ -162,7 +163,7 @@ print STDERR "[INFO] Num CDS out-of-frame +2: ".commify($fr2)." (".percentage($f
 print STDERR "[INFO] Finished ".`date`."\n";
 
 ## print trimmed sequences
-open (my $RESULTS, ">$outprefix.fna") or die $!;
+open (my $RESULTS, ">$basename"."_$outsuffix.fna") or die $!;
 foreach my $gid (nsort keys %results_hash) {
   print $RESULTS ">$gid\n$results_hash{$gid}\n";
 }
