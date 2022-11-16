@@ -52,17 +52,17 @@ while ( my $seq_obj = $transcripts_fh -> next_seq() ) {
 print STDERR "[INFO] Got ".scalar(keys %transcripts_hash)." protein seqs from '$dna_file'\n";
 
 ## trimmed transcripts
+my %stats_hash;
 my %results_hash;
+my ($unchanged,$fr0,$fr1,$fr2) = (0,0,0,0);
+# open (my $LOG, ">find_coding.log") or die "$!\n";
 
 ## cycle thru gene ids
 foreach my $gid (nsort keys %prot_hash) {
   my $pseq_obj = $prot_hash{$gid};
   my $tseq_obj = $transcripts_hash{$gid};
+  ## translate frame 0 and remove terminator '*'
   (my $tseq_translation_fr0 = $tseq_obj->translate( -frame => 0 )->seq()) =~ s/\*$//;
-  # $tseq_translation_fr0 =~ s/\*$//; ## remove terminator '*'
-  print $gid . "\t" . $pseq_obj->seq() . "\n";
-  print $gid . "\t" . $tseq_translation_fr0 . "\n";
-  print "\n";
 
   if ( $pseq_obj->seq() ne $tseq_translation_fr0 ) {
     ## get alternative coding frames
@@ -73,24 +73,39 @@ foreach my $gid (nsort keys %prot_hash) {
 
     ## check if any match exactly
     my ($m0,$m1,$m2) = ('','','');
-    my $trimmed_seq;
     if ( $pseq_obj->seq() eq $tseq_translation_fr1 ) {
       ## correct frame is +1
+      ## trim 1 bp from start, and N from end to ensure % 3 == 0
+      my $trimmed_seq_string = substr($tseq_obj->seq(), 1, (($tseq_obj->length-1) - (($tseq_obj->length-1) % 3)));
+      # my $trimmed_seq_obj = Bio::PrimarySeq -> new ( -id => $gid, -seq => $trimmed_seq_string );
+      $results_hash{$gid} = $trimmed_seq_string;
+
       print $tseq_obj->length() % 3 . "\n";
-      $trimmed_seq = substr($tseq_obj->seq(), 1, (($tseq_obj->length-1) - (($tseq_obj->length-1) % 3)));
       print length($trimmed_seq) % 3 . "\n";
+      print "#aa in prot: ".$pseq_obj->length()."\n";
+      print "#codons in trimmed: ".length($trimmed_seq)/3."\n";
       $m1 = "<==";
+      $fr1++;
 
     } elsif ( $pseq_obj->seq() eq $tseq_translation_fr2 ) {
-      ## correct frame is +1
+      ## correct frame is +2
+      ## trim 2 bp from start, and N from end to ensure % 3 == 0
+      my $trimmed_seq_string = substr($tseq_obj->seq(), 2, (($tseq_obj->length-2) - (($tseq_obj->length-2) % 3)));
+      # my $trimmed_seq_obj = Bio::PrimarySeq -> new ( -id => $gid, -seq => $trimmed_seq_string );
+      $results_hash{$gid} = $trimmed_seq_string;
+
       print $tseq_obj->length() % 3 . "\n";
-      $trimmed_seq = substr($tseq_obj->seq(), 2, (($tseq_obj->length-2) - (($tseq_obj->length-2) % 3)));
       print length($trimmed_seq) % 3 . "\n";
+      print "#aa in prot: ".$pseq_obj->length()."\n";
+      print "#codons in trimmed: ".length($trimmed_seq)/3."\n";
       $m2 = "<==";
+      $fr2++;
 
     } else {
       ## leave as frame 0
+      $results_hash{$gid} = $tseq_obj->seq();
       $m0 = "<==";
+      $fr0++;
     }
 
     print $gid . "\tPRED\t\t" . $pseq_obj->seq() . "\n";
@@ -99,5 +114,11 @@ foreach my $gid (nsort keys %prot_hash) {
     print $gid . "\tFRA2\t$m2\t" . $tseq_translation_fr2 . "\n";
     print "\n";
 
+  } else {
+    ## translation is good
+    $results_hash{$gid} = $tseq_obj->seq();
+    $unchanged++;
   }
 }
+
+# foreach my $gid (nsort )
