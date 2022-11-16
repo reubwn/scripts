@@ -54,7 +54,7 @@ print STDERR "[INFO] Got ".commify(scalar(keys %transcripts_hash))." transcript 
 ## trimmed transcripts
 my %results_hash;
 my ($processed,$unchanged,$fr0,$fr1,$fr2) = (0,0,0,0,0);
-open (my $LOG, ">find_coding.stats") or die "$!\n";
+open (my $LOG, ">$outprefix.stats") or die "$!\n";
 print $LOG "gene_id\taa_len\tnum_codons\tseq_match\tframe\ttrim_start\ttrim_end\tterm_codon\tnum_codons_trimmed\n";
 
 ## cycle thru gene ids
