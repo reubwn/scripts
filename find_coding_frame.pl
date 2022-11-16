@@ -82,34 +82,44 @@ foreach my $gid (nsort keys %prot_hash) {
       ## trim 1 bp from start, and N from end to ensure % 3 == 0
       my $trimmed_seq_string = substr($tseq_obj->seq(), 1, (($tseq_obj->length-1) - (($tseq_obj->length-1) % 3)));
       ## check for termination codon
+      my $term = "No";
       if ($trimmed_seq_string =~ m/(TAG|TAA|TGA)$/) {
-        print "$trimmed_seq_string\n";
+        $term = substr($trimmed_seq_string,length($trimmed_seq_string),length($trimmed_seq_string)-2);
         $trimmed_seq_string =~ s/(TAG|TAA|TGA)$//;
-        print "$trimmed_seq_string\n";
-      } else {
-
       }
       ## push results and log
       $results_hash{$gid} = $trimmed_seq_string;
-      print $LOG join("\t", "+1","1",(($tseq_obj->length-1) % 3),(length($trimmed_seq_string)/3));
+      print $LOG join("\t", "+1","1",(($tseq_obj->length-1) % 3),$term,(length($trimmed_seq_string)/3));
       $fr1++;
 
     } elsif ( $pseq_obj->seq() eq $tseq_translation_fr2 ) {
       ## correct frame is +2
       ## trim 2 bp from start, and N from end to ensure % 3 == 0
       my $trimmed_seq_string = substr($tseq_obj->seq(), 2, (($tseq_obj->length-2) - (($tseq_obj->length-2) % 3)));
+      ## check for termination codon
+      my $term = "No";
+      if ($trimmed_seq_string =~ m/(TAG|TAA|TGA)$/) {
+        $term = substr($trimmed_seq_string,length($trimmed_seq_string),length($trimmed_seq_string)-2);
+        $trimmed_seq_string =~ s/(TAG|TAA|TGA)$//;
+      }
       ## push results and log
       $results_hash{$gid} = $trimmed_seq_string;
-      print $LOG join("\t", "+2","2",(($tseq_obj->length-1) % 3),(length($trimmed_seq_string)/3));
+      print $LOG join("\t", "+2","2",(($tseq_obj->length-1) % 3),$term,(length($trimmed_seq_string)/3));
       $fr2++;
 
     } else {
       ## leave as frame 0
       ## still trim N from end to ensure % 3 == 0
       my $trimmed_seq_string = substr($tseq_obj->seq(), 0, ($tseq_obj->length - ($tseq_obj->length % 3)));
+      ## check for termination codon
+      my $term = "No";
+      if ($trimmed_seq_string =~ m/(TAG|TAA|TGA)$/) {
+        $term = substr($trimmed_seq_string,length($trimmed_seq_string),length($trimmed_seq_string)-2);
+        $trimmed_seq_string =~ s/(TAG|TAA|TGA)$//;
+      }
       ## push results and log
       $results_hash{$gid} = $trimmed_seq_string;
-      print $LOG join("\t", "0","0",(($tseq_obj->length) % 3),(length($trimmed_seq_string)/3));
+      print $LOG join("\t", "0","0",(($tseq_obj->length) % 3),$term,(length($trimmed_seq_string)/3));
       $fr0++;
     }
     print $LOG "\n";
@@ -118,8 +128,15 @@ foreach my $gid (nsort keys %prot_hash) {
     ## translation is good
     ## but still might need to trim from end to ensure % 3 == 0
     my $trimmed_seq_string = substr($tseq_obj->seq(), 0, ($tseq_obj->length - ($tseq_obj->length % 3)));
+    ## check for termination codon
+    my $term = "No";
+    if ($trimmed_seq_string =~ m/(TAG|TAA|TGA)$/) {
+      $term = substr($trimmed_seq_string,length($trimmed_seq_string),length($trimmed_seq_string)-2);
+      $trimmed_seq_string =~ s/(TAG|TAA|TGA)$//;
+    }
+    ## push results and log
     $results_hash{$gid} = $trimmed_seq_string;
-    print $LOG join("\t", "Y","0","0",(($tseq_obj->length) % 3),(length($trimmed_seq_string)/3));
+    print $LOG join("\t", "Y","0","0",(($tseq_obj->length) % 3),$term,(length($trimmed_seq_string)/3));
     $unchanged++;
   }
 }
