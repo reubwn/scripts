@@ -62,7 +62,7 @@ print $LOG "gene_id\taa_len\tcodons_len\tmatch\tframe\ttrim_start\ttrim_end\tnew
 foreach my $gid (nsort keys %prot_hash) {
   my $pseq_obj = $prot_hash{$gid};
   my $tseq_obj = $transcripts_hash{$gid};
-  print $LOG join ("\t", $gid,$pseq_obj->length,($tseq_obj->length/3)) . "\t";
+  print $LOG join ("\t", $gid,$pseq_obj->length,($tseq_obj->length/3))."\t";
 
   ## translate frame 0 and remove terminator '*'
   (my $tseq_translation_fr0 = $tseq_obj->translate( -frame => 0 )->seq()) =~ s/\*$//;
@@ -124,7 +124,7 @@ foreach my $gid (nsort keys %prot_hash) {
 
   } else {
     ## translation is good
-    print $LOG "Y\t0\t0\t" . (($tseq_obj->length) % 3) . "\t";
+    print $LOG "Y\t0\t0\t" . (($tseq_obj->length) % 3)."\n";
     ## but still might need to trim from end to ensure % 3 == 0
     my $trimmed_seq_string = substr($tseq_obj->seq(), 0, ($tseq_obj->length - ($tseq_obj->length % 3)));
     $results_hash{$gid} = $trimmed_seq_string;
