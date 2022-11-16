@@ -60,9 +60,10 @@ print $LOG "gene_id\taa_len\tcodons_len\tmatch\tframe\ttrim_start\ttrim_end\tnew
 
 ## cycle thru gene ids
 foreach my $gid (nsort keys %prot_hash) {
-  print $LOG "$gid\t" . $pseq_obj->length . ($tseq_obj/3) . "\t";
   my $pseq_obj = $prot_hash{$gid};
   my $tseq_obj = $transcripts_hash{$gid};
+  print $LOG "$gid\t" . $pseq_obj->length . ($tseq_obj/3) . "\t";
+  
   ## translate frame 0 and remove terminator '*'
   (my $tseq_translation_fr0 = $tseq_obj->translate( -frame => 0 )->seq()) =~ s/\*$//;
 
