@@ -60,7 +60,7 @@ my $prots_fh = Bio::SeqIO -> new ( -file => $aa_file, -format => 'fasta');
 while (my $seq_obj = $prots_fh -> next_seq) {
   $target_hash{$seq_obj->display_id()} = $seq_obj->seq();
 }
-print STDOUT "[INFO] Number of seqs in '$aa_file': ".commify(keys %target_hash)."\n";
+print STDOUT "[INFO] Number of seqs in '$aa_file': ".commify(scalar(keys %target_hash))."\n";
 
 ## read in proteins file to hash
 ## parse Orthogroups.txt file
@@ -82,10 +82,12 @@ while (my $line = <$ORTHO>) {
   foreach (@ignore) {
     delete ($gids{$_});
   }
-  if ( (scalar(keys %gids) == $total_proteomes-(scalar(@ignore))) and (sum values %gids == $total_proteomes-(scalar(@ignore)))) {
+  if ( (scalar(keys %gids) == $total_proteomes) and (sum values %gids == $total_proteomes-(scalar(@ignore)))) {
     print "$line\n";
   }
 }
+
+## iterate thru all but @ignore and pick out 1-1's
 
 #############
 
