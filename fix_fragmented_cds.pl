@@ -67,7 +67,7 @@ foreach my $msa (@msa_files) {
   my $aln = $in -> next_aln();
   my %counts;
   foreach my $seq ($aln -> each_seq()) {
-    @a = split(/\|/, $seq->display_id());
+    my @a = split(/\|/, $seq->display_id());
     $counts{$a[0]}++;
   }
   my %counts_copy = %counts;
