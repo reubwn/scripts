@@ -8,6 +8,7 @@ use Getopt::Long;
 
 use Bio::Seq;
 use Bio::SeqIO;
+use Bio::AlignIO;
 use File::Basename;
 use Sort::Naturally;
 use List::Util 'sum';
@@ -28,13 +29,15 @@ OPTIONS [*required]
   -h|--help                           : print this message
 \n";
 
-my ($aa_file, $dna_file, $db_dir_path, $orthogroups_file, $ignore_string, $logfile, $help);
+my ($aa_file, $dna_file, $db_dir_path, $orthogroups_file, $target_id, $msa_dir, $ignore_string, $logfile, $help);
 my $outsuffix = "fixed";
 
 GetOptions (
   'a|aa=s'      => \$aa_file,
   'd|db=s'      => \$db_dir_path,
   'g|orthogroups=s' => \$orthogroups_file,
+  't|target_id=s' => \$target_id,
+  'm|msa=s'     => \$msa_dir,
   'i|ignore:s'  => \$ignore_string,
   'n|dna:s'     => \$dna_file,
   'o|out:s'     => \$outsuffix,
@@ -43,49 +46,79 @@ GetOptions (
 );
 
 die $usage if ( $help );
-die $usage unless ( $aa_file && $orthogroups_file && $db_dir_path );
+die $usage unless ($target_id && $msa_dir);
+# die $usage unless ( $aa_file && $orthogroups_file && $db_dir_path );
 
-my @prots_files = glob("$db_dir_path/*fa $db_dir_path/*faa $db_dir_path/*fasta");
-my $total_proteomes = scalar(@prots_files);
-print STDERR "[INFO] Path to proteome files: $db_dir_path\n";
-print STDERR "[INFO] Number of input files found there: $total_proteomes\n";
+# my @prots_files = glob("$db_dir_path/*fa $db_dir_path/*faa $db_dir_path/*fasta");
+# my $total_proteomes = scalar(@prots_files);
+# print STDERR "[INFO] Path to proteome files: $db_dir_path\n";
+# print STDERR "[INFO] Number of input files found there: $total_proteomes\n";
 
 my @ignore;
 if ( $ignore_string ) {
   @ignore = split (",", $ignore_string);
 }
 
-my %target_hash;
-my $prots_fh = Bio::SeqIO -> new ( -file => $aa_file, -format => 'fasta');
-while (my $seq_obj = $prots_fh -> next_seq) {
-  $target_hash{$seq_obj->display_id()} = $seq_obj->seq();
-}
-print STDOUT "[INFO] Number of seqs in '$aa_file': ".commify(scalar(keys %target_hash))."\n";
+my @msa_files = glob ("$msa_dir/*fa");
+print STDERR "[INFO] Number of \*.fa MSA files in '$msa_dir': ".scalar(@msa_files)."\n";
 
-## read in proteins file to hash
-## parse Orthogroups.txt file
-## find 1-1's, ignoring any GID in 'ignore'
-## iterate thru 1-1's, find any with multiple proteins from target
-## iterate thru these;
-
-open (my $ORTHO, $orthogroups_file) or die $!;
-while (my $line = <$ORTHO>) {
-  chomp $line;
-  my @a = split (/:\s/, $line);
-  my @b = split (/\s+/, $a[1]);
-  my %gids;
-  foreach my $entry (@b) {
-    my @c = split (/\|/, $entry);
-    $gids{$c[0]}++;
+foreach my $msa (@msa_files) {
+  my $in = Bio::AlignIO -> new ( -file => $msa, -format => 'fasta' );
+  my $aln = $in -> next_aln();
+  my %counts;
+  foreach my $seq ($aln -> each_seq()) {
+    $counts{$seq->display_id()}++;
   }
-  ## delete the target gids which we don't want to consider here
+  my %counts_copy = %counts;
+  delete $counts_copy{$target_id};
   foreach (@ignore) {
-    delete ($gids{$_});
+    delete $counts_copy{$_};
   }
-  if ( (scalar(keys %gids) == $total_proteomes) and (sum values %gids == $total_proteomes-(scalar(@ignore)))) {
-    print "$line\n";
+
+  ## number of keys == sum of values, then 1-1 orthogroup (ignoring @ignore)
+  if (scalar keys %counts_copy == sum values %counts_copy) {
+    if ($counts{$target_id} > 1) {
+      print STDERR "[INFO] $msa: $target_id has $counts{$target_id} copies\n";
+    }
   }
 }
+
+
+
+
+#
+#
+# my %target_hash;
+# my $prots_fh = Bio::SeqIO -> new ( -file => $aa_file, -format => 'fasta');
+# while (my $seq_obj = $prots_fh -> next_seq) {
+#   $target_hash{$seq_obj->display_id()} = $seq_obj->seq();
+# }
+# print STDERR "[INFO] Number of seqs in '$aa_file': ".commify(scalar(keys %target_hash))."\n";
+#
+# ## read in proteins file to hash
+# ## parse Orthogroups.txt file
+# ## find 1-1's, ignoring any GID in 'ignore'
+# ## iterate thru 1-1's, find any with multiple proteins from target
+# ## iterate thru these;
+#
+# open (my $ORTHO, $orthogroups_file) or die $!;
+# while (my $line = <$ORTHO>) {
+#   chomp $line;
+#   my @a = split (/:\s/, $line);
+#   my @b = split (/\s+/, $a[1]);
+#   my %gids;
+#   foreach my $entry (@b) {
+#     my @c = split (/\|/, $entry);
+#     $gids{$c[0]}++;
+#   }
+#   ## delete the target gids which we don't want to consider here
+#   foreach (@ignore) {
+#     delete ($gids{$_});
+#   }
+#   if ( (scalar(keys %gids) == $total_proteomes) and (sum values %gids == $total_proteomes-(scalar(@ignore)))) {
+#     print "$line\n";
+#   }
+# }
 
 ## iterate thru all but @ignore and pick out 1-1's
 
