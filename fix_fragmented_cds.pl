@@ -77,10 +77,13 @@ foreach my $msa (@msa_files) {
   }
 
   ## number of keys == sum of values, then 1-1 orthogroup (ignoring @ignore)
-  if ( ($counts{$target_id} > 1) and (scalar keys %counts_copy == sum values %counts_copy) ) {
-    print STDERR "[INFO] $msa: $target_id has $counts{$target_id} copies\n";
+  if ($counts{$target_id}) {
+    if ( ($counts{$target_id} > 1) and (scalar keys %counts_copy == sum values %counts_copy) ) {
+      print STDERR "[INFO] $msa: $target_id has $counts{$target_id} copies\n";
 
+    }
   }
+
 }
 
 
