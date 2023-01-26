@@ -49,6 +49,12 @@ die $usage if ( $help );
 die $usage unless ($target_id && $msa_dir);
 # die $usage unless ( $aa_file && $orthogroups_file && $db_dir_path );
 
+my %target_lengths;
+my $aa_in = Bio::SeqIO -> new ( -file => $aa_file, -format => 'fasta' );
+while (my $seq = $aa_in->next_seq) {
+  %target_lengths{$seq->display_id} = $seq->length;
+}
+
 # my @prots_files = glob("$db_dir_path/*fa $db_dir_path/*faa $db_dir_path/*fasta");
 # my $total_proteomes = scalar(@prots_files);
 # print STDERR "[INFO] Path to proteome files: $db_dir_path\n";
@@ -64,24 +70,36 @@ print STDERR "[INFO] Number of \*.fa MSA files in '$msa_dir': ".scalar(@msa_file
 
 my $n;
 foreach my $msa (@msa_files) {
-  my $in = Bio::AlignIO -> new ( -file => $msa, -format => 'fasta' );
-  my $aln = $in -> next_aln();
+  my $aln_in = Bio::AlignIO -> new ( -file => $msa, -format => 'fasta' );
+  my $aln = $aln_in -> next_aln();
   my %counts;
-  my %lengths;
-  my %pairwise_matches;
+  # my %lengths;
+  # my %pairwise_matches;
+  my $longest_target_length = 0;
+  my $longest_target_id;
+
   foreach my $seq1 ($aln -> each_seq()) {
     my @a = split(/\|/, $seq1->display_id());
     $counts{$a[0]}++;
-    push (@{$lengths{$a[0]}{pids}}, $seq1->display_id());
-    push (@{$lengths{$a[0]}{lengths}}, $seq1->length());
-    foreach my $seq2 ($aln -> each_seq()) {
-      if ($seq1->display_id() eq $seq2->display_id()) {
-        next;
-      } else {
-        my $num_matches = ( lc $seq1->seq() ^ lc $seq2->seq() ) =~ tr/\0//;
+
+    # foreach my $seq2 ($aln -> each_seq()) {
+    #   if ($seq1->display_id() eq $seq2->display_id()) {
+    #     next;
+    #   } else {
+    #     my $num_matches = ( lc $seq1->seq() ^ lc $seq2->seq() ) =~ tr/\0//;
+    #   }
+    # }
+
+    if ($a[0] eq $target_id) {
+      print STDERR "[INFO] ".$seq1->display_id.": ".$target_lengths{$seq1->display_id}."\n";
+      if ($target_lengths{$seq1->display_id} > $longest_target_length) {
+        $longest_target_length = $target_lengths{$seq1->display_id};
+        $longest_target_id = $seq1->display_id;
       }
     }
   }
+  print STDERR "[INFO] Longest target is $longest_target_id ($longest_target_length)\n\n";
+
   my %counts_copy = %counts;
   delete $counts_copy{$target_id};
   foreach (@ignore) {
