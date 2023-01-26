@@ -91,14 +91,13 @@ foreach my $msa (@msa_files) {
     # }
 
     if ($a[0] eq $target_id) {
-      print STDERR "[INFO] ".$seq1->display_id.": ".$target_lengths{$seq1->display_id}."\n";
+      # print STDERR "[INFO] ".$seq1->display_id.": ".$target_lengths{$seq1->display_id}."\n";
       if ($target_lengths{$seq1->display_id} > $longest_target_length) {
         $longest_target_length = $target_lengths{$seq1->display_id};
         $longest_target_id = $seq1->display_id;
       }
     }
   }
-  print STDERR "[INFO] Longest target is $longest_target_id ($longest_target_length)\n\n";
 
   my %counts_copy = %counts;
   delete $counts_copy{$target_id};
@@ -110,6 +109,7 @@ foreach my $msa (@msa_files) {
   if ( ($counts{$target_id}) and (scalar keys %counts_copy >0) ) {
     if ( ($counts{$target_id} > 1) and (scalar keys %counts_copy == sum values %counts_copy) ) {
       print STDERR "[INFO] $msa: $target_id has $counts{$target_id} copies\n";
+      print STDERR "[INFO] Longest target is $longest_target_id ($longest_target_length)\n\n";
       $n++;
 
     }
