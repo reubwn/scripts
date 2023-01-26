@@ -67,10 +67,13 @@ foreach my $msa (@msa_files) {
   my $in = Bio::AlignIO -> new ( -file => $msa, -format => 'fasta' );
   my $aln = $in -> next_aln();
   my %counts;
+  my %lengths;
   my %pairwise_matches;
   foreach my $seq1 ($aln -> each_seq()) {
     my @a = split(/\|/, $seq1->display_id());
     $counts{$a[0]}++;
+    push (@{$lengths{$a[0]}{pids}}, $seq1->display_id());
+    push (@{$lengths{$a[0]}{lengths}}, $seq1->length());
     foreach my $seq2 ($aln -> each_seq()) {
       if ($seq1->display_id() eq $seq2->display_id()) {
         next;
