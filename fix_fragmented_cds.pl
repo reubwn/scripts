@@ -62,13 +62,22 @@ if ( $ignore_string ) {
 my @msa_files = glob ("$msa_dir/*fa");
 print STDERR "[INFO] Number of \*.fa MSA files in '$msa_dir': ".scalar(@msa_files)."\n";
 
+my $n;
 foreach my $msa (@msa_files) {
   my $in = Bio::AlignIO -> new ( -file => $msa, -format => 'fasta' );
   my $aln = $in -> next_aln();
   my %counts;
-  foreach my $seq ($aln -> each_seq()) {
-    my @a = split(/\|/, $seq->display_id());
+  my %pairwise_matches;
+  foreach my $seq1 ($aln -> each_seq()) {
+    my @a = split(/\|/, $seq1->display_id());
     $counts{$a[0]}++;
+    foreach my $seq2 ($aln -> each_seq()) {
+      if ($seq1->display_id() eq $seq2->display_id()) {
+        next;
+      } else {
+        my $num_matches = ( lc $seq1->seq() ^ lc $seq2->seq() ) =~ tr/\0//;
+      }
+    }
   }
   my %counts_copy = %counts;
   delete $counts_copy{$target_id};
@@ -80,11 +89,12 @@ foreach my $msa (@msa_files) {
   if ($counts{$target_id}) {
     if ( ($counts{$target_id} > 1) and (scalar keys %counts_copy == sum values %counts_copy) ) {
       print STDERR "[INFO] $msa: $target_id has $counts{$target_id} copies\n";
+      $n++;
 
     }
   }
-
 }
+print STDERR "[INFO] Total number of MSAs with >1 copy for $target_id: $n\n";
 
 
 
