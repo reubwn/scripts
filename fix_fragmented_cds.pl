@@ -52,7 +52,7 @@ die $usage unless ($target_id && $msa_dir);
 my %target_lengths;
 my $aa_in = Bio::SeqIO -> new ( -file => $aa_file, -format => 'fasta' );
 while (my $seq = $aa_in->next_seq) {
-  %target_lengths{$seq->display_id} = $seq->length;
+  $target_lengths{$seq->display_id} = $seq->length;
 }
 
 # my @prots_files = glob("$db_dir_path/*fa $db_dir_path/*faa $db_dir_path/*fasta");
