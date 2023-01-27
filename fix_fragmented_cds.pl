@@ -61,7 +61,7 @@ my $aa_in = Bio::SeqIO -> new ( -file => $aa_file, -format => 'fasta' );
 while (my $seq = $aa_in->next_seq) {
   $target_lengths{$seq->display_id} = $seq->length;
 }
-print STDERR "[INFO] Number of proteins in '$aa_file': ".scalar(keys %target_lengths)."\n";
+print STDERR "[INFO] Number of proteins in target file '$aa_file': ".scalar(keys %target_lengths)."\n";
 
 my @msa_files = glob ("$msa_dir/*fa");
 print STDERR "[INFO] Number of \*.fa MSA files in '$msa_dir' to analyse: ".scalar(@msa_files)."\n";
@@ -114,7 +114,7 @@ foreach my $msa (@msa_files) {
       print $LOG "[INFO] Longest target in aln is $longest_target_id ($longest_target_length aa)\n";
       delete $target_members{$longest_target_id};
       print $LOG "[INFO] Target PIDs to be removed:\n       ".join(", ", nsort keys %target_members)."\n\n";
-      print $OUT join("\n", nsort keys %target_members);
+      print $OUT join("\n", nsort keys %target_members)."\n";
       $m+= scalar(keys %target_members);
       $n++;
 
@@ -125,7 +125,7 @@ close $LOG;
 close $OUT;
 
 print STDERR "[INFO] Total number of MSAs with >1 copy for $target_id: $n\n";
-print STDERR "[INFO] Total number of proteins to be suppressed: $m\n".`date`."\n";
+print STDERR "[INFO] Total number of proteins to be suppressed: $m\n[INFO] Finished ".`date`."\n";
 
 #############
 
