@@ -49,6 +49,9 @@ die $usage if ( $help );
 die $usage unless ($target_id && $msa_dir);
 # die $usage unless ( $aa_file && $orthogroups_file && $db_dir_path );
 
+open (my $LOG, ">filter.log") or die $!;
+open (my $OUT, ">filter_res.out") or die $!;
+
 my %target_lengths;
 my $aa_in = Bio::SeqIO -> new ( -file => $aa_file, -format => 'fasta' );
 while (my $seq = $aa_in->next_seq) {
@@ -110,55 +113,20 @@ foreach my $msa (@msa_files) {
   ## number of keys == sum of values, then 1-1 orthogroup (ignoring @ignore)
   if ( ($counts{$target_id}) and (scalar keys %counts_copy >0) ) {
     if ( ($counts{$target_id} > 1) and (scalar keys %counts_copy == sum values %counts_copy) ) {
-      print STDERR "[INFO] $msa: $target_id has $counts{$target_id} copies\n";
-      print STDERR "[INFO] Longest target in aln is $longest_target_id ($longest_target_length aa)\n";
+      print $LOG "[INFO] $msa: $target_id has $counts{$target_id} copies\n";
+      print $LOG "[INFO] Longest target in aln is $longest_target_id ($longest_target_length aa)\n";
       delete $target_members{$longest_target_id};
-      print STDERR "[INFO] Target GIDs to be removed:\n       ".join(", ", nsort keys %target_members)."\n\n";
+      print $LOG "[INFO] Target PIDs to be removed:\n       ".join(", ", nsort keys %target_members)."\n\n";
+      print $OUT join("\n", nsort keys %target_members);
       $n++;
 
     }
   }
 }
+close $LOG;
+close $OUT;
+
 print STDERR "[INFO] Total number of MSAs with >1 copy for $target_id: $n\n";
-
-
-
-
-#
-#
-# my %target_hash;
-# my $prots_fh = Bio::SeqIO -> new ( -file => $aa_file, -format => 'fasta');
-# while (my $seq_obj = $prots_fh -> next_seq) {
-#   $target_hash{$seq_obj->display_id()} = $seq_obj->seq();
-# }
-# print STDERR "[INFO] Number of seqs in '$aa_file': ".commify(scalar(keys %target_hash))."\n";
-#
-# ## read in proteins file to hash
-# ## parse Orthogroups.txt file
-# ## find 1-1's, ignoring any GID in 'ignore'
-# ## iterate thru 1-1's, find any with multiple proteins from target
-# ## iterate thru these;
-#
-# open (my $ORTHO, $orthogroups_file) or die $!;
-# while (my $line = <$ORTHO>) {
-#   chomp $line;
-#   my @a = split (/:\s/, $line);
-#   my @b = split (/\s+/, $a[1]);
-#   my %gids;
-#   foreach my $entry (@b) {
-#     my @c = split (/\|/, $entry);
-#     $gids{$c[0]}++;
-#   }
-#   ## delete the target gids which we don't want to consider here
-#   foreach (@ignore) {
-#     delete ($gids{$_});
-#   }
-#   if ( (scalar(keys %gids) == $total_proteomes) and (sum values %gids == $total_proteomes-(scalar(@ignore)))) {
-#     print "$line\n";
-#   }
-# }
-
-## iterate thru all but @ignore and pick out 1-1's
 
 #############
 
