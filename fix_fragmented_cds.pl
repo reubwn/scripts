@@ -20,42 +20,44 @@ SYNOPSIS
 
 OPTIONS [*required]
   -a|--aa          *[FILE]            : target aa sequences (fasta)
-  -d|--db          *[DIR]             : path to dir of database proteome files (fasta)
-  -g|--orthogroups *[FILE]            : OrthoGroups.txt file (from OrthoFinder)
-  -i|--ignore       [STRING[,STRING]] : ID of any taxa to ignore in OF output
-  -n|--dna          [FILE]            : target DNA sequences (fasta)
-  -o|--out          [STR]             : outfile suffix
-  -l|--logfile                        : print stats to logfile [no]
+  -m|--msa         *[DIR]             : path to dir of MSA files (fasta)
+  -t|--target      *[STRING]          : ID of target genome
+  -i|--ignore       [STRING[,STRING]] : ID of any taxa to ignore
+  -o|--out          [STR]             : outfile prefix ('filter')
+  -n|--min          [INT]             : mimimum number of species in OG to be included [5]
+  -f|--fuzzy        [INT]             : allow up to INT extra copies in non-target species (i.e. departure from strict 1-1's)
   -h|--help                           : print this message
 \n";
 
-my ($aa_file, $dna_file, $db_dir_path, $orthogroups_file, $target_id, $msa_dir, $ignore_string, $logfile, $help);
-my $outsuffix = "fixed";
+my ($aa_file, $msa_dir, $target_id, $ignore_string, $fuzzy, $help);
+my $outprefix = "filter";
+my $min_OG_size = 5;
 
 GetOptions (
   'a|aa=s'      => \$aa_file,
-  'd|db=s'      => \$db_dir_path,
-  'g|orthogroups=s' => \$orthogroups_file,
-  't|target_id=s' => \$target_id,
+  't|target=s'  => \$target_id,
   'm|msa=s'     => \$msa_dir,
   'i|ignore:s'  => \$ignore_string,
-  'n|dna:s'     => \$dna_file,
-  'o|out:s'     => \$outsuffix,
-  'l|logfile'   => \$logfile,
+  'o|out:s'     => \$outprefix,
+  'f|fuzzy:i'   => \$fuzzy,
+  'n|min:i'     => \$min_OG_size,
   'h|help'      => \$help
 );
 
 die $usage if ( $help );
-die $usage unless ($target_id && $msa_dir);
+die $usage unless ( $aa_file && $msa_dir && $target_id );
 
+## parse ignore string
 my @ignore;
 if ( $ignore_string ) {
   @ignore = split (",", $ignore_string);
 }
 
-open (my $LOG, ">filter.log") or die $!;
-open (my $OUT, ">filter_res.out") or die $!;
+## open out files
+open (my $LOG, ">$outprefix.log") or die $!;
+open (my $OUT, ">$outprefix"."_exclude.out") or die $!;
 
+## parse aa target file
 my %target_lengths;
 my $aa_in = Bio::SeqIO -> new ( -file => $aa_file, -format => 'fasta' );
 while (my $seq = $aa_in->next_seq) {
@@ -63,12 +65,14 @@ while (my $seq = $aa_in->next_seq) {
 }
 print STDERR "[INFO] Number of proteins in target file '$aa_file': ".scalar(keys %target_lengths)."\n";
 
+## glob MSA files
 my @msa_files = glob ("$msa_dir/*fa");
 print STDERR "[INFO] Number of \*.fa MSA files in '$msa_dir' to analyse: ".scalar(@msa_files)."\n";
 
 my $n;
 my $m;
 
+## iterate thru MSA files
 foreach my $msa (@msa_files) {
   my $aln_in = Bio::AlignIO -> new ( -file => $msa, -format => 'fasta' );
   my $aln = $aln_in -> next_aln();
@@ -79,6 +83,7 @@ foreach my $msa (@msa_files) {
   my $longest_target_length = 0;
   my $longest_target_id;
 
+  ## iterate thru seqs in current MSA
   foreach my $seq1 ($aln -> each_seq()) {
     my @a = split(/\|/, $seq1->display_id());
     $counts{$a[0]}++;
@@ -91,6 +96,7 @@ foreach my $msa (@msa_files) {
     #   }
     # }
 
+    ## find the longest target seq in current MSA/OG
     if ($a[0] eq $target_id) {
       # print STDERR "[INFO] ".$seq1->display_id.": ".$target_lengths{$seq1->display_id}."\n";
       $target_members{$seq1->display_id} = $target_lengths{$seq1->display_id};
@@ -101,23 +107,41 @@ foreach my $msa (@msa_files) {
     }
   }
 
+  ## make a copy of counts
   my %counts_copy = %counts;
+  ## remove target counts
   delete $counts_copy{$target_id};
+  ## remove any other GIDs you don't want to include
   foreach (@ignore) {
     delete $counts_copy{$_};
   }
 
-  ## number of keys == sum of values, then 1-1 orthogroup (ignoring @ignore)
-  if ( ($counts{$target_id}) and (scalar keys %counts_copy >0) ) {
-    if ( ($counts{$target_id} > 1) and (scalar keys %counts_copy == sum values %counts_copy) ) {
-      print $LOG "[INFO] $msa: $target_id has $counts{$target_id} copies\n";
-      print $LOG "[INFO] Longest target in aln is $longest_target_id ($longest_target_length aa)\n";
-      delete $target_members{$longest_target_id};
-      print $LOG "[INFO] Target PIDs to be removed:\n       ".join(", ", nsort keys %target_members)."\n\n";
-      print $OUT join("\n", nsort keys %target_members)."\n";
-      $m+= scalar(keys %target_members);
-      $n++;
+  ## skip MSAs that do not contain any seqs from target, or that are composed entirely of seqs from target or @ignore
+  if ( ($counts{$target_id}) and (scalar keys %counts_copy > 0) ) {
 
+    if ( $fuzzy ) {
+      if ( ($counts{$target_id} > 1) and (scalar keys %counts_copy >= $min_OG_size) and (sum values %counts_copy <= (scalar keys %counts_copy + $fuzzy)) ) {
+        print $LOG "[INFO] $msa: $target_id has $counts{$target_id} copies\n";
+        print $LOG "[INFO] Longest target in aln is $longest_target_id ($longest_target_length aa)\n";
+        delete $target_members{$longest_target_id};
+        print $LOG "[INFO] Target PIDs to be removed:\n       ".join(", ", nsort keys %target_members)."\n\n";
+        print $OUT join("\n", nsort keys %target_members)."\n";
+        $m+= scalar(keys %target_members);
+        $n++;
+        
+      }
+    } else {
+      ## number of keys == sum of values, then 1-1 orthogroup (ignoring @ignore)
+      if ( ($counts{$target_id} > 1) and (scalar keys %counts_copy >= $min_OG_size) and (sum values %counts_copy == scalar keys %counts_copy) ) {
+        print $LOG "[INFO] $msa: $target_id has $counts{$target_id} copies\n";
+        print $LOG "[INFO] Longest target in aln is $longest_target_id ($longest_target_length aa)\n";
+        delete $target_members{$longest_target_id};
+        print $LOG "[INFO] Target PIDs to be removed:\n       ".join(", ", nsort keys %target_members)."\n\n";
+        print $OUT join("\n", nsort keys %target_members)."\n";
+        $m+= scalar(keys %target_members);
+        $n++;
+
+      }
     }
   }
 }
