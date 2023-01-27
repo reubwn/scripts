@@ -121,7 +121,7 @@ foreach my $msa (@msa_files) {
   if ( ($counts{$target_id}) and (scalar keys %counts_copy > 0) ) {
 
     if ( $fuzzy ) {
-      if ( ($counts{$target_id} > 1) and (scalar keys %counts_copy >= $min_OG_size) and (sum values %counts_copy <= (scalar keys %counts_copy + $fuzzy)) ) {
+      if ( ($counts{$target_id} > 1) and (scalar keys %counts_copy >= $min_OG_size) and (sum values %counts_copy <= (scalar(keys %counts_copy)+$fuzzy)) ) {
         print $LOG "[INFO] $msa: $target_id has $counts{$target_id} copies\n";
         print $LOG "[INFO] Longest target in aln is $longest_target_id ($longest_target_length aa)\n";
         delete $target_members{$longest_target_id};
