@@ -63,6 +63,7 @@ my $aa_in = Bio::SeqIO -> new ( -file => $aa_file, -format => 'fasta' );
 while (my $seq = $aa_in->next_seq) {
   $target_lengths{$seq->display_id} = $seq->length;
 }
+print STDERR "[INFO] Min OG size set to: $min_OG_size\n";
 print STDERR "[INFO] Number of proteins in target file '$aa_file': ".scalar(keys %target_lengths)."\n";
 
 ## glob MSA files
@@ -128,7 +129,7 @@ foreach my $msa (@msa_files) {
         print $OUT join("\n", nsort keys %target_members)."\n";
         $m+= scalar(keys %target_members);
         $n++;
-        
+
       }
     } else {
       ## number of keys == sum of values, then 1-1 orthogroup (ignoring @ignore)
