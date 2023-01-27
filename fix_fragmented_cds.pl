@@ -133,7 +133,7 @@ foreach my $msa (@msa_files) {
       }
     } else {
       ## number of keys == sum of values, then 1-1 orthogroup (ignoring @ignore) >>and (scalar(keys %counts_copy) >= $min_OG_size)
-      if ( ($counts{$target_id} > 1) and (sum values %counts_copy == scalar(keys %counts_copy)) ) {
+      if ( ($counts{$target_id} > 1) and (sum(values %counts_copy) == scalar(keys %counts_copy)) ) {
         print $LOG "[INFO] $msa: $target_id has $counts{$target_id} copies\n";
         print $LOG "[INFO] Longest target in aln is $longest_target_id ($longest_target_length aa)\n";
         delete $target_members{$longest_target_id};
