@@ -75,6 +75,7 @@ foreach my $msa (@msa_files) {
   my %counts;
   # my %lengths;
   # my %pairwise_matches;
+  my %target_members;
   my $longest_target_length = 0;
   my $longest_target_id;
 
@@ -92,6 +93,7 @@ foreach my $msa (@msa_files) {
 
     if ($a[0] eq $target_id) {
       # print STDERR "[INFO] ".$seq1->display_id.": ".$target_lengths{$seq1->display_id}."\n";
+      $target_members{$seq1->display_id} = $target_lengths{$seq1->display_id};
       if ($target_lengths{$seq1->display_id} > $longest_target_length) {
         $longest_target_length = $target_lengths{$seq1->display_id};
         $longest_target_id = $seq1->display_id;
@@ -109,7 +111,9 @@ foreach my $msa (@msa_files) {
   if ( ($counts{$target_id}) and (scalar keys %counts_copy >0) ) {
     if ( ($counts{$target_id} > 1) and (scalar keys %counts_copy == sum values %counts_copy) ) {
       print STDERR "[INFO] $msa: $target_id has $counts{$target_id} copies\n";
-      print STDERR "[INFO] Longest target is $longest_target_id ($longest_target_length)\n\n";
+      print STDERR "[INFO] Longest target is $longest_target_id ($longest_target_length aa)\n\n";
+      delete $target_members{$longest_target_id};
+      print STDERR "[INFO] Target GIDs to be removed: ".join(", ", keys %target_members)."\n";
       $n++;
 
     }
