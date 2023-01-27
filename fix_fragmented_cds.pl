@@ -47,7 +47,11 @@ GetOptions (
 
 die $usage if ( $help );
 die $usage unless ($target_id && $msa_dir);
-# die $usage unless ( $aa_file && $orthogroups_file && $db_dir_path );
+
+my @ignore;
+if ( $ignore_string ) {
+  @ignore = split (",", $ignore_string);
+}
 
 open (my $LOG, ">filter.log") or die $!;
 open (my $OUT, ">filter_res.out") or die $!;
@@ -57,21 +61,14 @@ my $aa_in = Bio::SeqIO -> new ( -file => $aa_file, -format => 'fasta' );
 while (my $seq = $aa_in->next_seq) {
   $target_lengths{$seq->display_id} = $seq->length;
 }
-
-# my @prots_files = glob("$db_dir_path/*fa $db_dir_path/*faa $db_dir_path/*fasta");
-# my $total_proteomes = scalar(@prots_files);
-# print STDERR "[INFO] Path to proteome files: $db_dir_path\n";
-# print STDERR "[INFO] Number of input files found there: $total_proteomes\n";
-
-my @ignore;
-if ( $ignore_string ) {
-  @ignore = split (",", $ignore_string);
-}
+print STDERR "[INFO] Number of proteins in '$aa_file': ".scalar(keys %target_lengths)."\n";
 
 my @msa_files = glob ("$msa_dir/*fa");
-print STDERR "[INFO] Number of \*.fa MSA files in '$msa_dir': ".scalar(@msa_files)."\n";
+print STDERR "[INFO] Number of \*.fa MSA files in '$msa_dir' to analyse: ".scalar(@msa_files)."\n";
 
 my $n;
+my $m;
+
 foreach my $msa (@msa_files) {
   my $aln_in = Bio::AlignIO -> new ( -file => $msa, -format => 'fasta' );
   my $aln = $aln_in -> next_aln();
@@ -118,6 +115,7 @@ foreach my $msa (@msa_files) {
       delete $target_members{$longest_target_id};
       print $LOG "[INFO] Target PIDs to be removed:\n       ".join(", ", nsort keys %target_members)."\n\n";
       print $OUT join("\n", nsort keys %target_members);
+      $m+= scalar(keys %target_members);
       $n++;
 
     }
@@ -127,6 +125,7 @@ close $LOG;
 close $OUT;
 
 print STDERR "[INFO] Total number of MSAs with >1 copy for $target_id: $n\n";
+print STDERR "[INFO] Total number of proteins to be suppressed: $m\n".`date`."\n";
 
 #############
 
