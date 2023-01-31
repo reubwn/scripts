@@ -64,6 +64,8 @@ while (my $seq = $aa_in->next_seq) {
   $target_lengths{$seq->display_id} = $seq->length;
 }
 print STDERR "[INFO] Min OG size set to: $min_OG_size\n";
+print STDERR "[INFO] Target GID: $target_id\n";
+print STDERR "[INFO] Ignoring GIDs: ".join(",",@ignore)."\n";
 print STDERR "[INFO] Number of proteins in target file '$aa_file': ".scalar(keys %target_lengths)."\n";
 
 ## glob MSA files
@@ -122,6 +124,7 @@ foreach my $msa (@msa_files) {
 
     if ( $fuzzy ) {
       if ( ($counts{$target_id} > 1) and (scalar(keys %counts_copy) >= $min_OG_size) and (sum(values %counts_copy) <= (scalar(keys %counts_copy)+$fuzzy)) ) {
+        print $LOG "[INFO] $msa: ".scalar(keys %counts_copy)." members and ".sum(values %counts_copy)." copies\n";
         print $LOG "[INFO] $msa: $target_id has $counts{$target_id} copies\n";
         print $LOG "[INFO] Longest target in aln is $longest_target_id ($longest_target_length aa)\n";
         delete $target_members{$longest_target_id};
