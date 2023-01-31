@@ -63,9 +63,9 @@ my $aa_in = Bio::SeqIO -> new ( -file => $aa_file, -format => 'fasta' );
 while (my $seq = $aa_in->next_seq) {
   $target_lengths{$seq->display_id} = $seq->length;
 }
-print STDERR "[INFO] Min OG size set to: $min_OG_size\n";
 print STDERR "[INFO] Target GID: $target_id\n";
 print STDERR "[INFO] Ignoring GIDs: ".join(",",@ignore)."\n";
+print STDERR "[INFO] Min OG size set to: $min_OG_size\n";
 print STDERR "[INFO] Number of proteins in target file '$aa_file': ".scalar(keys %target_lengths)."\n";
 
 ## glob MSA files
