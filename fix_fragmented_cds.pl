@@ -67,6 +67,9 @@ print STDERR "[INFO] Target GID: $target_id\n";
 print STDERR "[INFO] Ignoring GIDs: ".join(",",@ignore)."\n";
 print STDERR "[INFO] Min OG size set to: $min_OG_size\n";
 print STDERR "[INFO] Number of proteins in target file '$aa_file': ".scalar(keys %target_lengths)."\n";
+print $LOG "[INFO] Target GID: $target_id\n";
+print $LOG "[INFO] Ignoring GIDs: ".join(",",@ignore)."\n";
+print $LOG "[INFO] Min OG size set to: $min_OG_size\n\n";
 
 ## glob MSA files
 my @msa_files = glob ("$msa_dir/*fa");
@@ -128,7 +131,7 @@ foreach my $msa (@msa_files) {
         print $LOG "[INFO] $msa: $target_id has $counts{$target_id} copies\n";
         print $LOG "[INFO] Longest target in aln is $longest_target_id ($longest_target_length aa)\n";
         delete $target_members{$longest_target_id};
-        print $LOG "[INFO] Target PIDs to be removed:\n       ".join(", ", nsort keys %target_members)."\n\n";
+        print $LOG "[INFO] Target PIDs to be removed:\n       ".join(", ", nsort keys %target_members)."\n[~~~~]\n";
         print $OUT join("\n", nsort keys %target_members)."\n";
         $m+= scalar(keys %target_members);
         $n++;
