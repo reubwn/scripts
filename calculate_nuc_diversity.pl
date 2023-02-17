@@ -42,6 +42,7 @@ die $usage unless ( $vcf_file && $genes_file && $pops_file && $samples_path );
 
 ## RESULTS hash
 my %RESULTS;
+my %gene_lengths;
 
 ## parse populations files
 open (my $POPS, $pops_file) or die $!;
@@ -86,32 +87,44 @@ while (my $gene = <$GENES>) {
   close $REGIN;
   close $REGOUT;
 
-  $RESULTS{$gene}{length} = $gene_length;
+  ## store total CDS length
+  $gene_lengths{$gene} = $gene_length;
 
   ## iterate thru pops
   foreach my $pop (nsort keys %pops) {
     print STDERR "[INFO] -> Population: '$pop'\n";
-    my $sum_pi = 0;  
+    my $sum_pi = 0;
 
-    ## check number of variant lines in gene region
-    my $num_variants = `bcftools view -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt $vcf_file | grep -v "^#" | wc -l`; chomp $num_variants;
-    $RESULTS{$gene}{$pop}{num_variant_sites} = $num_variants;
+    ## get stats on SNPs in gene region, per population
+    open (my $STATS, "bcftools view -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt $vcf_file --min-ac=1 --no-update | bcftools stats - | grep \"\^SN\" |") or die $!;
+    while (my $line = <$STATS>) {
+      chomp $line;
+      my @F = split (/\s+/, $line);
+      $RESULTS{$gene}{$pop}{num_samples} = $F[-1] if $.==1;
+      $RESULTS{$gene}{$pop}{num_snps} = $F[-1] if $.==4;
+      $RESULTS{$gene}{$pop}{num_mnps} = $F[-1] if $.==5;
+      $RESULTS{$gene}{$pop}{num_indels} = $F[-1] if $.==6;
+      $RESULTS{$gene}{$pop}{num_multiallelic} = $F[-1] if $.==9;
+
+    }
+    close $STATS;
+
     ## skip if none
-    if ( $num_variants > 0 ) {
-      print STDERR "[INFO] --> Found $num_variants variant sites!\n";
+    if ( $RESULTS{$gene}{$pop}{num_snps} > 0 ) {
+      print STDERR "[INFO] --> Found $RESULTS{$gene}{$pop}{num_snps} variant sites!\n";
       ## run vcftools --site-pi
       if ( system("bcftools view -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt $vcf_file | vcftools --vcf - --out $gene.$pop --site-pi 2>/dev/null") != 0 ) {
         print STDERR "[INFO] --> Problem with vcftools command!\n";
       } else {
         print STDERR "[INFO] --> Ran vcftools successfully\n";
-        open (my $SITESPI, "$gene.$pop.sites.pi | cut -f3 |") or die $!;
+        open (my $SITESPI, "cut -f3 $gene.$pop.sites.pi |") or die $!;
         while (my $pi = <$SITESPI>) {
           next if $. == 1;
           chomp $pi;
           $sum_pi += $pi;
         }
         close $SITESPI;
-        $RESULTS{$gene}{$pop}{pi} = ($sum_pi/$RESULTS{$gene}{length});
+        $RESULTS{$gene}{$pop}{pi} = ($sum_pi/$gene_lengths{$gene});
       }
     } else {
       print STDERR "[INFO] --> No variants found\n";
@@ -123,6 +136,6 @@ close $GENES;
 foreach my $gene (nsort keys %RESULTS) {
   my %pops = %{$RESULTS{$gene}};
   foreach my $pop (nsort keys %pops) {
-    print STDOUT join ("\t", $gene, $pop, $pops{num_variant_sites}, $pops{pi}) . "\n";
+    print STDOUT join ("\t", $gene, $gene_lengths{$gene}, $pop, $pops{num_samples}, $pops{num_snps}, $pops{num_mnps}, $pops{num_indels}, $pops{num_multiallelic}, $pops{pi}) . "\n";
   }
 }
