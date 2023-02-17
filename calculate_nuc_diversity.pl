@@ -53,7 +53,7 @@ while (my $gene = <$GENES>) {
   open (my $REGOUT, ">$gene.regions.txt") or die $!;
   while (my $line = <$REGIN>) {
     chomp $line;
-    my @F = split ("\s+", $line);
+    my @F = split (/\s+/, $line);
     if($F[2] eq "CDS"){
       print join("\t", $F[0],$F[3],$F[4]);
     }
