@@ -53,8 +53,11 @@ print STDERR "[INFO] Number of populations in '$pops_file': ".scalar(keys %pops)
 ## make dir to store regions files
 my $regions_dir = $outprefix."_regions";
 if ( -d $regions_dir ) {
+  print STDERR "[INFO] Emptying '$regions_dir'...\n";
   rmtree $regions_dir;
+  mkdir $regions_dir;
 } else {
+  print STDERR "[INFO] Making '$regions_dir'\n";
   mkdir $regions_dir;
 }
 
@@ -67,7 +70,7 @@ while (my $gene = <$GENES>) {
   print STDERR "[INFO] > Gene: '$gene'\n";
   ## generate regions.txt file for BCF filtering
   open (my $REGIN, "grep $gene $gff_file |") or die $!;
-  open (my $REGOUT, ">$gene.regions.txt") or die $!;
+  open (my $REGOUT, ">$regions_dir/$gene.regions.txt") or die $!;
   while (my $line = <$REGIN>) {
     chomp $line;
     my @F = split (/\s+/, $line);
