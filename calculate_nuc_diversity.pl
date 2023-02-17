@@ -174,3 +174,6 @@ foreach my $k1 (nsort keys %RESULTS) {
   }
 }
 close $RESULTS;
+print STDERR "[INFO] Finished ".`date`."\n";
+
+__END__
