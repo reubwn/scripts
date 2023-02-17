@@ -56,7 +56,7 @@ open (my $GENES, $genes_file) or die $!;
 ## grep gene IDs from GFF to generate regions.txt file
 while (my $gene = <$GENES>) {
   chomp $gene;
-  print STDERR "[INFO] Gene: '$gene'\n";
+  print STDERR "[INFO] -> Gene: '$gene'\n";
   ## generate regions.txt file for BCF filtering
   open (my $REGIN, "grep $gene $gff_file |") or die $!;
   open (my $REGOUT, ">$gene.regions.txt") or die $!;
@@ -72,21 +72,21 @@ while (my $gene = <$GENES>) {
 
   ## iterate thru pops
   foreach my $pop (nsort keys %pops) {
-    print STDERR "[INFO] Population: '$pop'\n";
+    print STDERR "[INFO] --> Population: '$pop'\n";
 
     ## check number of variant lines in gene region
     my $num_variants = `bcftools view -R $gene.regions.txt -S $samples_path/$pop.txt $vcf_file | grep -v "^#" | wc -l`;
     ## skip if none
     if ( $num_variants > 0 ) {
       ## run vcftools --site-pi
-      print STDERR "[INFO] Found $num_variants variant lines for '$gene' in '$pop'\n";
+      print STDERR "[INFO] ---> Found $num_variants variant lines for '$gene' in '$pop'\n";
       if ( system("bcftools view -R $gene.regions.txt -S $samples_path/$pop.txt $vcf_file | vcftools --vcf - --out $gene.$pop --site-pi") != 0 ) {
-        print STDERR "[INFO] Problem with vcftools command!\n";
+        print STDERR "[INFO] ---> Problem with vcftools command!\n";
       } else {
-        print STDERR "[INFO] Ran vcftools successfully\n";
+        print STDERR "[INFO] ---> Ran vcftools successfully\n";
       }
     } else {
-      print STDERR "[INFO] No variants found for '$gene' in '$pop'\n";
+      print STDERR "[INFO] ---> No variants found for '$gene' in '$pop'\n";
     }
   }
 }
