@@ -40,9 +40,18 @@ GetOptions (
 die $usage if ( $help );
 die $usage unless ( $vcf_file && $genes_file && $pops_file && $samples_path );
 
-## open genes and populations files
-open (my $GENES, $genes_file) or die $!;
+## parse populations files
 open (my $POPS, $pops_file) or die $!;
+my %pops;
+while (my $pop = <$POPS>) {
+  chomp $pops;
+  $pops{$pop} = {};
+}
+close $POPS;
+print STDERR "[INFO] Number of populations in '$pops_file': ".scalar(keys %pops)."\n";
+
+## open genes file
+open (my $GENES, $genes_file) or die $!;
 
 ## grep gene IDs from GFF to generate regions.txt file
 while (my $gene = <$GENES>) {
@@ -60,14 +69,14 @@ while (my $gene = <$GENES>) {
   }
   close $REGIN;
   close $REGOUT;
-  # `grep $gene $gff_file | perl -lane 'if($F[2]eq"CDS"){print join("\t",$F[0],$F[3],$F[4])}' > ${gene}.regions.txt`;
 
   ## iterate thru pops
-  while (my $pop = <$POPS>) {
-    chomp $pop;
+  foreach my $pop (nsort keys %pops) {
     print STDERR "[INFO] Population: '$pop'\n";
+
+    ## check number of variant lines in gene region
     my $num_variants = `bcftools view -R $gene.regions.txt -S $samples_path/$pop.txt $vcf_file | grep -v "^#" | wc -l`;
-    ## check if there are any variants intersecting with gene/pop
+    ## skip if none
     if ( $num_variants > 0 ) {
       ## run vcftools --site-pi
       print STDERR "[INFO] Found $num_variants variant lines for '$gene' in '$pop'\n";
@@ -80,7 +89,5 @@ while (my $gene = <$GENES>) {
       print STDERR "[INFO] No variants found for '$gene' in '$pop'\n";
     }
   }
-  close $POPS;
-
 }
 close $GENES;
