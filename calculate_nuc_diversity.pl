@@ -40,6 +40,9 @@ GetOptions (
 die $usage if ( $help );
 die $usage unless ( $vcf_file && $genes_file && $pops_file && $samples_path );
 
+## RESULTS hash
+my %RESULTS;
+
 ## parse populations files
 open (my $POPS, $pops_file) or die $!;
 my %pops;
@@ -71,15 +74,19 @@ while (my $gene = <$GENES>) {
   ## generate regions.txt file for BCF filtering
   open (my $REGIN, "grep $gene $gff_file |") or die $!;
   open (my $REGOUT, ">$regions_dir/$gene.regions.txt") or die $!;
+  my $gene_length;
   while (my $line = <$REGIN>) {
     chomp $line;
     my @F = split (/\s+/, $line);
-    if($F[2] eq "CDS"){
-      print $REGOUT join("\t", $F[0],$F[3],$F[4]) . "\n";
+    if ($F[2] eq "CDS") {
+      print $REGOUT join("\t", $F[0],$F[3],$F[4])."\n";
+      $gene_length += (($F[4] - $F[3]) + 1); ## GFF coords are 1-based and inclusive
     }
   }
   close $REGIN;
   close $REGOUT;
+
+  $RESULTS{$gene}{length} = $gene_length;
 
   ## iterate thru pops
   foreach my $pop (nsort keys %pops) {
@@ -87,14 +94,24 @@ while (my $gene = <$GENES>) {
 
     ## check number of variant lines in gene region
     my $num_variants = `bcftools view -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt $vcf_file | grep -v "^#" | wc -l`; chomp $num_variants;
+    $RESULTS{$gene}{$pop}{num_variant_sites} = $num_variants;
     ## skip if none
     if ( $num_variants > 0 ) {
+      print STDERR "[INFO] --> Found $num_variants variant sites!\n";
       ## run vcftools --site-pi
-      print STDERR "[INFO] --> Found $num_variants variant lines for '$gene' in '$pop'\n";
       if ( system("bcftools view -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt $vcf_file | vcftools --vcf - --out $gene.$pop --site-pi 2>/dev/null") != 0 ) {
         print STDERR "[INFO] --> Problem with vcftools command!\n";
       } else {
         print STDERR "[INFO] --> Ran vcftools successfully\n";
+        my $sum_pi;
+        open (my $SITESPI, "$gene.$pop.sites.pi | cut -f3 |") or die $!;
+        while (<$SITESPI>) {
+          chomp;
+          next if $. == 1;
+          $sum_pi += $_;
+        }
+        close $SITESPI;
+        $RESULTS{$gene}{$pop}{pi} = ($sum_pi/$RESULTS{$gene}{length});
       }
     } else {
       print STDERR "[INFO] --> No variants found\n";
@@ -102,3 +119,10 @@ while (my $gene = <$GENES>) {
   }
 }
 close $GENES;
+
+foreach my $gene (nsort keys %RESULTS) {
+  my %pops = %{$RESULTS{$gene}};
+  foreach my $pop (nsort keys %pops) {
+    print STDOUT join ("\t", $gene, $pop, $pops{num_variant_sites}, $pops{pi}) . "\n";
+  }
+}
