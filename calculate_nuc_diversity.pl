@@ -91,7 +91,7 @@ while (my $gene = <$GENES>) {
     if ( $num_variants > 0 ) {
       ## run vcftools --site-pi
       print STDERR "[INFO] --> Found $num_variants variant lines for '$gene' in '$pop'\n";
-      if ( system("bcftools view -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt $vcf_file | vcftools --vcf - --out $gene.$pop --site-pi") != 0 ) {
+      if ( system("bcftools view -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt $vcf_file | vcftools --vcf - --out $gene.$pop --site-pi &>/dev/null") != 0 ) {
         print STDERR "[INFO] --> Problem with vcftools command!\n";
       } else {
         print STDERR "[INFO] --> Ran vcftools successfully\n";
