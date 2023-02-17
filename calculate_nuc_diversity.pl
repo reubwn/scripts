@@ -55,7 +55,7 @@ while (my $gene = <$GENES>) {
     chomp $line;
     my @F = split (/\s+/, $line);
     if($F[2] eq "CDS"){
-      print join("\t", $F[0],$F[3],$F[4]);
+      print $REGOUT join("\t", $F[0],$F[3],$F[4]) . "\n";
     }
   }
   close $REGIN;
