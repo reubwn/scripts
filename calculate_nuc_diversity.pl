@@ -133,6 +133,8 @@ while (my $gene = <$GENES>) {
 }
 close $GENES;
 
+print Dumper(\%RESULTS);
+
 foreach my $gene (nsort keys %RESULTS) {
   my %pops = %{$RESULTS{$gene}};
   foreach my $pop (nsort keys %pops) {
