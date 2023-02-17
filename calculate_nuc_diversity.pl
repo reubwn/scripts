@@ -135,9 +135,15 @@ close $GENES;
 
 print Dumper(\%RESULTS);
 
-foreach my $gene (nsort keys %RESULTS) {
-  my %pops = %{$RESULTS{$gene}};
-  foreach my $pop (nsort keys %pops) {
-    print STDOUT join ("\t", $gene, $gene_lengths{$gene}, $pop, $pops{num_samples}, $pops{num_snps}, $pops{num_mnps}, $pops{num_indels}, $pops{num_multiallelic}, $pops{pi}) . "\n";
+foreach my $k1 (nsort keys %RESULTS) {
+  foreach my $k2 (nsort keys %{ $RESULTS{$k1} }) {
+    print STDOUT join ("\t", $k1, $gene_lengths{$k1}, $k2,
+      $RESULTS{$k1}{$k2}{num_samples},
+      $RESULTS{$k1}{$k2}{num_snps},
+      $RESULTS{$k1}{$k2}{num_indels},
+      $RESULTS{$k1}{$k2}{num_multiallelic},
+      $RESULTS{$k1}{$k2}{pi} )
+      ."\n";
+
   }
 }
