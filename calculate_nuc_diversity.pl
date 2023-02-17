@@ -91,6 +91,7 @@ while (my $gene = <$GENES>) {
   ## iterate thru pops
   foreach my $pop (nsort keys %pops) {
     print STDERR "[INFO] -> Population: '$pop'\n";
+    my $sum_pi = 0;  
 
     ## check number of variant lines in gene region
     my $num_variants = `bcftools view -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt $vcf_file | grep -v "^#" | wc -l`; chomp $num_variants;
@@ -103,12 +104,11 @@ while (my $gene = <$GENES>) {
         print STDERR "[INFO] --> Problem with vcftools command!\n";
       } else {
         print STDERR "[INFO] --> Ran vcftools successfully\n";
-        my $sum_pi;
         open (my $SITESPI, "$gene.$pop.sites.pi | cut -f3 |") or die $!;
-        while (<$SITESPI>) {
-          chomp;
+        while (my $pi = <$SITESPI>) {
           next if $. == 1;
-          $sum_pi += $_;
+          chomp $pi;
+          $sum_pi += $pi;
         }
         close $SITESPI;
         $RESULTS{$gene}{$pop}{pi} = ($sum_pi/$RESULTS{$gene}{length});
