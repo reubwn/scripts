@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use Getopt::Long;
 
-use File::Basename;
+use File::Path qw( rmtree );
 use Sort::Naturally;
 use Data::Dumper;
 
@@ -50,6 +50,14 @@ while (my $pop = <$POPS>) {
 close $POPS;
 print STDERR "[INFO] Number of populations in '$pops_file': ".scalar(keys %pops)."\n";
 
+## make dir to store regions files
+my $regions_dir = $outprefix."_regions";
+if ( -d $regions_dir ) {
+  rmtree $regions_dir;
+} else {
+  mkdir $regions_dir;
+}
+
 ## open genes file
 open (my $GENES, $genes_file) or die $!;
 
@@ -86,7 +94,7 @@ while (my $gene = <$GENES>) {
         print STDERR "[INFO] --> Ran vcftools successfully\n";
       }
     } else {
-      print STDERR "[INFO] --> No variants found for '$gene' in '$pop'\n";
+      print STDERR "[INFO] --> No variants found\n";
     }
   }
 }
