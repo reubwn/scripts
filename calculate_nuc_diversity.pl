@@ -54,7 +54,7 @@ while (my $pop = <$POPS>) {
 close $POPS;
 print STDERR "[INFO] Number of populations in '$pops_file': ".scalar(keys %pops)."\n";
 
-## make dir to store regions files
+## make dir to store intermediate files
 my $regions_dir = $outprefix."_regions";
 if ( -d $regions_dir ) {
   print STDERR "[INFO] Emptying '$regions_dir'...\n";
@@ -63,6 +63,16 @@ if ( -d $regions_dir ) {
 } else {
   print STDERR "[INFO] Making '$regions_dir'\n";
   mkdir $regions_dir;
+}
+
+my $pi_dir = $outprefix."_sites_pi";
+if ( -d $pi_dir ) {
+  print STDERR "[INFO] Emptying '$pi_dir'...\n";
+  rmtree $pi_dir;
+  mkdir $pi_dir;
+} else {
+  print STDERR "[INFO] Making '$pi_dir'\n";
+  mkdir $pi_dir;
 }
 
 ## open genes file
@@ -113,11 +123,11 @@ while (my $gene = <$GENES>) {
     if ( $RESULTS{$gene}{$pop}{num_snps} > 0 ) {
       print STDERR "[INFO] --> Found $RESULTS{$gene}{$pop}{num_snps} variant sites!\n";
       ## run vcftools --site-pi
-      if ( system("bcftools view -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt $vcf_file | vcftools --vcf - --out $gene.$pop --site-pi 2>/dev/null") != 0 ) {
+      if ( system("bcftools view -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt $vcf_file | vcftools --vcf - --out $gene.$pop --site-pi --stdout >$pi_dir/$gene.$pop.sites.pi 2>/dev/null") != 0 ) {
         print STDERR "[INFO] --> Problem with vcftools command!\n";
       } else {
         print STDERR "[INFO] --> Ran vcftools successfully\n";
-        open (my $SITESPI, "cut -f3 $gene.$pop.sites.pi |") or die $!;
+        open (my $SITESPI, "cut -f3 $pi_dir/$gene.$pop.sites.pi |") or die $!;
         while (my $pi = <$SITESPI>) {
           next if $. == 1;
           chomp $pi;
