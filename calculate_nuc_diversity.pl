@@ -128,22 +128,39 @@ while (my $gene = <$GENES>) {
       }
     } else {
       print STDERR "[INFO] --> No variants found\n";
+      $RESULTS{$gene}{$pop}{pi} = 0;
     }
   }
 }
 close $GENES;
 
-print Dumper(\%RESULTS);
+# print Dumper(\%RESULTS);
+
+## print results to file
+open (my $RESULTS, ">".$outprefix."_RESULTS.tab") or die $!;
+print $RESULTS join ("\t",
+  "GENE",
+  "LENGTH",
+  "POP",
+  "N_SAMPLES",
+  "N_SNPS",
+  "N_MULTIALLELIC_SNPS",
+  "N_MNPS",
+  "N_INDELS",
+  "NUC_DIVERSITY")
+  ."\n";
 
 foreach my $k1 (nsort keys %RESULTS) {
   foreach my $k2 (nsort keys %{ $RESULTS{$k1} }) {
-    print STDOUT join ("\t", $k1, $gene_lengths{$k1}, $k2,
+    print $RESULTS join ("\t", $k1, $gene_lengths{$k1}, $k2,
       $RESULTS{$k1}{$k2}{num_samples},
       $RESULTS{$k1}{$k2}{num_snps},
-      $RESULTS{$k1}{$k2}{num_indels},
       $RESULTS{$k1}{$k2}{num_multiallelic},
+      $RESULTS{$k1}{$k2}{num_mnps},
+      $RESULTS{$k1}{$k2}{num_indels},
       $RESULTS{$k1}{$k2}{pi} )
       ."\n";
 
   }
 }
+close $RESULTS;
