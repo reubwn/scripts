@@ -86,12 +86,12 @@ while (my $gene = <$GENES>) {
     print STDERR "[INFO] -> Population: '$pop'\n";
 
     ## check number of variant lines in gene region
-    my $num_variants = `bcftools view -R $gene.regions.txt -S $samples_path/$pop.txt $vcf_file | grep -v "^#" | wc -l`;
+    my $num_variants = `bcftools view -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt $vcf_file | grep -v "^#" | wc -l`;
     ## skip if none
     if ( $num_variants > 0 ) {
       ## run vcftools --site-pi
       print STDERR "[INFO] --> Found $num_variants variant lines for '$gene' in '$pop'\n";
-      if ( system("bcftools view -R $gene.regions.txt -S $samples_path/$pop.txt $vcf_file | vcftools --vcf - --out $gene.$pop --site-pi") != 0 ) {
+      if ( system("bcftools view -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt $vcf_file | vcftools --vcf - --out $gene.$pop --site-pi") != 0 ) {
         print STDERR "[INFO] --> Problem with vcftools command!\n";
       } else {
         print STDERR "[INFO] --> Ran vcftools successfully\n";
