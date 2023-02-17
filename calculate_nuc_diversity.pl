@@ -64,6 +64,7 @@ while (my $gene = <$GENES>) {
 
   ## iterate thru pops
   while (my $pop = <$POPS>) {
+    chomp $pop;
     print STDERR "[INFO] Population: '$pop'\n";
     my $num_variants = `bcftools view -R $gene.regions.txt -S $samples_path/$pop.txt $vcf_file | grep -v "^#" | wc -l`;
     ## check if there are any variants intersecting with gene/pop
@@ -79,7 +80,7 @@ while (my $gene = <$GENES>) {
       print STDERR "[INFO] No variants found for '$gene' in '$pop'\n";
     }
   }
+  close $POPS;
 
 }
 close $GENES;
-close $POPS;
