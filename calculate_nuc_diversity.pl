@@ -44,8 +44,8 @@ die $usage unless ( $vcf_file && $genes_file && $pops_file && $samples_path );
 open (my $POPS, $pops_file) or die $!;
 my %pops;
 while (my $pop = <$POPS>) {
-  chomp $pops;
-  $pops{$pop} = {};
+  chomp $pop;
+  $pops{$pop}++;
 }
 close $POPS;
 print STDERR "[INFO] Number of populations in '$pops_file': ".scalar(keys %pops)."\n";
