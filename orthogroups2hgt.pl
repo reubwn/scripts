@@ -94,7 +94,8 @@ while (my $line = <$GROUPS>) {
 
   ## print
   print $OUT join (" ", @b) . "\n";
-  print $PROP join (" ", $b[0], scalar(@b), $count, (sprintf("%.3f",($count/scalar(@b))))) . "\n";
+  ## (scalar(@b)-1) because the OG id is also an element of @b, so need to discount
+  print $PROP join (" ", $b[0], (scalar(@b)-1), $count, (sprintf("%.3f",($count/(scalar(@b)-1))))) . "\n";
 }
 close $GROUPS;
 close $OUT;
