@@ -106,7 +106,7 @@ while (my $gene = <$GENES>) {
     my $sum_pi = 0;
 
     ## get stats on SNPs in gene region, per population
-    open (my $STATS, "bcftools view -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt $vcf_file --min-ac=1 --no-update | bcftools stats - | grep \"\^SN\" |") or die $!;
+    open (my $STATS, "bcftools view -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt --min-ac=1 --no-update $vcf_file | bcftools stats - | grep \"\^SN\" |") or die $!;
     while (my $line = <$STATS>) {
       chomp $line;
       my @F = split (/\s+/, $line);
@@ -123,7 +123,7 @@ while (my $gene = <$GENES>) {
     if ( $RESULTS{$gene}{$pop}{num_snps} > 0 ) {
       print STDERR "[INFO] --> Found $RESULTS{$gene}{$pop}{num_snps} variant sites!\n";
       ## run vcftools --site-pi
-      if ( system("bcftools view -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt $vcf_file | vcftools --vcf - --out $gene.$pop --site-pi --stdout >$pi_dir/$gene.$pop.sites.pi 2>/dev/null") != 0 ) {
+      if ( system("bcftools view -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt --min-ac=1 --no-update $vcf_file | vcftools --vcf - --out $gene.$pop --site-pi --stdout >$pi_dir/$gene.$pop.sites.pi 2>/dev/null") != 0 ) {
         print STDERR "[INFO] --> Problem with vcftools command!\n";
       } else {
         print STDERR "[INFO] --> Ran vcftools successfully\n";
