@@ -80,7 +80,8 @@ while (my $line = <$GROUPS>) {
   chomp $line;
   my @a = split(/\:\s+/, $line);
   my @b = split(/\s+/, $a[1]);
-  print STDERR "\r[INFO] Working on OG \#$.: $a[0]"; $|=1;
+  # print STDERR "\r[INFO] Working on OG \#$.: $a[0]"; $|=1;
+  print STDERR "\r[INFO] Working on OG \#$.: $a[0]\n";
   my %membership_per_OG_hash;
   ## collapse OG membership to 1/0
   foreach (@b) {
@@ -89,6 +90,7 @@ while (my $line = <$GROUPS>) {
   }
   ## cycle thru membership hash and push to species hash
   foreach (nsort keys %membership_per_OG_hash) {
+    print STDERR "$_\n";
     if ($species_hash{$_}) {
       push ( @{$species_hash{$_}}, 1 );
     } else {
