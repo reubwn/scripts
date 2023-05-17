@@ -56,7 +56,7 @@ foreach (@fastas){
   my $in = Bio::SeqIO->new ( -file => $_, -format => "fasta" );
   while ( my $seq_obj = $in->next_seq() ){
     my $seq_id = $seq_obj->display_id();
-    my $species_id = ( split("\|", $seq_id) )[0];
+    my $species_id = ( split(m/\|/, $seq_id) )[0];
     $seq_hash{$seq_id} = ();
     $species_hash{$species_id}++;
   }
