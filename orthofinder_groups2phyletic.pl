@@ -26,7 +26,7 @@ OPTIONS [*required]
 \n";
 
 my ($orthogroups_file, $proteins_path, $help);
-my $outprefix = "phyletic";
+my $outprefix = "out";
 
 GetOptions (
   'i|groups=s' => \$orthogroups_file,
@@ -97,6 +97,13 @@ while (my $line = <$GROUPS>) {
   }
 }
 close $GROUPS;
+
+open (my $OUT, ">$outprefix".".phyletic_matrix.txt")
+foreach (nsort keys %species_hash) {
+  print $OUT ">$_\n";
+  print $OUT join ('', @{$species_hash{$_}}) . "\n";
+}
+close $OUT;
 
 print STDERR "\n[INFO] Finished on ".`date`."\n";
 
