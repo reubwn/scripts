@@ -64,13 +64,11 @@ foreach (@fastas){
   }
 }
 print STDERR "[INFO] Read in ".commify(scalar(keys %seq_hash))." sequences from ".commify(scalar(@fastas))." files\n\n";
-# foreach (keys %species_hash) {
-#   print "$_\n";
-# }
 
 ## open Orthogroups
 my %orthogroups;
 my %seen_in_orthogroups;
+my %lineage_specific_seqs = %seq_hash;
 
 # matrix looks like
 # >species1
@@ -104,6 +102,9 @@ while (my $line = <$GROUPS>) {
   foreach (@seqs_array) {
     my $species_id = ( split(/\|/, $_) )[0];
     $membership_per_OG_hash{$species_id}++;
+
+    ## delete from %lineage_specific_seqs
+    delete $lineage_specific_seqs{$_};
   }
 
   ## cycle thru species hash and push 1/0 depending on membership
@@ -115,51 +116,18 @@ while (my $line = <$GROUPS>) {
     }
   }
 }
-
-#
-#
-#
-#
-#
-#
-# if ( $legacy ) {
-#   print STDERR "[INFO] Input file is 'Orthogroups.txt' format\n";
-#
-#     my @a = split(/\:\s+/, $line);
-#     my @b = split(/\s+/, $a[1]);
-#     print STDERR "\r[INFO] Working on OG \#$.: $a[0]"; $|=1;
-#
-#     my %membership_per_OG_hash;
-#     ## collapse OG membership to 1/0
-#     foreach (@b) {
-#       my $species_id = ( split(/\|/, $_) )[0];
-#       $membership_per_OG_hash{$species_id}++;
-#     }
-#
-#     ## cycle thru species hash and push 1/0 depending on membership
-#     foreach (nsort keys %species_hash) {
-#       if ($membership_per_OG_hash{$_}) {
-#         push ( @{$species_hash{$_}}, 1 );
-#       } else {
-#         push ( @{$species_hash{$_}}, 0 );
-#       }
-#     }
-#   }
-# } else {
-#
-#   while (my $line = <$GROUPS>) {
-#     chomp $line;
-#     next if $. == 1; ## skip first line
-#     my @a = split(/\s+/, $_);
-#     my @b = @a[3..$#a]; ## seqs begin in column 4
-#     my @c = map{s/,//g; $_} @b;
-#     print STDERR "\r[INFO] Working on HOG \#$.: $a[0]"; $|=1;
-#
-#
-#   }
-# }
-
 close $GROUPS;
+
+my %lineage_specific_counts;
+foreach (keys %lineage_specific_seqs) {
+  my @a = split (/\|/, $_);
+  $lineage_specific_counts{$a[0]}++; ## should be the number of seqs that weren't found in any HOG
+}
+
+print STDERR "[INFO] Lineage-specific counts:\n";
+foreach (nsort keys %lineage_specific_counts) {
+  print STDERR "$_ : $lineage_specific_counts{$_}\n";
+}
 
 ## open outfile and print as fasta phyletic matrix
 open (my $OUT, ">$outprefix".".phyletic_matrix.txt");
