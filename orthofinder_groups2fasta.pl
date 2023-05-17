@@ -14,47 +14,47 @@ use File::Path 'rmtree';
 
 my $usage = "
 SYNOPSIS
-  Converts Orthogroups.txt to fasta.
+  Converts Orthogroups.txt to multi-fasta per OG.
 
-OPTIONS
-  -i|--groups [FILE] : Orthogroups.txt file [required]
-  -p|--path   [FILE] : path to directory of fasta files used to construct Orthogroups.txt [required]
-  -d|--outdir [STR]  : output dir name [default: {infile}_seqs]
-  -a|--annot  [FILE] : annotate sequences with results from HGT analysis
-  -h|--help          : prints this help message
+OPTIONS [*required]
+  -i|--groups *[FILE] : Orthogroups.txt file
+  -p|--path   *[FILE] : path to directory of fasta files used to construct Orthogroups.txt
+  -d|--outdir  [STR]  : output dir name [default: {infile}_seqs]
+  -a|--annot   [FILE] : annotate sequences with results from HGT analysis
+  -h|--help           : prints this help message
 \n";
 
-my ($orthogroups_file,$path,$outdir,$annot,$help);
+my ($orthogroups_file, $proteins_path, $outdir, $annot, $help);
 #my $outdir = "orthofinder_groups2fasta";
 
 GetOptions (
-  'i|in=s'     => \$orthogroups_file,
-  'p|path=s'   => \$path,
+  'i|groups=s' => \$orthogroups_file,
+  'p|path=s'   => \$proteins_path,
   'd|outdir:s' => \$outdir,
   'a|annot:s'  => \$annot,
   'h|help'     => \$help,
 );
 
 die $usage if $help;
-die $usage unless ($orthogroups_file && $path);
+die $usage unless ($orthogroups_file && $proteins_path);
 
 ## get sequences
 my %seq_hash;
-my @fastas = glob("$path*fasta");
+my @fastas = glob("$proteins_path*fasta");
 if (scalar(@fastas) == 0) {
-  print STDERR "[INFO] Nothing found in $path with *.fasta... will try *.faa\n";
-  @fastas = glob("$path*faa");
+  print STDERR "[INFO] Nothing found in $proteins_path with *.fasta... will try *.faa\n";
+  @fastas = glob("$proteins_path*faa");
 }
 if (scalar(@fastas) == 0) {
-  print STDERR "[INFO] Nothing found in $path with *.faa... will try *.fna\n";
-  @fastas = glob("$path*fna");
+  print STDERR "[INFO] Nothing found in $proteins_path with *.faa... will try *.fna\n";
+  @fastas = glob("$proteins_path*fna");
 }
 if (scalar(@fastas) == 0) {
-  print STDERR "[INFO] Nothing found in $path with *.fna... will try *.aa (augustus style)\n";
-  @fastas = glob("$$path*aa");
+  print STDERR "[INFO] Nothing found in $proteins_path with *.fna... will try *.aa (augustus style)\n";
+  @fastas = glob("$$proteins_path*aa");
 }
 if (scalar(@fastas) == 0) {
-  die "[ERROR] Still nothing found in $path\nPlease make sure there are protein fastas in $path with extension fasta|faa|fna|aa\n";
+  die "[ERROR] Still nothing found in $proteins_path\nPlease make sure there are protein fastas in $proteins_path with extension fasta|faa|fna|aa\n";
 }
 print STDERR "[INFO] Reading sequences from:\n";
 foreach (@fastas){
