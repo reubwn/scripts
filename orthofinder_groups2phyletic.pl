@@ -88,14 +88,13 @@ while (my $line = <$GROUPS>) {
     my $species_id = ( split(/\|/, $_) )[0];
     $membership_per_OG_hash{$species_id}++;
   }
-  ## cycle thru membership hash and push to species hash
-  foreach (nsort keys %membership_per_OG_hash) {
-    print STDERR "$_\n";
-    if ($species_hash{$_}) {
-      print STDERR "$_ gets a 1\n";
+  ## cycle thru species hash and push 1/0 depending on membership
+  foreach (nsort keys %species_hash) {
+    if ($membership_per_OG_hash{$_}) {
+      print "$_ gets a 1\n";
       push ( @{$species_hash{$_}}, 1 );
     } else {
-      print STDERR "$_ gets a 0\n";
+      print "$_ gets a 0\n";
       push ( @{$species_hash{$_}}, 0 );
     }
   }
