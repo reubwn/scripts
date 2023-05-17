@@ -15,22 +15,24 @@ use Data::Dumper;
 
 my $usage = "
 SYNOPSIS
-  Convert OrthoFinder Orthogroups.txt file to phyletic presence/absence matrix.
+  Convert OrthoFinder orthogroups file (N0.tsv or Orthogroups.txt) to phyletic presence/absence matrix.
   Globs '*.fasta', '*.faa', '*.fa' or '*.aa' from --path.
 
 OPTIONS [*required]
-  -i|--groups  *[FILE] : Orthogroups.txt file
+  -i|--groups  *[FILE] : Orthogroups file (N0.tsv or Orthogroups.txt)
   -p|--path    *[PATH] : path to protein files
+  -l|--legacy          : file is Orthogroups.txt format (default is N0.tsv format)
   -o|--out      [STR]  : outfiles prefix ('phyletic')
   -h|--help            : print this message
 \n";
 
-my ($orthogroups_file, $proteins_path, $help);
+my ($orthogroups_file, $proteins_path, $legacy, $help);
 my $outprefix = "out";
 
 GetOptions (
   'i|groups=s' => \$orthogroups_file,
   'p|path=s'   => \$proteins_path,
+  'l|legacy'   => \$legacy,
   'o|out:s'    => \$outprefix,
   'h|help'     => \$help
 );
@@ -76,16 +78,30 @@ my %seen_in_orthogroups;
 # where cols are OGs and membership is collapsed to 1/0
 
 open (my $GROUPS, $orthogroups_file) or die $!;
-
 while (my $line = <$GROUPS>) {
   chomp $line;
-  my @a = split(/\:\s+/, $line);
-  my @b = split(/\s+/, $a[1]);
-  print STDERR "\r[INFO] Working on OG \#$.: $a[0]"; $|=1;
+  my @seqs_array;
+
+  if ( $legacy ) { ## Orthogroups.txt format
+    print STDERR "[INFO] Input file is 'Orthogroups.txt' format\n";
+    my @a = split(/\:\s+/, $line);
+    my @b = split(/\s+/, $a[1]);
+    @seqs_array = @b;
+    print STDERR "\r[INFO] Working on OG \#$.: $a[0]"; $|=1;
+
+  } else { ## N0.tsv format
+    print STDERR "[INFO] Input file is 'N0.tsv' (HOGs) format\n";
+    next if $. == 1; ## skip first line
+    my @a = split(/\s+/, $_);
+    my @b = @a[3..$#a]; ## seqs begin in column 4
+    my @c = map{s/,//g; $_} @b;
+    @seqs_array = @c;
+    print STDERR "\r[INFO] Working on HOG \#$.: $a[0]"; $|=1;
+  }
 
   my %membership_per_OG_hash;
   ## collapse OG membership to 1/0
-  foreach (@b) {
+  foreach (@seqs_array) {
     my $species_id = ( split(/\|/, $_) )[0];
     $membership_per_OG_hash{$species_id}++;
   }
@@ -99,6 +115,50 @@ while (my $line = <$GROUPS>) {
     }
   }
 }
+
+#
+#
+#
+#
+#
+#
+# if ( $legacy ) {
+#   print STDERR "[INFO] Input file is 'Orthogroups.txt' format\n";
+#
+#     my @a = split(/\:\s+/, $line);
+#     my @b = split(/\s+/, $a[1]);
+#     print STDERR "\r[INFO] Working on OG \#$.: $a[0]"; $|=1;
+#
+#     my %membership_per_OG_hash;
+#     ## collapse OG membership to 1/0
+#     foreach (@b) {
+#       my $species_id = ( split(/\|/, $_) )[0];
+#       $membership_per_OG_hash{$species_id}++;
+#     }
+#
+#     ## cycle thru species hash and push 1/0 depending on membership
+#     foreach (nsort keys %species_hash) {
+#       if ($membership_per_OG_hash{$_}) {
+#         push ( @{$species_hash{$_}}, 1 );
+#       } else {
+#         push ( @{$species_hash{$_}}, 0 );
+#       }
+#     }
+#   }
+# } else {
+#
+#   while (my $line = <$GROUPS>) {
+#     chomp $line;
+#     next if $. == 1; ## skip first line
+#     my @a = split(/\s+/, $_);
+#     my @b = @a[3..$#a]; ## seqs begin in column 4
+#     my @c = map{s/,//g; $_} @b;
+#     print STDERR "\r[INFO] Working on HOG \#$.: $a[0]"; $|=1;
+#
+#
+#   }
+# }
+
 close $GROUPS;
 
 ## open outfile and print as fasta phyletic matrix
