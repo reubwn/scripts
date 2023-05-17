@@ -48,7 +48,7 @@ if (scalar(@fastas) == 0) {
 
 print STDERR "[INFO] Reading sequences from:\n";
 foreach (@fastas){
-  print STDERR colored($_, 'white on_blue') . "\n";
+  print STDERR "$_\n";
   my $in = Bio::SeqIO->new ( -file => $_, -format => "fasta" );
   while ( my $seq_obj = $in->next_seq() ){
     $seq_hash{($seq_obj->display_id())} = ($seq_obj->seq());
