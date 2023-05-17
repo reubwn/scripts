@@ -80,23 +80,9 @@ while (my $line = <$GROUPS>) {
   chomp $line;
   my @a = split(/\:\s+/, $line);
   my @b = split(/\s+/, $a[1]);
-  foreach (@b) {
-    if ($annot) {
-      if ($annot_hash{$_}) { ## genes with no hit to uniref are not in $annot
-        if ($annot_hash{$_}{category} eq "OUTGROUP") { ## only write annotations for HGTc genes
-          print $OUT ">$_ ";
-          print $OUT join (":", $annot_hash{$_}{hU}, $annot_hash{$_}{AI}, $annot_hash{$_}{category}, $annot_hash{$_}{CHS}, $annot_hash{$_}{tax});
-          print $OUT "\n";
-        }
-      } else {
-        print $OUT ">$_\n";
-      }
-      print $OUT "$seq_hash{$_}\n";
-    } else {
-      print $OUT ">$_\n$seq_hash{$_}\n";
-    }
-  }
-  close $OUT;
+  # foreach (@b) {
+  #
+  # }
   print STDERR "\r[INFO] Working on OG \#$.: $a[0]"; $|=1;
 }
 close $GROUPS;
