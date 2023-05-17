@@ -58,13 +58,13 @@ foreach (@fastas){
     my $seq_id = $seq_obj->display_id();
     my $species_id = ( split(m/\|/, $seq_id) )[0];
     $seq_hash{$seq_id} = ();
-    $species_hash{$species_id}++;
+    $species_hash{$species_id} = ();
   }
 }
 print STDERR "[INFO] Read in ".commify(scalar(keys %seq_hash))." sequences from ".commify(scalar(@fastas))." files\n\n";
-foreach (keys %species_hash) {
-  print "$_\n";
-}
+# foreach (keys %species_hash) {
+#   print "$_\n";
+# }
 
 ## open Orthogroups
 my %orthogroups;
@@ -80,10 +80,21 @@ while (my $line = <$GROUPS>) {
   chomp $line;
   my @a = split(/\:\s+/, $line);
   my @b = split(/\s+/, $a[1]);
-  # foreach (@b) {
-  #
-  # }
   print STDERR "\r[INFO] Working on OG \#$.: $a[0]"; $|=1;
+  my %membership_per_OG_hash;
+  ## collapse OG membership to 1/0
+  foreach (@b) {
+    my $species_id = ( split(/\|/, $_) )[0];
+    $membership_per_OG_hash{$species_id}++;
+  }
+  ## cycle thru membership hash and push to species hash
+  foreach (nsort keys %membership_per_OG_hash) {
+    if ($species_hash{$_}) {
+      push ( @{$species_hash{$_}}, 1 );
+    } else {
+      push ( @{$species_hash{$_}}, 0 );
+    }
+  }
 }
 close $GROUPS;
 
