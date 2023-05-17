@@ -76,31 +76,32 @@ my %seen_in_orthogroups;
 # where cols are OGs and membership is collapsed to 1/0
 
 open (my $GROUPS, $orthogroups_file) or die $!;
+
 while (my $line = <$GROUPS>) {
   chomp $line;
   my @a = split(/\:\s+/, $line);
   my @b = split(/\s+/, $a[1]);
-  # print STDERR "\r[INFO] Working on OG \#$.: $a[0]"; $|=1;
-  print STDERR "\r[INFO] Working on OG \#$.: $a[0]\n";
+  print STDERR "\r[INFO] Working on OG \#$.: $a[0]"; $|=1;
+
   my %membership_per_OG_hash;
   ## collapse OG membership to 1/0
   foreach (@b) {
     my $species_id = ( split(/\|/, $_) )[0];
     $membership_per_OG_hash{$species_id}++;
   }
+
   ## cycle thru species hash and push 1/0 depending on membership
   foreach (nsort keys %species_hash) {
     if ($membership_per_OG_hash{$_}) {
-      print "$_ gets a 1\n";
       push ( @{$species_hash{$_}}, 1 );
     } else {
-      print "$_ gets a 0\n";
       push ( @{$species_hash{$_}}, 0 );
     }
   }
 }
 close $GROUPS;
 
+## open outfile and print as fasta phyletic matrix
 open (my $OUT, ">$outprefix".".phyletic_matrix.txt");
 foreach (nsort keys %species_hash) {
   print $OUT ">$_\n";
