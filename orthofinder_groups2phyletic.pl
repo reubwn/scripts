@@ -4,8 +4,11 @@
 
 use strict;
 use warnings;
-use Getopt::Long;
 
+use Bio::Seq;
+use Bio::SeqIO;
+use Getopt::Long;
+use Term::ANSIColor;
 use File::Path qw( rmtree );
 use Sort::Naturally;
 use Data::Dumper;
@@ -48,7 +51,7 @@ if (scalar(@fastas) == 0) {
 
 print STDERR "[INFO] Reading sequences from:\n";
 foreach (@fastas){
-  print STDERR "$_\n";
+  print STDERR colored($_, 'white on_blue') . "\n";
   my $in = Bio::SeqIO->new ( -file => $_, -format => "fasta" );
   while ( my $seq_obj = $in->next_seq() ){
     $seq_hash{($seq_obj->display_id())} = ($seq_obj->seq());
