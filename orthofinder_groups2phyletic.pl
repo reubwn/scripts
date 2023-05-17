@@ -92,7 +92,7 @@ while (my $line = <$GROUPS>) {
   } else { ## N0.tsv format
     print STDERR "[INFO] Input file is 'N0.tsv' (HOGs) format\n";
     next if $. == 1; ## skip first line
-    my @a = split(/\s+/, $_);
+    my @a = split(/\s+/, $line);
     my @b = @a[3..$#a]; ## seqs begin in column 4
     my @c = map{s/,//g; $_} @b;
     @seqs_array = @c;
