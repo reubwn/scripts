@@ -109,10 +109,8 @@ foreach (nsort keys %species_hash) {
 }
 close $OUT;
 
+print STDERR "[INFO] Printing matrix to file '$outprefix.phyletic_matrix.txt'\n";
 print STDERR "\n[INFO] Finished on ".`date`."\n";
-
-
-
 
 ######################## SUBS
 
