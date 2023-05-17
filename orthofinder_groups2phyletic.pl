@@ -83,14 +83,14 @@ while (my $line = <$GROUPS>) {
   my @seqs_array;
 
   if ( $legacy ) { ## Orthogroups.txt format
-    print STDERR "[INFO] Input file is 'Orthogroups.txt' format\n";
+    # print STDERR "[INFO] Input file is 'Orthogroups.txt' format\n";
     my @a = split(/\:\s+/, $line);
     my @b = split(/\s+/, $a[1]);
     @seqs_array = @b;
     print STDERR "\r[INFO] Working on OG \#$.: $a[0]"; $|=1;
 
   } else { ## N0.tsv format
-    print STDERR "[INFO] Input file is 'N0.tsv' (HOGs) format\n";
+    # print STDERR "[INFO] Input file is 'N0.tsv' (HOGs) format\n";
     next if $. == 1; ## skip first line
     my @a = split(/\s+/, $line);
     my @b = @a[3..$#a]; ## seqs begin in column 4
