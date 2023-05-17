@@ -98,7 +98,7 @@ while (my $line = <$GROUPS>) {
 }
 close $GROUPS;
 
-open (my $OUT, ">$outprefix".".phyletic_matrix.txt")
+open (my $OUT, ">$outprefix".".phyletic_matrix.txt");
 foreach (nsort keys %species_hash) {
   print $OUT ">$_\n";
   print $OUT join ('', @{$species_hash{$_}}) . "\n";
