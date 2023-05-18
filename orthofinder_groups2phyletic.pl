@@ -67,9 +67,7 @@ foreach (@fastas){
 }
 print STDERR "[INFO] Read in ".commify(scalar(keys %seq_hash))." sequences from ".commify(scalar(@fastas))." files\n";
 
-## open Orthogroups
-my %orthogroups;
-my %seen_in_orthogroups;
+## dump all seqs in unassigned for later assessment
 my %unassigned_seqs = %seq_hash;
 
 # matrix looks like
@@ -77,6 +75,7 @@ my %unassigned_seqs = %seq_hash;
 # 00010101100111101101111
 # where cols are OGs and membership is collapsed to 1/0
 
+## open Orthogroups
 open (my $GROUPS, $orthogroups_file) or die $!;
 while (my $line = <$GROUPS>) {
   chomp $line;
@@ -122,7 +121,7 @@ close $GROUPS;
 
 ## add lineage specific unassigned genes to the end of matrix
 if ($add_unassigned) {
-  
+
   my %unassigned_counts;
   foreach (keys %unassigned_seqs) {
     my @a = split (/\|/, $_);
