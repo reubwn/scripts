@@ -22,7 +22,7 @@ OPTIONS [*required]
   -p|--path    *[PATH] : path to protein files
   -U|--no_unassigned   : DON'T add counts of unassigned genes to matrix (default: add them)
   -d|--use_og_id       : print OG id instead of HOG id (OG ids may not be unique in output file)
-  -o|--out      [STR]  : outfiles prefix ('phyletic')
+  -o|--out      [STR]  : outfiles prefix ('out')
   -h|--help            : print this message
 \n";
 

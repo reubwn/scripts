@@ -6,7 +6,6 @@ use strict;
 use warnings;
 
 use Getopt::Long;
-use Term::ANSIColor;
 use Sort::Naturally;
 
 my $usage = "
@@ -19,11 +18,12 @@ OPTIONS
   -u|--hU          [INT]  : hU threshold for defining HGTc (>30)
   -c|--CHS         [INT]  : CHS threshold for defining HGTc (>90\%)
   -s|--simple             : print simple output
-  -o|--outfile     [STR]  : output base filename ('inputfilename')
+  -o|--out         [STR]  : outfile prefix ('out')
   -h|--help               : print this message
 \n";
 
-my ($orthogroupsfile, $annot, $simple, $outfile, $help);
+my ($orthogroupsfile, $annot, $simple, $help);
+my $outprefix = "out";
 my $hU_threshold = 30;
 my $CHS_threshold = 90;
 
@@ -33,7 +33,7 @@ GetOptions (
   'u|hU:i'      => \$hU_threshold,
   'c|CHS:i'     => \$CHS_threshold,
   's|simple'    => \$simple,
-  'o|outfile'   => \$outfile,
+  'o|out:s'   => \$outprefix,
   'h|help'          => \$help
 );
 
@@ -41,13 +41,12 @@ die $usage if $help;
 die $usage unless ($orthogroupsfile && $annot);
 
 ## outfiles
-$outfile = $orthogroupsfile.".annot" unless ($outfile);
-open (my $OUT, ">$outfile") or die $!;
-open (my $PROP, ">$outfile.proportion") or die $!;
+open (my $OUT, ">$outprefix".".annot.txt") or die $!;
+open (my $PROP, ">$outprefix".".prop.txt") or die $!;
 
 ## parse $annot if present
 my %annot_hash;
-print STDERR "[INFO] Collecting annotations from " . colored($annot, 'white on_blue') . "\n";
+print STDERR "[INFO] Collecting annotations from '$annot'\n";
 open (my $ANNOT, $annot) or die $!;
 LINE: while (my $line = <$ANNOT>) {
   next LINE if $line =~ m/^\#/;
