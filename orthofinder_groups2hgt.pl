@@ -41,8 +41,8 @@ die $usage if $help;
 die $usage unless ($orthogroupsfile && $annot);
 
 ## outfiles
-open (my $OUT, ">$outprefix".".annot.txt") or die $!;
-open (my $PROP, ">$outprefix".".prop.txt") or die $!;
+open (my $OUT, ">$outprefix.annot.txt") or die $!;
+open (my $PROP, ">$outprefix.prop.txt") or die $!;
 
 ## parse $annot if present
 my %annot_hash;
@@ -99,6 +99,10 @@ while (my $line = <$GROUPS>) {
 close $GROUPS;
 close $OUT;
 close $PROP;
+
+print STDERR "[INFO] Printing annotated OG file to '$outprefix.annot.txt'\n";
+print STDERR "[INFO] Printing proportions file to '$outprefix.prop.txt'\n";
+print STDERR "[INFO] Finished on ".`date`."\n";
 
 ######################## SUBS
 
