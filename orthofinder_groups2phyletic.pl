@@ -120,19 +120,20 @@ while (my $line = <$GROUPS>) {
 }
 close $GROUPS;
 
-my %unassigned_counts;
-foreach (keys %unassigned_seqs) {
-  my @a = split (/\|/, $_);
-  $unassigned_counts{$a[0]}++; ## should be the number of seqs that weren't found in any HOG
-}
-
-print STDERR "\n[INFO] Unassigned gene counts:\n";
-foreach (nsort keys %unassigned_counts) {
-  print STDERR "$_ : $unassigned_counts{$_}\n";
-}
-
 ## add lineage specific unassigned genes to the end of matrix
 if ($add_unassigned) {
+  
+  my %unassigned_counts;
+  foreach (keys %unassigned_seqs) {
+    my @a = split (/\|/, $_);
+    $unassigned_counts{$a[0]}++; ## should be the number of seqs that weren't found in any HOG
+  }
+
+  print STDERR "\n[INFO] Unassigned gene counts:\n";
+  foreach (nsort keys %unassigned_counts) {
+    print STDERR "\t$_ : $unassigned_counts{$_}\n";
+  }
+
   print STDERR "[INFO] Adding unassigned genes to phyletic matrix\n";
   foreach my $k1 (nsort keys %species_hash) {
     foreach my $k2 (nsort keys %unassigned_counts) {
