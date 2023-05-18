@@ -19,19 +19,20 @@ SYNOPSIS
 OPTIONS [*required]
   -i|--groups  *[FILE] : Orthogroups file (N0.tsv or Orthogroups.txt)
   -p|--path    *[PATH] : path to protein files
-  -l|--legacy          : file is Orthogroups.txt format (default is N0.tsv format)
+  -f|--format   [STR]  : specify input file format ('ortho' = Orthogroups.txt or 'N0' = N0.tsv) (default: N0.tsv)
   -u|--unassigned      : add counts of unassigned genes (lineage-specific) to matrix (default: don't add)
   -o|--out      [STR]  : outfiles prefix ('phyletic')
   -h|--help            : print this message
 \n";
 
-my ($orthogroups_file, $proteins_path, $legacy, $add_unassigned, $help);
+my ($orthogroups_file, $proteins_path, $add_unassigned, $help);
+my $format = "N0";
 my $outprefix = "out";
 
 GetOptions (
   'i|groups=s' => \$orthogroups_file,
   'p|path=s'   => \$proteins_path,
-  'l|legacy'   => \$legacy,
+  'f|format'   => \$format,
   'u|unassigned' => \$add_unassigned,
   'o|out:s'    => \$outprefix,
   'h|help'     => \$help
@@ -39,6 +40,16 @@ GetOptions (
 
 die $usage if ( $help );
 die $usage unless ( $orthogroups_file && $proteins_path );
+
+## check format
+if ( $format eq "ortho" ) { ## Orthogroups.txt format
+  print STDERR "[INFO] Input file is 'Orthogroups.txt' format\n";
+} elsif ($format eq "N0") { ## N0.tsv format
+  print STDERR "[INFO] Input file is 'N0.tsv' (HOGs) format\n";
+} else {
+  print STDERR "[ERROR] File format not specified correctly!\n";
+  die 1;
+}
 
 ## get sequences
 my %seq_hash;
@@ -79,14 +90,14 @@ while (my $line = <$GROUPS>) {
   chomp $line;
   my @seqs_array;
 
-  if ( $legacy ) { ## Orthogroups.txt format
+  if ( $format eq "ortho" ) { ## Orthogroups.txt format
     # print STDERR "[INFO] Input file is 'Orthogroups.txt' format\n";
     my @a = split(/\:\s+/, $line);
     my @b = split(/\s+/, $a[1]);
     @seqs_array = @b;
     print STDERR "\r[INFO] Working on OG \#$.: $a[0]"; $|=1;
 
-  } else { ## N0.tsv format
+  } elsif ($format eq "N0") { ## N0.tsv format
     # print STDERR "[INFO] Input file is 'N0.tsv' (HOGs) format\n";
     next if $. == 1; ## skip first line
     my @a = split(/\s+/, $line);
@@ -94,6 +105,10 @@ while (my $line = <$GROUPS>) {
     my @c = map{s/,//g; $_} @b;
     @seqs_array = @c;
     print STDERR "\r[INFO] Working on HOG \#$.: $a[0]"; $|=1;
+  } else {
+    ## shouldn't ever get into here...
+    print STDERR "[ERROR] File format not specified correctly\n";
+    die 1;
   }
 
   my %membership_per_OG_hash;
