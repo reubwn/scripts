@@ -22,17 +22,19 @@ OPTIONS [*required]
   -i|--groups  *[FILE] : Orthogroups file (N0.tsv or Orthogroups.txt)
   -p|--path    *[PATH] : path to protein files
   -l|--legacy          : file is Orthogroups.txt format (default is N0.tsv format)
+  -u|--unassigned      : add counts of unassigned genes (lineage-specific) to matrix (default: don't add)
   -o|--out      [STR]  : outfiles prefix ('phyletic')
   -h|--help            : print this message
 \n";
 
-my ($orthogroups_file, $proteins_path, $legacy, $help);
+my ($orthogroups_file, $proteins_path, $legacy, $add_unassigned, $help);
 my $outprefix = "out";
 
 GetOptions (
   'i|groups=s' => \$orthogroups_file,
   'p|path=s'   => \$proteins_path,
   'l|legacy'   => \$legacy,
+  'u|unassigned' => \$add_unassigned,
   'o|out:s'    => \$outprefix,
   'h|help'     => \$help
 );
@@ -63,12 +65,12 @@ foreach (@fastas){
     $species_hash{$species_id} = ();
   }
 }
-print STDERR "[INFO] Read in ".commify(scalar(keys %seq_hash))." sequences from ".commify(scalar(@fastas))." files\n\n";
+print STDERR "[INFO] Read in ".commify(scalar(keys %seq_hash))." sequences from ".commify(scalar(@fastas))." files\n";
 
 ## open Orthogroups
 my %orthogroups;
 my %seen_in_orthogroups;
-my %lineage_specific_seqs = %seq_hash;
+my %unassigned_seqs = %seq_hash;
 
 # matrix looks like
 # >species1
@@ -103,8 +105,8 @@ while (my $line = <$GROUPS>) {
     my $species_id = ( split(/\|/, $_) )[0];
     $membership_per_OG_hash{$species_id}++;
 
-    ## delete from %lineage_specific_seqs
-    delete $lineage_specific_seqs{$_};
+    ## delete from %unassigned_seqs; only genes not found in OGs remain in this hash
+    delete $unassigned_seqs{$_};
   }
 
   ## cycle thru species hash and push 1/0 depending on membership
@@ -118,15 +120,34 @@ while (my $line = <$GROUPS>) {
 }
 close $GROUPS;
 
-my %lineage_specific_counts;
-foreach (keys %lineage_specific_seqs) {
+my %unassigned_counts;
+foreach (keys %unassigned_seqs) {
   my @a = split (/\|/, $_);
-  $lineage_specific_counts{$a[0]}++; ## should be the number of seqs that weren't found in any HOG
+  $unassigned_counts{$a[0]}++; ## should be the number of seqs that weren't found in any HOG
 }
 
-print STDERR "[INFO] Lineage-specific counts:\n";
-foreach (nsort keys %lineage_specific_counts) {
-  print STDERR "$_ : $lineage_specific_counts{$_}\n";
+print STDERR "\n[INFO] Unassigned gene counts:\n";
+foreach (nsort keys %unassigned_counts) {
+  print STDERR "$_ : $unassigned_counts{$_}\n";
+}
+
+## add lineage specific unassigned genes to the end of matrix
+if ($add_unassigned) {
+  foreach my $k1 (nsort keys %species_hash) {
+    foreach my $k2 (nsort keys %unassigned_counts) {
+      if ($k1 eq $k2) {
+        ## adds 1 to correct species to length == number of unassigned genes
+        for (1..$unassigned_counts{$k2}) {
+          push ( @{$species_hash{$k1}}, 1 );
+        }
+      } else {
+        ## else adds 0 to any other species
+        for (1..$unassigned_counts{$k2}) {
+          push ( @{$species_hash{$k1}}, 0 );
+        }
+      }
+    }
+  }
 }
 
 ## open outfile and print as fasta phyletic matrix
@@ -137,7 +158,7 @@ foreach (nsort keys %species_hash) {
 }
 close $OUT;
 
-print STDERR "\n[INFO] Printing matrix to file '$outprefix.phyletic_matrix.txt'\n";
+print STDERR "[INFO] Printing matrix to file '$outprefix.phyletic_matrix.txt'\n";
 print STDERR "[INFO] Finished on ".`date`."\n";
 
 ######################## SUBS
