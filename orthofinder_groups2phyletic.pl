@@ -32,7 +32,7 @@ my $outprefix = "out";
 GetOptions (
   'i|groups=s' => \$orthogroups_file,
   'p|path=s'   => \$proteins_path,
-  'f|format'   => \$format,
+  'f|format:s'   => \$format,
   'u|unassigned' => \$add_unassigned,
   'o|out:s'    => \$outprefix,
   'h|help'     => \$help
@@ -47,8 +47,7 @@ if ( $format eq "ortho" ) { ## Orthogroups.txt format
 } elsif ($format eq "N0") { ## N0.tsv format
   print STDERR "[INFO] Input file is 'N0.tsv' (HOGs) format\n";
 } else {
-  print STDERR "[ERROR] File format not specified correctly!\n";
-  die 1;
+  die "[ERROR] File format not specified correctly!\n";
 }
 
 ## get sequences
