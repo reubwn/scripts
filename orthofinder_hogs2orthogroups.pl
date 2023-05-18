@@ -69,7 +69,7 @@ my %unassigned_seqs = %seq_hash;
 my $last_og_id;
 
 ## open outfile
-open (my $OUT, ">$outprefix"."_reformatted.txt")
+open (my $OUT, ">$outprefix.reformatted.txt");
 
 ## open Orthogroups
 open (my $GROUPS, $orthogroups_file) or die $!;
@@ -101,3 +101,9 @@ unless ( $no_unassigned ) {
     $last_og_id++;
   }
 }
+close $OUT;
+
+print STDERR "[INFO] Printing matrix to file '$outprefix.reformatted.txt'\n";
+print STDERR "[INFO] Finished on ".`date`."\n";
+
+__END__
