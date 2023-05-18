@@ -21,17 +21,19 @@ OPTIONS [*required]
   -i|--groups  *[FILE] : OrthoFinder N0.tsv file
   -p|--path    *[PATH] : path to protein files
   -U|--no_unassigned   : DON'T add counts of unassigned genes to matrix (default: add them)
+  -d|--use_og_id       : print OG id instead of HOG id (OG ids may not be unique in output file)
   -o|--out      [STR]  : outfiles prefix ('phyletic')
   -h|--help            : print this message
 \n";
 
-my ($orthogroups_file, $proteins_path, $no_unassigned, $help);
+my ($orthogroups_file, $proteins_path, $no_unassigned, $use_og_id, $help);
 my $outprefix = "out";
 
 GetOptions (
   'i|groups=s' => \$orthogroups_file,
   'p|path=s'   => \$proteins_path,
   'U|no_unassigned' => \$no_unassigned,
+  'd|use_og_id' => \$use_og_id,
   'o|out:s'    => \$outprefix,
   'h|help'     => \$help
 );
@@ -79,7 +81,14 @@ while (my $line = <$GROUPS>) {
   my @a = split(/\s+/, $line);
   my @b = @a[3..$#a]; ## seqs begin in column 4
   my @c = map{s/,//g; $_} @b;
-  print $OUT "$a[1]: " . join (" ", @c) . "\n"; ## NB some OG ids will be replicated in the output file
+  if ($use_og_id) {
+    print $OUT "$a[1]: ";
+    $last_og_id = $a[1]; ## OG id
+  } else {
+    print $OUT "$a[0]: ";
+    $last_og_id = ( split (/\./, $a[0]) )[1]; ## HOG id
+  }
+  print $OUT join (" ", @c) . "\n"; ## NB some OG ids will be replicated in the output file
   print STDERR "\r[INFO] Working on HOG \#$.: $a[0]"; $|=1;
 
   ## delete from %unassigned_seqs
@@ -87,18 +96,23 @@ while (my $line = <$GROUPS>) {
   foreach (@c) {
     delete $unassigned_seqs{$_};
   }
-  $last_og_id = $a[1];
 }
 close $GROUPS;
 
 ## add unassigned genes to end of OUT file
 unless ( $no_unassigned ) {
-  print STDERR "[INFO] Adding unassigned genes to outfile\n";
-  $last_og_id =~ s/OG//; ## get the number
+  print STDERR "\n[INFO] Adding unassigned genes to outfile\n";
+
+  if ($use_og_id) {
+    $last_og_id =~ s/OG//; ## get the number
+  } else {
+    $last_og_id =~ s/HOG//; ## get the number
+  }
 
   foreach (nsort keys %unassigned_seqs) {
-    print $OUT "OG" . $last_og_id . ": $_\n";
     $last_og_id++;
+    print $OUT "OG" . $last_og_id . ": $_\n";
+
   }
 }
 close $OUT;
