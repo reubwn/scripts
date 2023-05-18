@@ -82,11 +82,11 @@ while (my $line = <$GROUPS>) {
   my @b = @a[3..$#a]; ## seqs begin in column 4
   my @c = map{s/,//g; $_} @b;
   if ($use_og_id) {
-    print $OUT "$a[1]: ";
     $last_og_id = $a[1]; ## OG id
+    print $OUT "$last_og_id: ";
   } else {
-    print $OUT "$a[0]: ";
     $last_og_id = ( split (/\./, $a[0]) )[1]; ## HOG id
+    print $OUT "$last_og_id: ";
   }
   print $OUT join (" ", @c) . "\n"; ## NB some OG ids will be replicated in the output file
   print STDERR "\r[INFO] Working on HOG \#$.: $a[0]"; $|=1;
@@ -105,15 +105,19 @@ unless ( $no_unassigned ) {
 
   if ($use_og_id) {
     $last_og_id =~ s/OG//; ## get the number
+    foreach (nsort keys %unassigned_seqs) {
+      $last_og_id++;
+      print $OUT "OG" . $last_og_id . ": $_\n";
+    }
   } else {
     $last_og_id =~ s/HOG//; ## get the number
+    foreach (nsort keys %unassigned_seqs) {
+      $last_og_id++;
+      print $OUT "HOG" . $last_og_id . ": $_\n";
+    }
   }
 
-  foreach (nsort keys %unassigned_seqs) {
-    $last_og_id++;
-    print $OUT "OG" . $last_og_id . ": $_\n";
 
-  }
 }
 close $OUT;
 
