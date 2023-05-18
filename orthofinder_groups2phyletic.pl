@@ -133,6 +133,7 @@ foreach (nsort keys %unassigned_counts) {
 
 ## add lineage specific unassigned genes to the end of matrix
 if ($add_unassigned) {
+  print STDERR "[INFO] Adding unassigned genes to phyletic matrix\n";
   foreach my $k1 (nsort keys %species_hash) {
     foreach my $k2 (nsort keys %unassigned_counts) {
       if ($k1 eq $k2) {
