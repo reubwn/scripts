@@ -89,7 +89,7 @@ while (my $line = <$GROUPS>) {
     print $OUT "$last_og_id: ";
   }
   print $OUT join (" ", @c) . "\n"; ## NB some OG ids will be replicated in the output file
-  print STDERR "\r[INFO] Working on HOG \#$.: $a[0]"; $|=1;
+  print STDERR "\r[INFO] Working on HOG \#$.: $last_og_id"; $|=1;
 
   ## delete from %unassigned_seqs
   ## only genes not found in OGs remain in this hash
