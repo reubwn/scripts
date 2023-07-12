@@ -12,26 +12,30 @@ use Data::Dumper;
 
 my $usage = "
 SYNOPSIS
-  Calculate per-gene per-population avg. nucleotide diversity (pi) from GFF and VCF.
+  Calculate genome wide nucleotide diversity (pi) across provided samples.
+
+  If 'genes' and 'gff' files are provided, the script will only calculate pi for
+    CDS located within the regions specifed in the bed file.
 
 OPTIONS [*required]
   -v|--vcf      *[FILE] : VCF/BCF file
-  -g|--genes    *[FILE] : TXT list of gene IDs to be analysed (linking to the 'mRNA' field of the GFF)
-  -G|--gff      *[FILE] : GFF annotation file
+  -b|--bed      *[FILE] : BED file of regions to be included in analysis
   -p|--pops     *[FILE] : TXT list of population/site IDs to subset VCF
   -s|--samples  *[PATH] : path/to/dir containing samples files that link sample ID to population grouping
-  -m|--method    [STR]  : method for calculating nuc diversity (default: 'vcftools')
+  -g|--genes     [FILE] : TXT list of gene IDs to be analysed (linking to the 'mRNA' field of the GFF)
+  -G|--gff       [FILE] : GFF annotation file
   -o|--out       [STR]  : outfiles prefix ('pi')
   -h|--help             : print this message
 \n";
 
-my ($vcf_file, $genes_file, $gff_file, $pops_file, $samples_path, $help);
+my ($vcf_file, $bed_file, $genes_file, $gff_file, $pops_file, $samples_path, $help);
 my $outprefix = "pi";
 
 GetOptions (
   'v|vcf=s'     => \$vcf_file,
-  'g|genes=s'   => \$genes_file,
-  'G|gff=s'     => \$gff_file,
+  'b|bed=s'     => \$bed_file,
+  'g|genes:s'   => \$genes_file,
+  'G|gff:s'     => \$gff_file,
   'p|pops=s'    => \$pops_file,
   's|samples=s' => \$samples_path,
   'o|out:s'     => \$outprefix,
@@ -39,7 +43,7 @@ GetOptions (
 );
 
 die $usage if ( $help );
-die $usage unless ( $vcf_file && $genes_file && $pops_file && $samples_path );
+die $usage unless ( $vcf_file && $bed_file && $pops_file && $samples_path );
 
 ## RESULTS hash
 my %RESULTS;
