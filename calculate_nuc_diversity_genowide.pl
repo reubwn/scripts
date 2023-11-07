@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-## reubwn Feb 23
+## reubwn July 23
 
 use strict;
 use warnings;
@@ -14,28 +14,23 @@ my $usage = "
 SYNOPSIS
   Calculate genome wide nucleotide diversity (pi) across provided samples.
 
-  If 'genes' and 'gff' files are provided, the script will only calculate pi for
-    CDS located within the regions specifed in the bed file.
-
 OPTIONS [*required]
-  -v|--vcf      *[FILE] : VCF/BCF file
+  -i|--in      **[FILE] : FOFN list of VCF/BCF files to analyse, or...
+  -v|--vcf     **[FILE] : single VCF/BCF file
   -b|--bed      *[FILE] : BED file of regions to be included in analysis
   -p|--pops     *[FILE] : TXT list of population/site IDs to subset VCF
   -s|--samples  *[PATH] : path/to/dir containing samples files that link sample ID to population grouping
-  -g|--genes     [FILE] : TXT list of gene IDs to be analysed (linking to the 'mRNA' field of the GFF)
-  -G|--gff       [FILE] : GFF annotation file
-  -o|--out       [STR]  : outfiles prefix ('pi')
+  -o|--out       [STR]  : outfiles prefix ('result')
   -h|--help             : print this message
 \n";
 
-my ($vcf_file, $bed_file, $genes_file, $gff_file, $pops_file, $samples_path, $help);
-my $outprefix = "pi";
+my ($vcf_fofn, $vcf_file, $bed_file, $pops_file, $samples_path, $help);
+my $outprefix = "result";
 
 GetOptions (
-  'v|vcf=s'     => \$vcf_file,
+  'i|in:s'      => \$vcf_fofn,
+  'v|vcf:s'     => \$vcf_file,
   'b|bed=s'     => \$bed_file,
-  'g|genes:s'   => \$genes_file,
-  'G|gff:s'     => \$gff_file,
   'p|pops=s'    => \$pops_file,
   's|samples=s' => \$samples_path,
   'o|out:s'     => \$outprefix,
@@ -43,7 +38,8 @@ GetOptions (
 );
 
 die $usage if ( $help );
-die $usage unless ( $vcf_file && $bed_file && $pops_file && $samples_path );
+die $usage unless ( $vcf_fofn || $vcf_file );
+die $usage unless ( $pops_file && $samples_path );
 
 ## RESULTS hash
 my %RESULTS;
@@ -80,30 +76,13 @@ if ( -d $pi_dir ) {
   mkdir $pi_dir;
 }
 
-## open genes file
-open (my $GENES, $genes_file) or die $!;
+## open vcf fofn
+open (my $FOFN, $vcf_fofn) or die $!;
 
-## grep gene IDs from GFF to generate regions.txt file
-while (my $gene = <$GENES>) {
-  chomp $gene;
-  print STDERR "[INFO] > Gene: '$gene'\n";
-  ## generate regions.txt file for BCF filtering
-  open (my $REGIN, "grep $gene $gff_file |") or die $!;
-  open (my $REGOUT, ">$regions_dir/$gene.regions.txt") or die $!;
-  my $gene_length;
-  while (my $line = <$REGIN>) {
-    chomp $line;
-    my @F = split (/\s+/, $line);
-    if ($F[2] eq "CDS") {
-      print $REGOUT join("\t", $F[0],$F[3],$F[4])."\n";
-      $gene_length += (($F[4] - $F[3]) + 1); ## GFF coords are 1-based and inclusive
-    }
-  }
-  close $REGIN;
-  close $REGOUT;
-
-  ## store total CDS length
-  $gene_lengths{$gene} = $gene_length;
+## cycle thru fofn
+while (my $vcf_file = <$FOFN>) {
+  chomp $vcf_file;
+  print STDERR "[INFO] > File: '$vcf_file'\n";
 
   ## iterate thru pops
   foreach my $pop (nsort keys %pops) {
