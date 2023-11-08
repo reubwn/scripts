@@ -38,7 +38,7 @@ die $usage if ( $help );
 die $usage unless ( $data_fofn && $orthogroups_file );
 
 ## parse species IDs from input
-my @species_ids = split (/\,/, $species_list);
+my @species_ids = split (/\,/, $species_input);
 print STDERR "[INFO] Species to select from orthogroups: ".join(", ", @species_ids) . "\n";
 
 ## read in OGs
