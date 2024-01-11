@@ -15,18 +15,21 @@ SYNOPSIS
   Calculate per-gene per-population avg. nucleotide diversity (pi) from GFF and VCF.
 
 OPTIONS [*required]
-  -v|--vcf      *[FILE] : VCF/BCF file
-  -g|--genes    *[FILE] : TXT list of gene IDs to be analysed (linking to the 'mRNA' field of the GFF)
-  -G|--gff      *[FILE] : GFF annotation file
-  -p|--pops     *[FILE] : TXT list of population/site IDs to subset VCF
-  -s|--samples  *[PATH] : path/to/dir containing samples files that link sample ID to population grouping
-  -m|--method    [STR]  : method for calculating nuc diversity (default: 'vcftools')
-  -o|--out       [STR]  : outfiles prefix ('pi')
-  -h|--help             : print this message
+  -v|--vcf      *[FILE]  : VCF/BCF file
+  -g|--genes    *[FILE]  : TXT list of gene IDs to be analysed (linking to the 'mRNA' field of the GFF)
+  -G|--gff      *[FILE]  : GFF annotation file
+  -p|--pops     *[FILE]  : TXT list of population/site IDs to subset VCF
+  -s|--samples  *[PATH]  : path/to/dir containing samples files that link sample ID to population grouping
+  -e|--het       [FLOAT] : threshold for heterozygous calls per sample, if greater sample is omitted (for given gene) (default: 0.05 [5%])
+  -m|--missing   [FLOAT] : threshold for missing data per sample, if greater sample is omitted (default: 0.05 [5%])
+  -o|--out       [STR]   : outfiles prefix ('pi')
+  -h|--help              : print this message
 \n";
 
 my ($vcf_file, $genes_file, $gff_file, $pops_file, $samples_path, $help);
 my $outprefix = "pi";
+my $het_threshold = 0.05;
+my $missing_threshold = 0.05;
 
 GetOptions (
   'v|vcf=s'     => \$vcf_file,
@@ -34,6 +37,8 @@ GetOptions (
   'G|gff=s'     => \$gff_file,
   'p|pops=s'    => \$pops_file,
   's|samples=s' => \$samples_path,
+  'e|het:f'     => \$het_threshold,
+  'm|missing:f' => \$missing_threshold,
   'o|out:s'     => \$outprefix,
   'h|help'      => \$help
 );
@@ -105,41 +110,89 @@ while (my $gene = <$GENES>) {
   foreach my $pop (nsort keys %pops) {
     print STDERR "[INFO] -> Population: '$pop'\n";
     my $sum_pi = 0;
+    ## samples to exclude based on missing data and/or proportion of het calls
+    my @excluded_samples_het;
+    my @exculded_samples_missing;
 
     ## get stats on SNPs in gene region, per population
-    open (my $STATS, "bcftools view -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt --min-ac=1 --no-update $vcf_file | bcftools stats - | grep \"\^SN\" |") or die $!;
+    open (my $STATS, "bcftools view -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt -Ou $vcf_file | bcftools view -a -c1 -Ou | bcftools view -i 'TYPE="snp"' -Ou | bcftools stats -s- |") or die $!;
     while (my $line = <$STATS>) {
       chomp $line;
-      my @F = split (/\s+/, $line);
-      $RESULTS{$gene}{$pop}{num_samples} = $F[-1] if $.==1;
-      $RESULTS{$gene}{$pop}{num_snps} = $F[-1] if $.==4;
-      $RESULTS{$gene}{$pop}{num_mnps} = $F[-1] if $.==5;
-      $RESULTS{$gene}{$pop}{num_indels} = $F[-1] if $.==6;
-      $RESULTS{$gene}{$pop}{num_multiallelic} = $F[-1] if $.==9;
+      if ($line =~ m/^SN/) { ## summary numbers block
+        my @F = split (/\s+/, $line);
+        $RESULTS{$gene}{$pop}{num_samples} = $F[-1] if $line =~ m/number of samples:/;
+        $RESULTS{$gene}{$pop}{num_snps} = $F[-1] if $line =~ m/number of SNPs:/;
+        $RESULTS{$gene}{$pop}{num_mnps} = $F[-1] if $line =~ m/number of MNPs:/;
+        $RESULTS{$gene}{$pop}{num_indels} = $F[-1] if $line =~ m/number of indels:/;
+        $RESULTS{$gene}{$pop}{num_multiallelic} = $F[-1] if $line =~ m/number of multiallelic SNP sites:/;
 
+      } elsif ($line =~ m/^PSC/) { ## per-sample counts block
+        my @F = split (/\s+/, $line);
+        ## sum of 4th, 5th, 6th and 14th cols = total num SNPs in subset VCF
+        # PSC, Per-sample counts. Note that the ref/het/hom counts include only SNPs, for indels see PSI. The rest include both SNPs and indels.
+        # PSC	[2]id	[3]sample	[4]nRefHom	[5]nNonRefHom	[6]nHets	[7]nTransitions	[8]nTransversions	[9]nIndels	[10]average depth	[11]nSingletons	[12]nHapRef	[13]nHapAlt	[14]nMissing
+        push (@excluded_samples_het, $F[2]) if (($F[5]/($F[3]+$F[4]+$F[5]+$F[13])) > $het_threshold);
+        push (@exculded_samples_missing, $F[2]) if (($F[13]/($F[3]+$F[4]+$F[5]+$F[13])) > $missing_threshold);
+      }
     }
     close $STATS;
 
-    ## skip if none
-    if ( $RESULTS{$gene}{$pop}{num_snps} > 0 ) {
-      print STDERR "[INFO] --> Found $RESULTS{$gene}{$pop}{num_snps} variant sites!\n";
-      ## run vcftools --site-pi
-      if ( system("bcftools view -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt --min-ac=1 --no-update $vcf_file | vcftools --vcf - --out $gene.$pop --site-pi --stdout >$pi_dir/$gene.$pop.sites.pi 2>/dev/null") != 0 ) {
-        print STDERR "[INFO] --> Problem with vcftools command!\n";
-      } else {
-        print STDERR "[INFO] --> Ran vcftools successfully\n";
-        open (my $SITESPI, "cut -f3 $pi_dir/$gene.$pop.sites.pi |") or die $!;
-        while (my $pi = <$SITESPI>) {
-          next if $. == 1;
-          chomp $pi;
-          $sum_pi += $pi;
+    ## join lists
+    my @excluded_all = (@excluded_samples_het, @exculded_samples_missing);
+
+    ## execute slightly different commands depending on whether additional sample filtering is required
+    if (scalar(@excluded_all) > 0) {
+      print STDERR "[INFO] --> Found ".scalar(@excluded_all)." samples to be excluded:\n";
+      print STDERR "[INFO] --> Proportion MISSING DATA > $missing_threshold: " . join(",", @exculded_samples_missing) . "\n" if scalar(@exculded_samples_missing)>0;
+      print STDERR "[INFO] --> Proportion HETEROZYGOUS CALLS > $het_threshold: " . join(", ", @exculded_samples_het) . "\n" if scalar(@exculded_samples_het)>0;
+      my $exclude_string = join(",", @excluded_all);
+
+      ## command block if samples are to be excluded
+      ## skip if no SNPs
+      if ( $RESULTS{$gene}{$pop}{num_snps} > 0 ) {
+        print STDERR "[INFO] --> Found $RESULTS{$gene}{$pop}{num_snps} variant sites!\n";
+        ## run vcftools --site-pi
+        if ( system("bcftools view -Ou -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt $vcf_file | bcftools view -Ou -s ^$exclude_string | bcftools view -Ou -a -c1 | bcftools view -Ov -i 'TYPE="snp"' | vcftools --vcf - --out $gene.$pop --site-pi --stdout >$pi_dir/$gene.$pop.sites.pi 2>/dev/null") != 0 ) {
+          print STDERR "[INFO] --> Problem with vcftools command!\n";
+        } else {
+          print STDERR "[INFO] --> Ran vcftools successfully\n";
+          open (my $SITESPI, "cut -f3 $pi_dir/$gene.$pop.sites.pi |") or die $!;
+          while (my $pi = <$SITESPI>) {
+            next if $. == 1;
+            chomp $pi;
+            $sum_pi += $pi;
+          }
+          close $SITESPI;
+          $RESULTS{$gene}{$pop}{pi} = ($sum_pi/$gene_lengths{$gene});
         }
-        close $SITESPI;
-        $RESULTS{$gene}{$pop}{pi} = ($sum_pi/$gene_lengths{$gene});
+      } else {
+        print STDERR "[INFO] --> No variants found\n";
+        $RESULTS{$gene}{$pop}{pi} = 0;
       }
+
     } else {
-      print STDERR "[INFO] --> No variants found\n";
-      $RESULTS{$gene}{$pop}{pi} = 0;
+      ## command block if no samples are to be excluded
+      ## skip if no SNPs
+      if ( $RESULTS{$gene}{$pop}{num_snps} > 0 ) {
+        print STDERR "[INFO] --> Found $RESULTS{$gene}{$pop}{num_snps} variant sites!\n";
+        ## run vcftools --site-pi
+        if ( system("bcftools view -Ou -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt $vcf_file | bcftools view -Ou -a -c1 | bcftools view -Ov -i 'TYPE="snp"' | vcftools --vcf - --out $gene.$pop --site-pi --stdout >$pi_dir/$gene.$pop.sites.pi 2>/dev/null") != 0 ) {
+          print STDERR "[INFO] --> Problem with vcftools command!\n";
+        } else {
+          print STDERR "[INFO] --> Ran vcftools successfully\n";
+          open (my $SITESPI, "cut -f3 $pi_dir/$gene.$pop.sites.pi |") or die $!;
+          while (my $pi = <$SITESPI>) {
+            next if $. == 1;
+            chomp $pi;
+            $sum_pi += $pi;
+          }
+          close $SITESPI;
+          $RESULTS{$gene}{$pop}{pi} = ($sum_pi/$gene_lengths{$gene});
+        }
+      } else {
+        print STDERR "[INFO] --> No variants found\n";
+        $RESULTS{$gene}{$pop}{pi} = 0;
+      }
     }
   }
 }

@@ -41,6 +41,15 @@ die $usage unless ( $data_fofn && $orthogroups_file );
 my @species_ids = split (/\,/, $species_input);
 print STDERR "[INFO] Species to select from orthogroups: ".join(", ", @species_ids) . "\n";
 
+## parse grouping info from groupings file
+
+## read in CPM data
+open (my $FOFN, $data_fofn) or die $!;
+while (my $file = <$FOFN>) {
+
+}
+close $FOFN;
+
 ## read in OGs
 my %orthogroups;
 open (my $ORTHO, $orthogroups_file) or die $!;
@@ -48,15 +57,16 @@ while (my $line = <$ORTHO>) {
   chomp $line;
   my @F = split (m/\s+/, $line);
   my $og_id = shift @F;
-  ## pull out gene ids for individual species based on OG convention e.g. "AVAG|g67330.t1"
-  my @arr1 = grep (/^ARIC\|/, @F);
-  my @arr2 = grep (/^AVAG\|/, @F);
-  ## push into hash
+  $og_id =~ s/\://;
+  ## pull out gene ids for individual species based on OG convention e.g. "AVAG|g67330.t1" and push into hash
+  my @members;
   foreach my $species_id (@species_ids) {
-    print STDERR "[INFO] Pulling out genes for '$species_id'...\n";
-    $orthogroups{$species_id}{$og_id} = \@F;
+    my @a = grep (/$species_id\|/, @F);
+    push (@members, @a) if scalar (@a) > 0;
   }
 
-
+  $orthogroups{$og_id} = \@members if scalar (@members) > 0;
 }
 close $ORTHO;
+
+print Dumper (\%orthogroups);
