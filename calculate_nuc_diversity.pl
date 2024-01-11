@@ -112,7 +112,7 @@ while (my $gene = <$GENES>) {
     my $sum_pi = 0;
     ## samples to exclude based on missing data and/or proportion of het calls
     my @excluded_samples_het;
-    my @exculded_samples_missing;
+    my @excluded_samples_missing;
 
     ## get stats on SNPs in gene region, per population
     open (my $STATS, "bcftools view -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt -Ou $vcf_file | bcftools view -a -c1 -Ou | bcftools view -i 'TYPE=\"snp\"' -Ou | bcftools stats -s- |") or die $!;
@@ -132,19 +132,19 @@ while (my $gene = <$GENES>) {
         # PSC, Per-sample counts. Note that the ref/het/hom counts include only SNPs, for indels see PSI. The rest include both SNPs and indels.
         # PSC	[2]id	[3]sample	[4]nRefHom	[5]nNonRefHom	[6]nHets	[7]nTransitions	[8]nTransversions	[9]nIndels	[10]average depth	[11]nSingletons	[12]nHapRef	[13]nHapAlt	[14]nMissing
         push (@excluded_samples_het, $F[2]) if (($F[5]/($F[3]+$F[4]+$F[5]+$F[13])) > $het_threshold);
-        push (@exculded_samples_missing, $F[2]) if (($F[13]/($F[3]+$F[4]+$F[5]+$F[13])) > $missing_threshold);
+        push (@excluded_samples_missing, $F[2]) if (($F[13]/($F[3]+$F[4]+$F[5]+$F[13])) > $missing_threshold);
       }
     }
     close $STATS;
 
     ## join lists
-    my @excluded_all = (@excluded_samples_het, @exculded_samples_missing);
+    my @excluded_all = (@excluded_samples_het, @excluded_samples_missing);
 
     ## execute slightly different commands depending on whether additional sample filtering is required
     if (scalar(@excluded_all) > 0) {
       print STDERR "[INFO] --> Found ".scalar(@excluded_all)." samples to be excluded:\n";
-      print STDERR "[INFO] --> Proportion MISSING DATA > $missing_threshold: " . join(",", @exculded_samples_missing) . "\n" if scalar(@exculded_samples_missing)>0;
-      print STDERR "[INFO] --> Proportion HETEROZYGOUS CALLS > $het_threshold: " . join(", ", @exculded_samples_het) . "\n" if scalar(@exculded_samples_het)>0;
+      print STDERR "[INFO] --> Proportion MISSING DATA > $missing_threshold: " . join(",", @excluded_samples_missing) . "\n" if scalar(@excluded_samples_missing)>0;
+      print STDERR "[INFO] --> Proportion HETEROZYGOUS CALLS > $het_threshold: " . join(", ", @excluded_samples_het) . "\n" if scalar(@excluded_samples_het)>0;
       my $exclude_string = join(",", @excluded_all);
 
       ## command block if samples are to be excluded
