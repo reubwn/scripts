@@ -115,7 +115,7 @@ while (my $gene = <$GENES>) {
     my @exculded_samples_missing;
 
     ## get stats on SNPs in gene region, per population
-    open (my $STATS, "bcftools view -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt -Ou $vcf_file | bcftools view -a -c1 -Ou | bcftools view -i 'TYPE="snp"' -Ou | bcftools stats -s- |") or die $!;
+    open (my $STATS, "bcftools view -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt -Ou $vcf_file | bcftools view -a -c1 -Ou | bcftools view -i 'TYPE=\"snp\"' -Ou | bcftools stats -s- |") or die $!;
     while (my $line = <$STATS>) {
       chomp $line;
       if ($line =~ m/^SN/) { ## summary numbers block
@@ -152,7 +152,7 @@ while (my $gene = <$GENES>) {
       if ( $RESULTS{$gene}{$pop}{num_snps} > 0 ) {
         print STDERR "[INFO] --> Found $RESULTS{$gene}{$pop}{num_snps} variant sites!\n";
         ## run vcftools --site-pi
-        if ( system("bcftools view -Ou -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt $vcf_file | bcftools view -Ou -s ^$exclude_string | bcftools view -Ou -a -c1 | bcftools view -Ov -i 'TYPE="snp"' | vcftools --vcf - --out $gene.$pop --site-pi --stdout >$pi_dir/$gene.$pop.sites.pi 2>/dev/null") != 0 ) {
+        if ( system("bcftools view -Ou -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt $vcf_file | bcftools view -Ou -s ^$exclude_string | bcftools view -Ou -a -c1 | bcftools view -Ov -i 'TYPE=\"snp\"' | vcftools --vcf - --out $gene.$pop --site-pi --stdout >$pi_dir/$gene.$pop.sites.pi 2>/dev/null") != 0 ) {
           print STDERR "[INFO] --> Problem with vcftools command!\n";
         } else {
           print STDERR "[INFO] --> Ran vcftools successfully\n";
@@ -176,7 +176,7 @@ while (my $gene = <$GENES>) {
       if ( $RESULTS{$gene}{$pop}{num_snps} > 0 ) {
         print STDERR "[INFO] --> Found $RESULTS{$gene}{$pop}{num_snps} variant sites!\n";
         ## run vcftools --site-pi
-        if ( system("bcftools view -Ou -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt $vcf_file | bcftools view -Ou -a -c1 | bcftools view -Ov -i 'TYPE="snp"' | vcftools --vcf - --out $gene.$pop --site-pi --stdout >$pi_dir/$gene.$pop.sites.pi 2>/dev/null") != 0 ) {
+        if ( system("bcftools view -Ou -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt $vcf_file | bcftools view -Ou -a -c1 | bcftools view -Ov -i 'TYPE=\"snp\"' | vcftools --vcf - --out $gene.$pop --site-pi --stdout >$pi_dir/$gene.$pop.sites.pi 2>/dev/null") != 0 ) {
           print STDERR "[INFO] --> Problem with vcftools command!\n";
         } else {
           print STDERR "[INFO] --> Ran vcftools successfully\n";
