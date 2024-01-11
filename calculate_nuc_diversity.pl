@@ -126,21 +126,24 @@ while (my $gene = <$GENES>) {
         $RESULTS{$gene}{$pop}{num_indels} = $F[-1] if $line =~ "number of indels";
         $RESULTS{$gene}{$pop}{num_multiallelic} = $F[-1] if $line =~ "number of multiallelic SNP sites";
 
-        print STDERR Dumper(\%RESULTS);
-
       } elsif ($line =~ m/^PSC/) { ## per-sample counts block
-        my @F = split (/\s+/, $line);
-        ## sum of 4th, 5th, 6th and 14th cols = total num SNPs in subset VCF
-        # PSC, Per-sample counts. Note that the ref/het/hom counts include only SNPs, for indels see PSI. The rest include both SNPs and indels.
-        # PSC	[2]id	[3]sample	[4]nRefHom	[5]nNonRefHom	[6]nHets	[7]nTransitions	[8]nTransversions	[9]nIndels	[10]average depth	[11]nSingletons	[12]nHapRef	[13]nHapAlt	[14]nMissing
-        push (@excluded_samples_het, $F[2]) if (($F[5]/($F[3]+$F[4]+$F[5]+$F[13])) > $het_threshold);
-        push (@excluded_samples_missing, $F[2]) if (($F[13]/($F[3]+$F[4]+$F[5]+$F[13])) > $missing_threshold);
+        if ($RESULTS{$gene}{$pop}{num_snps} > 0) { ## only do for genes with SNPs
+          my @F = split (/\s+/, $line);
+          ## sum of 4th, 5th, 6th and 14th cols = total num SNPs in subset VCF
+          # PSC, Per-sample counts. Note that the ref/het/hom counts include only SNPs, for indels see PSI. The rest include both SNPs and indels.
+          # PSC	[2]id	[3]sample	[4]nRefHom	[5]nNonRefHom	[6]nHets	[7]nTransitions	[8]nTransversions	[9]nIndels	[10]average depth	[11]nSingletons	[12]nHapRef	[13]nHapAlt	[14]nMissing
+          push (@excluded_samples_het, $F[2]) if (($F[5]/($F[3]+$F[4]+$F[5]+$F[13])) > $het_threshold);
+          push (@excluded_samples_missing, $F[2]) if (($F[13]/($F[3]+$F[4]+$F[5]+$F[13])) > $missing_threshold);
+        }
       }
     }
     close $STATS;
 
-    ## join lists
+    ## join lists, add info to RESULTS
     my @excluded_all = (@excluded_samples_het, @excluded_samples_missing);
+    $RESULTS{$gene}{$pop}{num_excluded} = scalar(@excluded_all);
+    $RESULTS{$gene}{$pop}{excluded_samples_het} = join(",",@excluded_samples_het);
+    $RESULTS{$gene}{$pop}{excluded_samples_missing} = join(",",@excluded_samples_missing);
 
     ## execute slightly different commands depending on whether additional sample filtering is required
     if (scalar(@excluded_all) > 0) {
@@ -209,6 +212,8 @@ print $RESULTS join ("\t",
   "LENGTH",
   "POP",
   "N_SAMPLES",
+  "N_EXCLUDED",
+  "EXCLUDED_IDS",
   "N_SNPS",
   "N_MULTIALLELIC_SNPS",
   "N_MNPS",
@@ -220,6 +225,8 @@ foreach my $k1 (nsort keys %RESULTS) {
   foreach my $k2 (nsort keys %{ $RESULTS{$k1} }) {
     print $RESULTS join ("\t", $k1, $gene_lengths{$k1}, $k2,
       $RESULTS{$k1}{$k2}{num_samples},
+      $RESULTS{$k1}{$k2}{num_excluded},
+      join(",",$RESULTS{$k1}{$k2}{excluded_samples_het},$RESULTS{$k1}{$k2}{excluded_samples_missing}),
       $RESULTS{$k1}{$k2}{num_snps},
       $RESULTS{$k1}{$k2}{num_multiallelic},
       $RESULTS{$k1}{$k2}{num_mnps},
