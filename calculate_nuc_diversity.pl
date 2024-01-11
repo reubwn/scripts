@@ -20,16 +20,16 @@ OPTIONS [*required]
   -G|--gff      *[FILE]  : GFF annotation file
   -p|--pops     *[FILE]  : TXT list of population/site IDs to subset VCF
   -s|--samples  *[PATH]  : path/to/dir containing samples files that link sample ID to population grouping
-  -e|--het       [FLOAT] : threshold for heterozygous calls per sample, if greater sample is omitted (for given gene) (default: 0.05 [5%])
-  -m|--missing   [FLOAT] : threshold for missing data per sample, if greater sample is omitted (default: 0.05 [5%])
+  -e|--het       [FLOAT] : threshold for heterozygous calls per sample, if greater sample is omitted (for given gene) (default: 0.5 [50%])
+  -m|--missing   [FLOAT] : threshold for missing data per sample, if greater sample is omitted (default: 0.5 [50%])
   -o|--out       [STR]   : outfiles prefix ('pi')
   -h|--help              : print this message
 \n";
 
 my ($vcf_file, $genes_file, $gff_file, $pops_file, $samples_path, $help);
 my $outprefix = "pi";
-my $het_threshold = 0.05;
-my $missing_threshold = 0.05;
+my $het_threshold = 0.5;
+my $missing_threshold = 0.5;
 
 GetOptions (
   'v|vcf=s'     => \$vcf_file,
@@ -149,7 +149,7 @@ while (my $gene = <$GENES>) {
     if (scalar(@excluded_all) > 0) {
       print STDERR "[INFO] --> Found ".scalar(@excluded_all)." samples to be excluded:\n";
       print STDERR "[INFO] --> Proportion MISSING DATA > $missing_threshold: " . join(",", @excluded_samples_missing) . "\n" if scalar(@excluded_samples_missing)>0;
-      print STDERR "[INFO] --> Proportion HETEROZYGOUS CALLS > $het_threshold: " . join(", ", @excluded_samples_het) . "\n" if scalar(@excluded_samples_het)>0;
+      print STDERR "[INFO] --> Proportion HETEROZYGOUS CALLS > $het_threshold: " . join(",", @excluded_samples_het) . "\n" if scalar(@excluded_samples_het)>0;
       my $exclude_string = join(",", @excluded_all);
 
       ## command block if samples are to be excluded
