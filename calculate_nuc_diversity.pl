@@ -126,7 +126,7 @@ while (my $gene = <$GENES>) {
         $RESULTS{$gene}{$pop}{num_indels} = $F[-1] if $line =~ "number of indels";
         $RESULTS{$gene}{$pop}{num_multiallelic} = $F[-1] if $line =~ "number of multiallelic SNP sites";
 
-        print STDERR "$RESULTS{$gene}{$pop}{num_snps}\n";
+        print STDERR Dumper(\%RESULTS);
 
       } elsif ($line =~ m/^PSC/) { ## per-sample counts block
         my @F = split (/\s+/, $line);
