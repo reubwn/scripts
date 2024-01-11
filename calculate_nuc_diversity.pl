@@ -126,6 +126,8 @@ while (my $gene = <$GENES>) {
         $RESULTS{$gene}{$pop}{num_indels} = $F[-1] if $line =~ m/number of indels:/;
         $RESULTS{$gene}{$pop}{num_multiallelic} = $F[-1] if $line =~ m/number of multiallelic SNP sites:/;
 
+        next if $RESULTS{$gene}{$pop}{num_snps} == 0;
+
       } elsif ($line =~ m/^PSC/) { ## per-sample counts block
         my @F = split (/\s+/, $line);
         ## sum of 4th, 5th, 6th and 14th cols = total num SNPs in subset VCF
