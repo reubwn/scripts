@@ -120,11 +120,11 @@ while (my $gene = <$GENES>) {
       chomp $line;
       if ($line =~ m/^SN/) { ## summary numbers block
         my @F = split (/\s+/, $line);
-        $RESULTS{$gene}{$pop}{num_samples} = $F[-1] if $line =~ m/number of samples:/;
-        $RESULTS{$gene}{$pop}{num_snps} = $F[-1] if $line =~ m/number of SNPs:/;
-        $RESULTS{$gene}{$pop}{num_mnps} = $F[-1] if $line =~ m/number of MNPs:/;
-        $RESULTS{$gene}{$pop}{num_indels} = $F[-1] if $line =~ m/number of indels:/;
-        $RESULTS{$gene}{$pop}{num_multiallelic} = $F[-1] if $line =~ m/number of multiallelic SNP sites:/;
+        $RESULTS{$gene}{$pop}{num_samples} = $F[-1] if $line =~ m/number of samples/;
+        $RESULTS{$gene}{$pop}{num_snps} = $F[-1] if $line =~ m/number of SNPs/;
+        $RESULTS{$gene}{$pop}{num_mnps} = $F[-1] if $line =~ m/number of MNPs/;
+        $RESULTS{$gene}{$pop}{num_indels} = $F[-1] if $line =~ m/number of indels/;
+        $RESULTS{$gene}{$pop}{num_multiallelic} = $F[-1] if $line =~ m/number of multiallelic SNP sites/;
 
         next if $RESULTS{$gene}{$pop}{num_snps} == 0;
 
