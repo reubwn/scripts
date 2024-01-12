@@ -150,14 +150,14 @@ while (my $gene = <$GENES>) {
 
     ## execute slightly different commands depending on whether additional sample filtering is required
     if (scalar(@excluded_all) > 0) {
-      print STDERR "[INFO] Total samples excluded: ".scalar(@excluded_all)." (".percentage(scalar(@excluded_all),$RESULTS{$gene}{$pop}{num_samples},1).")\n";
+      print STDERR "[INFO] \tTotal samples excluded: ".scalar(@excluded_all)." (".percentage(scalar(@excluded_all),$RESULTS{$gene}{$pop}{num_samples},1).")\n";
       # print STDERR "[INFO] Total samples excluded: ".scalar(@excluded_all)." (MISSING>$missing_threshold = ".scalar(@excluded_samples_missing)."; HET>$het_threshold = ".scalar(@excluded_samples_het).")\n";
       my $exclude_string = join(",", @excluded_all);
 
       ## command block if samples are to be excluded
       ## skip if no SNPs
       if ( $RESULTS{$gene}{$pop}{num_snps} > 0 ) {
-        print STDERR "[INFO] Number of variant sites: $RESULTS{$gene}{$pop}{num_snps}\n";
+        print STDERR "[INFO] \tNumber SNPs: $RESULTS{$gene}{$pop}{num_snps}\n";
         ## run vcftools --site-pi
         if ( system("bcftools view -Ou -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt $vcf_file | bcftools view -Ou -s ^$exclude_string | bcftools view -Ou -a -c1 | bcftools view -Ov -i 'TYPE=\"snp\"' | vcftools --vcf - --out $gene.$pop --site-pi --stdout >$pi_dir/$gene.$pop.sites.pi 2>/dev/null") != 0 ) {
           print STDERR "[INFO] Problem with vcftools command!\n\n";
@@ -172,9 +172,10 @@ while (my $gene = <$GENES>) {
           }
           close $SITESPI;
           $RESULTS{$gene}{$pop}{pi} = ($sum_pi/$gene_lengths{$gene});
+          print STDERR "[INFO] \tNucleotide diversity = $RESULTS{$gene}{$pop}{pi}\n";
         }
       } else {
-        print STDERR "[INFO] No variants found\n";
+        print STDERR "[INFO] \tNo variants found\n";
         $RESULTS{$gene}{$pop}{pi} = 0;
       }
 
@@ -182,7 +183,7 @@ while (my $gene = <$GENES>) {
       ## command block if no samples are to be excluded
       ## skip if no SNPs
       if ( $RESULTS{$gene}{$pop}{num_snps} > 0 ) {
-        print STDERR "[INFO] Number of variant sites: $RESULTS{$gene}{$pop}{num_snps}\n";
+        print STDERR "[INFO] \tNumber SNPs: $RESULTS{$gene}{$pop}{num_snps}\n";
         ## run vcftools --site-pi
         if ( system("bcftools view -Ou -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt $vcf_file | bcftools view -Ou -a -c1 | bcftools view -Ov -i 'TYPE=\"snp\"' | vcftools --vcf - --out $gene.$pop --site-pi --stdout >$pi_dir/$gene.$pop.sites.pi 2>/dev/null") != 0 ) {
           print STDERR "[INFO] Problem with vcftools command!\n\n";
@@ -197,9 +198,10 @@ while (my $gene = <$GENES>) {
           }
           close $SITESPI;
           $RESULTS{$gene}{$pop}{pi} = ($sum_pi/$gene_lengths{$gene});
+          print STDERR "[INFO] \tNucleotide diversity = $RESULTS{$gene}{$pop}{pi}\n";
         }
       } else {
-        print STDERR "[INFO] No variants found\n";
+        print STDERR "[INFO] \tNo variants found\n";
         $RESULTS{$gene}{$pop}{pi} = 0;
       }
     }
