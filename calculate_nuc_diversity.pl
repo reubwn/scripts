@@ -150,7 +150,7 @@ while (my $gene = <$GENES>) {
 
     ## execute slightly different commands depending on whether additional sample filtering is required
     if (scalar(@excluded_all) > 0) {
-      print STDERR "[INFO] Total samples excluded: ".scalar(@excluded_all)." (".percentage($RESULTS{$gene}{$pop}{num_samples},scalar(@excluded_all)).")\n";
+      print STDERR "[INFO] Total samples excluded: ".scalar(@excluded_all)." (".percentage(scalar(@excluded_all),$RESULTS{$gene}{$pop}{num_samples},1).")\n";
       # print STDERR "[INFO] Total samples excluded: ".scalar(@excluded_all)." (MISSING>$missing_threshold = ".scalar(@excluded_samples_missing)."; HET>$het_threshold = ".scalar(@excluded_samples_het).")\n";
       my $exclude_string = join(",", @excluded_all);
 
