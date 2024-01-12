@@ -59,6 +59,8 @@ while (my $pop = <$POPS>) {
 }
 close $POPS;
 print STDERR "[INFO] Number of populations in '$pops_file': ".scalar(keys %pops)."\n";
+print STDERR "[INFO] Threshold for missing data = $missing_threshold\n";
+print STDERR "[INFO] Threshold for heterozygous calls = $het_threshold\n\n";
 
 ## make dir to store intermediate files
 my $regions_dir = $outprefix."_regions";
@@ -87,7 +89,7 @@ open (my $GENES, $genes_file) or die $!;
 ## grep gene IDs from GFF to generate regions.txt file
 while (my $gene = <$GENES>) {
   chomp $gene;
-  print STDERR "[INFO] > Gene: '$gene'\n";
+  print STDERR "[INFO] Gene: '$gene'\n";
   ## generate regions.txt file for BCF filtering
   open (my $REGIN, "grep $gene $gff_file |") or die $!;
   open (my $REGOUT, ">$regions_dir/$gene.regions.txt") or die $!;
@@ -108,7 +110,7 @@ while (my $gene = <$GENES>) {
 
   ## iterate thru pops
   foreach my $pop (nsort keys %pops) {
-    print STDERR "[INFO] -> Population: '$pop'\n";
+    print STDERR "[INFO] Population: '$pop'\n";
     my $sum_pi = 0;
     ## samples to exclude based on missing data and/or proportion of het calls
     my @excluded_samples_het;
@@ -147,20 +149,19 @@ while (my $gene = <$GENES>) {
 
     ## execute slightly different commands depending on whether additional sample filtering is required
     if (scalar(@excluded_all) > 0) {
-      print STDERR "[INFO] --> Found ".scalar(@excluded_all)." samples to be excluded:\n";
-      print STDERR "[INFO] --> Proportion MISSING DATA > $missing_threshold: " . join(",", @excluded_samples_missing) . "\n" if scalar(@excluded_samples_missing)>0;
-      print STDERR "[INFO] --> Proportion HETEROZYGOUS CALLS > $het_threshold: " . join(",", @excluded_samples_het) . "\n" if scalar(@excluded_samples_het)>0;
+      print STDERR "[INFO] Total samples to be excluded: ".scalar(@excluded_all)." (MISSING DATA > $missing_threshold: ".scalar(@excluded_samples_missing)."; HET CALLS > $het_threshold: ".scalar(@excluded_samples_het).")\n";
       my $exclude_string = join(",", @excluded_all);
 
       ## command block if samples are to be excluded
       ## skip if no SNPs
       if ( $RESULTS{$gene}{$pop}{num_snps} > 0 ) {
-        print STDERR "[INFO] --> Found $RESULTS{$gene}{$pop}{num_snps} variant sites!\n";
+        print STDERR "[INFO] Number of variant sites: $RESULTS{$gene}{$pop}{num_snps}\n";
         ## run vcftools --site-pi
         if ( system("bcftools view -Ou -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt $vcf_file | bcftools view -Ou -s ^$exclude_string | bcftools view -Ou -a -c1 | bcftools view -Ov -i 'TYPE=\"snp\"' | vcftools --vcf - --out $gene.$pop --site-pi --stdout >$pi_dir/$gene.$pop.sites.pi 2>/dev/null") != 0 ) {
-          print STDERR "[INFO] --> Problem with vcftools command!\n";
+          print STDERR "[INFO] Problem with vcftools command!\n\n";
+          die 1;
         } else {
-          print STDERR "[INFO] --> Ran vcftools successfully\n";
+          # print STDERR "[INFO] Ran vcftools successfully\n";
           open (my $SITESPI, "cut -f3 $pi_dir/$gene.$pop.sites.pi |") or die $!;
           while (my $pi = <$SITESPI>) {
             next if $. == 1;
@@ -171,7 +172,7 @@ while (my $gene = <$GENES>) {
           $RESULTS{$gene}{$pop}{pi} = ($sum_pi/$gene_lengths{$gene});
         }
       } else {
-        print STDERR "[INFO] --> No variants found\n";
+        print STDERR "[INFO] No variants found\n";
         $RESULTS{$gene}{$pop}{pi} = 0;
       }
 
@@ -179,12 +180,13 @@ while (my $gene = <$GENES>) {
       ## command block if no samples are to be excluded
       ## skip if no SNPs
       if ( $RESULTS{$gene}{$pop}{num_snps} > 0 ) {
-        print STDERR "[INFO] --> Found $RESULTS{$gene}{$pop}{num_snps} variant sites!\n";
+        print STDERR "[INFO] Number of variant sites: $RESULTS{$gene}{$pop}{num_snps}\n";
         ## run vcftools --site-pi
         if ( system("bcftools view -Ou -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt $vcf_file | bcftools view -Ou -a -c1 | bcftools view -Ov -i 'TYPE=\"snp\"' | vcftools --vcf - --out $gene.$pop --site-pi --stdout >$pi_dir/$gene.$pop.sites.pi 2>/dev/null") != 0 ) {
-          print STDERR "[INFO] --> Problem with vcftools command!\n";
+          print STDERR "[INFO] Problem with vcftools command!\n\n";
+          die 1;
         } else {
-          print STDERR "[INFO] --> Ran vcftools successfully\n";
+          # print STDERR "[INFO] --> Ran vcftools successfully\n";
           open (my $SITESPI, "cut -f3 $pi_dir/$gene.$pop.sites.pi |") or die $!;
           while (my $pi = <$SITESPI>) {
             next if $. == 1;
@@ -195,11 +197,12 @@ while (my $gene = <$GENES>) {
           $RESULTS{$gene}{$pop}{pi} = ($sum_pi/$gene_lengths{$gene});
         }
       } else {
-        print STDERR "[INFO] --> No variants found\n";
+        print STDERR "[INFO] No variants found\n";
         $RESULTS{$gene}{$pop}{pi} = 0;
       }
     }
   }
+  print STDERR "\n";
 }
 close $GENES;
 
