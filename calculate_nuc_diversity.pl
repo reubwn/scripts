@@ -110,7 +110,6 @@ while (my $gene = <$GENES>) {
 
   ## iterate thru pops
   foreach my $pop (nsort keys %pops) {
-    print STDERR "[INFO] Population: '$pop'\n";
     my $sum_pi = 0;
     ## samples to exclude based on missing data and/or proportion of het calls
     my @excluded_samples_het;
@@ -140,16 +139,19 @@ while (my $gene = <$GENES>) {
       }
     }
     close $STATS;
+    print STDERR "[INFO] Population: '$pop' (N = $RESULTS{$gene}{$pop}{num_samples})\n";
 
     ## join lists, add info to RESULTS
     my @excluded_all = (@excluded_samples_het, @excluded_samples_missing);
     $RESULTS{$gene}{$pop}{num_excluded} = scalar(@excluded_all);
     $RESULTS{$gene}{$pop}{excluded_samples_het} = join(",",@excluded_samples_het);
     $RESULTS{$gene}{$pop}{excluded_samples_missing} = join(",",@excluded_samples_missing);
+    $RESULTS{$gene}{$pop}{num_samples_final} = ($RESULTS{$gene}{$pop}{num_samples} - $RESULTS{$gene}{$pop}{num_excluded}); ## num samples after excluding some samples based on missing data and/or het calls
 
     ## execute slightly different commands depending on whether additional sample filtering is required
     if (scalar(@excluded_all) > 0) {
-      print STDERR "[INFO] Total samples to be excluded: ".scalar(@excluded_all)." (MISSING DATA > $missing_threshold: ".scalar(@excluded_samples_missing)."; HET CALLS > $het_threshold: ".scalar(@excluded_samples_het).")\n";
+      print STDERR "[INFO] Total samples excluded: ".scalar(@excluded_all)." (".percentage($RESULTS{$gene}{$pop}{num_samples},scalar(@excluded_all)).")\n";
+      # print STDERR "[INFO] Total samples excluded: ".scalar(@excluded_all)." (MISSING>$missing_threshold = ".scalar(@excluded_samples_missing)."; HET>$het_threshold = ".scalar(@excluded_samples_het).")\n";
       my $exclude_string = join(",", @excluded_all);
 
       ## command block if samples are to be excluded
@@ -186,7 +188,7 @@ while (my $gene = <$GENES>) {
           print STDERR "[INFO] Problem with vcftools command!\n\n";
           die 1;
         } else {
-          # print STDERR "[INFO] --> Ran vcftools successfully\n";
+          # print STDERR "[INFO] Ran vcftools successfully\n";
           open (my $SITESPI, "cut -f3 $pi_dir/$gene.$pop.sites.pi |") or die $!;
           while (my $pi = <$SITESPI>) {
             next if $. == 1;
@@ -214,9 +216,10 @@ print $RESULTS join ("\t",
   "GENE",
   "LENGTH",
   "POP",
-  "N_SAMPLES",
+  "N_SAMPLES_INIT",
   "N_EXCLUDED",
   "EXCLUDED_IDS",
+  "N_SAMPLES_FINAL",
   "N_SNPS",
   "N_MULTIALLELIC_SNPS",
   "N_MNPS",
@@ -241,5 +244,23 @@ foreach my $k1 (nsort keys %RESULTS) {
 }
 close $RESULTS;
 print STDERR "[INFO] Finished ".`date`."\n";
+
+######################### sub-routines
+
+sub commify {
+  my $text = reverse $_[0];
+  $text =~ s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/g;
+  return scalar reverse $text;
+}
+
+sub percentage {
+  my $numerator = $_[0];
+  my $denominator = $_[1];
+  my $places = "\%.2f"; ## default is two decimal places
+  if (exists $_[2]){$places = "\%.".$_[2]."f";};
+  my $float = (($numerator / $denominator)*100);
+  my $rounded = sprintf("$places",$float);
+  return "$rounded\%";
+}
 
 __END__
