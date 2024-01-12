@@ -233,6 +233,7 @@ foreach my $k1 (nsort keys %RESULTS) {
       $RESULTS{$k1}{$k2}{num_samples},
       $RESULTS{$k1}{$k2}{num_excluded},
       join(",",$RESULTS{$k1}{$k2}{excluded_samples_het},$RESULTS{$k1}{$k2}{excluded_samples_missing}),
+      $RESULTS{$k1}{$k2}{num_samples_final},
       $RESULTS{$k1}{$k2}{num_snps},
       $RESULTS{$k1}{$k2}{num_multiallelic},
       $RESULTS{$k1}{$k2}{num_mnps},
