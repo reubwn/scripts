@@ -89,7 +89,7 @@ open (my $GENES, $genes_file) or die $!;
 ## grep gene IDs from GFF to generate regions.txt file
 while (my $gene = <$GENES>) {
   chomp $gene;
-  print STDERR "[INFO] Gene: '$gene'\n";
+  print STDERR "\n[####]\n[INFO] Gene: '$gene'\n[####]\n";
   ## generate regions.txt file for BCF filtering
   open (my $REGIN, "grep $gene $gff_file |") or die $!;
   open (my $REGOUT, ">$regions_dir/$gene.regions.txt") or die $!;
@@ -204,7 +204,7 @@ while (my $gene = <$GENES>) {
       }
     }
   }
-  print STDERR "\n";
+  # print STDERR "\n";
 }
 close $GENES;
 
