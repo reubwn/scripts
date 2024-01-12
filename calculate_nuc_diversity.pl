@@ -13,18 +13,22 @@ use Data::Dumper;
 my $usage = "
 SYNOPSIS
   Calculate per-gene per-population avg. nucleotide diversity (pi) from GFF and VCF.
+  Sample filtering options work on gene-by-gene basis.
 
-OPTIONS [*required]
+GENERAL OPTIONS [*required]
   -v|--vcf      *[FILE]  : VCF/BCF file
   -g|--genes    *[FILE]  : TXT list of gene IDs to be analysed (linking to the 'mRNA' field of the GFF)
   -G|--gff      *[FILE]  : GFF annotation file
   -p|--pops     *[FILE]  : TXT list of population/site IDs to subset VCF
   -s|--samples  *[PATH]  : path/to/dir containing samples files that link sample ID to population grouping
-  -e|--het       [FLOAT] : threshold for heterozygous calls per sample, if greater sample is omitted (for given gene) (default: 0.5 [50%])
-  -m|--missing   [FLOAT] : threshold for missing data per sample, if greater sample is omitted (default: 0.5 [50%])
-  -n|--samples_N [INT]   : minimum threshold for number of samples; if N samples < (default: 5) after filters above, pop is skipped
   -o|--out       [STR]   : outfiles prefix ('pi')
   -h|--help              : print this message
+
+SAMPLE FILTERING OPTIONS
+  -e|--het       [FLOAT] : proportion of heterozygous calls per sample allowed (default = 0.5; set to 1 to disable)
+  -m|--missing   [FLOAT] : proportion of missing data per sample (default = 0.5; set to 1 to disable)
+  -n|--samples_N [INT]   : minimum number of samples per population after applying above filters (default = 5)
+
 \n";
 
 my ($vcf_file, $genes_file, $gff_file, $pops_file, $samples_path, $help);
