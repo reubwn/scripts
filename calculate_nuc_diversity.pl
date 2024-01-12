@@ -22,6 +22,7 @@ OPTIONS [*required]
   -s|--samples  *[PATH]  : path/to/dir containing samples files that link sample ID to population grouping
   -e|--het       [FLOAT] : threshold for heterozygous calls per sample, if greater sample is omitted (for given gene) (default: 0.5 [50%])
   -m|--missing   [FLOAT] : threshold for missing data per sample, if greater sample is omitted (default: 0.5 [50%])
+  -n|--samples_N [INT]   : minimum threshold for number of samples; if N samples < (default: 5) after filters above, pop is skipped
   -o|--out       [STR]   : outfiles prefix ('pi')
   -h|--help              : print this message
 \n";
@@ -30,6 +31,7 @@ my ($vcf_file, $genes_file, $gff_file, $pops_file, $samples_path, $help);
 my $outprefix = "pi";
 my $het_threshold = 0.5;
 my $missing_threshold = 0.5;
+my $samples_N_threshold = 5;
 
 GetOptions (
   'v|vcf=s'     => \$vcf_file,
@@ -39,6 +41,7 @@ GetOptions (
   's|samples=s' => \$samples_path,
   'e|het:f'     => \$het_threshold,
   'm|missing:f' => \$missing_threshold,
+  'n|samples_N:i' => \$samples_N_threshold,
   'o|out:s'     => \$outprefix,
   'h|help'      => \$help
 );
@@ -60,7 +63,8 @@ while (my $pop = <$POPS>) {
 close $POPS;
 print STDERR "[INFO] Number of populations in '$pops_file': ".scalar(keys %pops)."\n";
 print STDERR "[INFO] Threshold for missing data = $missing_threshold\n";
-print STDERR "[INFO] Threshold for heterozygous calls = $het_threshold\n\n";
+print STDERR "[INFO] Threshold for heterozygous calls = $het_threshold\n";
+print STDERR "[INFO] Threshold samples size (after filtering) = $samples_N_threshold\n\n";
 
 ## make dir to store intermediate files
 my $regions_dir = $outprefix."_regions";
@@ -109,7 +113,7 @@ while (my $gene = <$GENES>) {
   $gene_lengths{$gene} = $gene_length;
 
   ## iterate thru pops
-  foreach my $pop (nsort keys %pops) {
+  POP: foreach my $pop (nsort keys %pops) {
     my $sum_pi = 0;
     ## samples to exclude based on missing data and/or proportion of het calls
     my @excluded_samples_het;
@@ -147,6 +151,12 @@ while (my $gene = <$GENES>) {
     $RESULTS{$gene}{$pop}{excluded_samples_het} = join(",",@excluded_samples_het);
     $RESULTS{$gene}{$pop}{excluded_samples_missing} = join(",",@excluded_samples_missing);
     $RESULTS{$gene}{$pop}{num_samples_final} = ($RESULTS{$gene}{$pop}{num_samples} - $RESULTS{$gene}{$pop}{num_excluded}); ## num samples after excluding some samples based on missing data and/or het calls
+
+    ## iterate to next pop if N < sample_N_threshold after excluding additional samples
+    if ( $RESULTS{$gene}{$pop}{num_samples_final} < $samples_N_threshold ) {
+      print STDERR "[INFO] Pop '$pop' has < $samples_N_threshold samples after filtering, skipping\n";
+      next POP;
+    }
 
     ## execute slightly different commands depending on whether additional sample filtering is required
     if (scalar(@excluded_all) > 0) {
