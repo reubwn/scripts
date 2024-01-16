@@ -154,6 +154,7 @@ while (my $gene = <$GENES>) {
     $RESULTS{$gene}{$pop}{num_excluded} = scalar(@excluded_all);
     $RESULTS{$gene}{$pop}{excluded_samples_het} = join(",",@excluded_samples_het);
     $RESULTS{$gene}{$pop}{excluded_samples_missing} = join(",",@excluded_samples_missing);
+    $RESULTS{$gene}{$pop}{excluded_samples_all} = join(",",@excluded_all);
     $RESULTS{$gene}{$pop}{num_samples_final} = ($RESULTS{$gene}{$pop}{num_samples} - $RESULTS{$gene}{$pop}{num_excluded}); ## num samples after excluding some samples based on missing data and/or het calls
 
     ## iterate to next pop if N < sample_N_threshold after excluding additional samples
@@ -248,7 +249,7 @@ foreach my $k1 (nsort keys %RESULTS) {
     print $RESULTS join ("\t", $k1, $gene_lengths{$k1}, $k2,
       $RESULTS{$k1}{$k2}{num_samples},
       $RESULTS{$k1}{$k2}{num_excluded},
-      join(",",$RESULTS{$k1}{$k2}{excluded_samples_het},$RESULTS{$k1}{$k2}{excluded_samples_missing}),
+      $RESULTS{$k1}{$k2}{excluded_samples_all},
       $RESULTS{$k1}{$k2}{num_samples_final},
       $RESULTS{$k1}{$k2}{num_snps},
       $RESULTS{$k1}{$k2}{num_multiallelic},
