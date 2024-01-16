@@ -58,7 +58,7 @@ my %RESULTS;
 my %gene_lengths;
 
 ## parse populations files
-open (my $POPS, $pops_file) or die $!;
+open (my $POPS, $pops_file) or die "Problem with '$pops_file': $!";
 my %pops;
 while (my $pop = <$POPS>) {
   chomp $pop;
@@ -92,7 +92,7 @@ if ( -d $pi_dir ) {
 }
 
 ## open genes file
-open (my $GENES, $genes_file) or die $!;
+open (my $GENES, $genes_file) or die "Problem with '$genes_file': $!";
 
 ## grep gene IDs from GFF to generate regions.txt file
 while (my $gene = <$GENES>) {
