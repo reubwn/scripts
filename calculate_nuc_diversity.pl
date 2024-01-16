@@ -156,9 +156,9 @@ while (my $gene = <$GENES>) {
     ## join lists, add info to RESULTS
     my @excluded_all = (@excluded_samples_het, @excluded_samples_missing);
     $RESULTS{$gene}{$pop}{num_excluded} = scalar(@excluded_all);
-    $RESULTS{$gene}{$pop}{excluded_samples_het} = join(",",@excluded_samples_het);
-    $RESULTS{$gene}{$pop}{excluded_samples_missing} = join(",",@excluded_samples_missing);
-    $RESULTS{$gene}{$pop}{excluded_samples_all} = join(",",@excluded_all);
+    # $RESULTS{$gene}{$pop}{excluded_samples_het} = join(",",@excluded_samples_het);
+    # $RESULTS{$gene}{$pop}{excluded_samples_missing} = join(",",@excluded_samples_missing);
+    scalar(@excluded_all) > 0 ? $RESULTS{$gene}{$pop}{excluded_samples_all} = join(",",@excluded_all) : $RESULTS{$gene}{$pop}{excluded_samples_all} = "None";
     $RESULTS{$gene}{$pop}{num_samples_final} = ($RESULTS{$gene}{$pop}{num_samples} - $RESULTS{$gene}{$pop}{num_excluded}); ## num samples after excluding some samples based on missing data and/or het calls
 
     ## iterate to next pop if N < sample_N_threshold after excluding additional samples
@@ -236,7 +236,7 @@ open (my $RESULTS, ">".$outprefix."_RESULTS.tab") or die $!;
 print $RESULTS join ("\t",
   "GENE",
   "LENGTH",
-  "POP",
+  "ADMIN",
   "N_SAMPLES_INIT",
   "N_EXCLUDED",
   "EXCLUDED_IDS",
