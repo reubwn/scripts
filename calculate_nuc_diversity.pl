@@ -65,6 +65,10 @@ while (my $pop = <$POPS>) {
   $pops{$pop}++;
 }
 close $POPS;
+print STDERR "[INFO] VCF file: '$vcf_file'\n";
+print STDERR "[INFO] GFF file: '$gff_file'\n";
+print STDERR "[INFO] Genes file: '$genes_file'\n";
+print STDERR "[INFO] Populations file: '$pops_file'\n";
 print STDERR "[INFO] Number of populations in '$pops_file': ".scalar(keys %pops)."\n";
 print STDERR "[INFO] Threshold for missing data = $missing_threshold\n";
 print STDERR "[INFO] Threshold for heterozygous calls = $het_threshold\n";
