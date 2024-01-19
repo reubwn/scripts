@@ -25,16 +25,24 @@ GENERAL OPTIONS [*required]
   -h|--help              : print this message
 
 SAMPLE FILTERING OPTIONS
-  -e|--het       [FLOAT] : proportion of heterozygous calls per sample allowed (default = 0.5; set to 1 to disable)
-  -m|--missing   [FLOAT] : proportion of missing data per sample (default = 0.5; set to 1 to disable)
+  -e|--het       [FLOAT] : proportion of heterozygous calls per sample allowed (default = 1 [off]) [see DETAILS]
+  -m|--missing   [FLOAT] : proportion of missing data per sample (default = 1 [off]) [see DETAILS]
   -n|--samples_N [INT]   : minimum number of samples per population after applying above filters (default = 5)
+
+DETAILS
+  --het sets the threshold for maximum proportion of heterozygous calls allowed
+        e.g. '--het 0.5' removes any sample where >50% of variant sites are heterozygous
+        filter is off by default.
+  --missing sets the threshold for max proportion of missing calls allowed
+        e.g. '--missing 0.5' removes any sample where >50% of variant sites are missing
+        filter is off by default.
 
 \n";
 
 my ($vcf_file, $genes_file, $gff_file, $pops_file, $samples_path, $help);
 my $outprefix = "pi";
-my $het_threshold = 0.5;
-my $missing_threshold = 0.5;
+my $het_threshold = 1;
+my $missing_threshold = 1;
 my $samples_N_threshold = 5;
 
 GetOptions (
@@ -143,6 +151,7 @@ while (my $gene = <$GENES>) {
         if ($RESULTS{$gene}{$pop}{num_snps} > 0) { ## only do for genes with SNPs
           my @F = split (/\s+/, $line);
           ## sum of 4th, 5th, 6th and 14th cols = total num SNPs in subset VCF
+## !      ## so this uses the number of SNPs as the denominator when defining %het and %missing... better to use gene length??
           # PSC, Per-sample counts. Note that the ref/het/hom counts include only SNPs, for indels see PSI. The rest include both SNPs and indels.
           # PSC	[2]id	[3]sample	[4]nRefHom	[5]nNonRefHom	[6]nHets	[7]nTransitions	[8]nTransversions	[9]nIndels	[10]average depth	[11]nSingletons	[12]nHapRef	[13]nHapAlt	[14]nMissing
           push (@excluded_samples_het, $F[2]) if (($F[5]/($F[3]+$F[4]+$F[5]+$F[13])) > $het_threshold);
