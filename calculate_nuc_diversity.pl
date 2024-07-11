@@ -12,15 +12,17 @@ use Data::Dumper;
 
 my $usage = "
 SYNOPSIS
-  Calculate per-gene per-population avg. nucleotide diversity (pi) from GFF and VCF.
-  Sample filtering options work on gene-by-gene basis.
+  Calculate per-gene per-population nucleotide diversity (pi) from GFF and VCF, using SNPs falling within CDS
+	regions only. Sample filtering options work on gene-by-gene basis.
 
 GENERAL OPTIONS [*required]
   -v|--vcf      *[FILE]  : VCF/BCF file
   -g|--genes    *[FILE]  : TXT list of gene IDs to be analysed (linking to the 'mRNA' field of the GFF)
   -G|--gff      *[FILE]  : GFF annotation file
-  -p|--pops     *[FILE]  : TXT list of population/site IDs to subset VCF
-  -s|--samples  *[PATH]  : path/to/dir containing samples files that link sample ID to population grouping
+  -p|--pops     *[STR]   : TXT list of population/site IDs to subset VCF,
+                             or keyword 'all' to run on all samples in VCF (no subsetting)
+  -s|--samples   [PATH]  : path/to/dir containing samples files that link sample ID to population grouping
+	                           (not needed if using `--pops all`)
   -o|--out       [STR]   : outfiles prefix ('pi')
   -h|--help              : print this message
 
@@ -59,28 +61,42 @@ GetOptions (
 );
 
 die $usage if ( $help );
-die $usage unless ( $vcf_file && $genes_file && $pops_file && $samples_path );
+die $usage unless ( $vcf_file && $genes_file && $pops_file );
 
 ## RESULTS hash
 my %RESULTS;
 my %gene_lengths;
-
-## parse populations files
-open (my $POPS, $pops_file) or die "Problem with '$pops_file': $!";
 my %pops;
-while (my $pop = <$POPS>) {
-  chomp $pop;
-  $pops{$pop}++;
+
+if ($pops_file eq 'all') {
+	
+	## will run on all samples in VCF
+	print STDERR "[INFO] VCF file: '$vcf_file'\n";
+	print STDERR "[INFO] GFF file: '$gff_file'\n";
+	print STDERR "[INFO] Genes file: '$genes_file'\n";
+	print STDERR "[INFO] Populations file: '$pops_file' (running on all samples in VCF)\n";
+	print STDERR "[INFO] Threshold for missing data = $missing_threshold\n";
+	print STDERR "[INFO] Threshold for heterozygous calls = $het_threshold\n";
+	print STDERR "[INFO] Threshold samples size (after filtering) = $samples_N_threshold\n\n";
+} else {
+	
+	## parse populations files
+	open (my $POPS, $pops_file) or die "Problem with '$pops_file': $!";
+	while (my $pop = <$POPS>) {
+	  chomp $pop;
+	  $pops{$pop}++;
+	}
+	close $POPS;
+	print STDERR "[INFO] VCF file: '$vcf_file'\n";
+	print STDERR "[INFO] GFF file: '$gff_file'\n";
+	print STDERR "[INFO] Genes file: '$genes_file'\n";
+	print STDERR "[INFO] Populations file: '$pops_file'\n";
+	print STDERR "[INFO] Number of populations in '$pops_file': ".scalar(keys %pops)."\n";
+	print STDERR "[INFO] Path to samples files: '$samples_path'\n";
+	print STDERR "[INFO] Threshold for missing data = $missing_threshold\n";
+	print STDERR "[INFO] Threshold for heterozygous calls = $het_threshold\n";
+	print STDERR "[INFO] Threshold samples size (after filtering) = $samples_N_threshold\n\n";
 }
-close $POPS;
-print STDERR "[INFO] VCF file: '$vcf_file'\n";
-print STDERR "[INFO] GFF file: '$gff_file'\n";
-print STDERR "[INFO] Genes file: '$genes_file'\n";
-print STDERR "[INFO] Populations file: '$pops_file'\n";
-print STDERR "[INFO] Number of populations in '$pops_file': ".scalar(keys %pops)."\n";
-print STDERR "[INFO] Threshold for missing data = $missing_threshold\n";
-print STDERR "[INFO] Threshold for heterozygous calls = $het_threshold\n";
-print STDERR "[INFO] Threshold samples size (after filtering) = $samples_N_threshold\n\n";
 
 ## make dir to store intermediate files
 my $regions_dir = $outprefix."_regions";
@@ -127,114 +143,217 @@ while (my $gene = <$GENES>) {
 
   ## store total CDS length
   $gene_lengths{$gene} = $gene_length;
+	
+	## if using samples files or not
+	if ($pops_file eq 'all') {
+		
+	  ## run on all samples with no subsetting
+	  my $sum_pi = 0;
+	  ## samples to exclude based on missing data and/or proportion of het calls
+	  my @excluded_samples_het;
+	  my @excluded_samples_missing;
 
-  ## iterate thru pops
-  POP: foreach my $pop (nsort keys %pops) {
-    my $sum_pi = 0;
-    ## samples to exclude based on missing data and/or proportion of het calls
-    my @excluded_samples_het;
-    my @excluded_samples_missing;
+	  ## get stats on SNPs in gene region, per population
+	  open (my $STATS, "bcftools view -R $regions_dir/$gene.regions.txt -Ou $vcf_file | bcftools view -a -c1 -Ou | bcftools view -i 'TYPE=\"snp\"' -Ou | bcftools stats -s- |") or die $!;
+	  while (my $line = <$STATS>) {
+	    chomp $line;
+	    if ($line =~ m/^SN/) { ## summary numbers block
+	      my @F = split (/\s+/, $line);
+	      $RESULTS{$gene}{num_samples} = $F[-1] if $line =~ "number of samples";
+	      $RESULTS{$gene}{num_snps} = $F[-1] if $line =~ "number of SNPs";
+	      $RESULTS{$gene}{num_mnps} = $F[-1] if $line =~ "number of MNPs";
+	      $RESULTS{$gene}{num_indels} = $F[-1] if $line =~ "number of indels";
+	      $RESULTS{$gene}{num_multiallelic} = $F[-1] if $line =~ "number of multiallelic SNP sites";
 
-    ## get stats on SNPs in gene region, per population
-    open (my $STATS, "bcftools view -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt -Ou $vcf_file | bcftools view -a -c1 -Ou | bcftools view -i 'TYPE=\"snp\"' -Ou | bcftools stats -s- |") or die $!;
-    while (my $line = <$STATS>) {
-      chomp $line;
-      if ($line =~ m/^SN/) { ## summary numbers block
-        my @F = split (/\s+/, $line);
-        $RESULTS{$gene}{$pop}{num_samples} = $F[-1] if $line =~ "number of samples";
-        $RESULTS{$gene}{$pop}{num_snps} = $F[-1] if $line =~ "number of SNPs";
-        $RESULTS{$gene}{$pop}{num_mnps} = $F[-1] if $line =~ "number of MNPs";
-        $RESULTS{$gene}{$pop}{num_indels} = $F[-1] if $line =~ "number of indels";
-        $RESULTS{$gene}{$pop}{num_multiallelic} = $F[-1] if $line =~ "number of multiallelic SNP sites";
+	    } elsif ($line =~ m/^PSC/) { ## per-sample counts block
+	      if ($RESULTS{$gene}{num_snps} > 0) { ## only do for genes with SNPs
+	        my @F = split (/\s+/, $line);
+	        ## sum of 4th, 5th, 6th and 14th cols = total num SNPs in subset VCF
+	        ## so this uses the number of SNPs as the denominator when defining %het and %missing... better to use gene length??
+	        # PSC, Per-sample counts. Note that the ref/het/hom counts include only SNPs, for indels see PSI. The rest include both SNPs and indels.
+	        # PSC	[2]id	[3]sample	[4]nRefHom	[5]nNonRefHom	[6]nHets	[7]nTransitions	[8]nTransversions	[9]nIndels	[10]average depth	[11]nSingletons	[12]nHapRef	[13]nHapAlt	[14]nMissing
+	        push (@excluded_samples_het, $F[2]) if (($F[5]/($F[3]+$F[4]+$F[5]+$F[13])) > $het_threshold);
+	        push (@excluded_samples_missing, $F[2]) if (($F[13]/($F[3]+$F[4]+$F[5]+$F[13])) > $missing_threshold);
+	      }
+	    }
+	  }
+	  close $STATS;
 
-      } elsif ($line =~ m/^PSC/) { ## per-sample counts block
-        if ($RESULTS{$gene}{$pop}{num_snps} > 0) { ## only do for genes with SNPs
-          my @F = split (/\s+/, $line);
-          ## sum of 4th, 5th, 6th and 14th cols = total num SNPs in subset VCF
-## !      ## so this uses the number of SNPs as the denominator when defining %het and %missing... better to use gene length??
-          # PSC, Per-sample counts. Note that the ref/het/hom counts include only SNPs, for indels see PSI. The rest include both SNPs and indels.
-          # PSC	[2]id	[3]sample	[4]nRefHom	[5]nNonRefHom	[6]nHets	[7]nTransitions	[8]nTransversions	[9]nIndels	[10]average depth	[11]nSingletons	[12]nHapRef	[13]nHapAlt	[14]nMissing
-          push (@excluded_samples_het, $F[2]) if (($F[5]/($F[3]+$F[4]+$F[5]+$F[13])) > $het_threshold);
-          push (@excluded_samples_missing, $F[2]) if (($F[13]/($F[3]+$F[4]+$F[5]+$F[13])) > $missing_threshold);
-        }
-      }
-    }
-    close $STATS;
-    print STDERR "[INFO] Population: '$pop' (N = $RESULTS{$gene}{$pop}{num_samples})\n";
-
-    ## join lists, add info to RESULTS
-    my @excluded_all = (@excluded_samples_het, @excluded_samples_missing);
-    $RESULTS{$gene}{$pop}{num_excluded} = scalar(@excluded_all);
-    # $RESULTS{$gene}{$pop}{excluded_samples_het} = join(",",@excluded_samples_het);
-    # $RESULTS{$gene}{$pop}{excluded_samples_missing} = join(",",@excluded_samples_missing);
-    scalar(@excluded_all) > 0 ? $RESULTS{$gene}{$pop}{excluded_samples_all} = join(",",@excluded_all) : $RESULTS{$gene}{$pop}{excluded_samples_all} = "None";
-    $RESULTS{$gene}{$pop}{num_samples_final} = ($RESULTS{$gene}{$pop}{num_samples} - $RESULTS{$gene}{$pop}{num_excluded}); ## num samples after excluding some samples based on missing data and/or het calls
-
-    ## iterate to next pop if N < sample_N_threshold after excluding additional samples
-    if ( $RESULTS{$gene}{$pop}{num_samples_final} < $samples_N_threshold ) {
-      print STDERR "[INFO] Pop '$pop' has < $samples_N_threshold samples after filtering, skipping\n";
-      next POP;
-    }
+	  ## join lists, add info to RESULTS
+	  my @excluded_all = (@excluded_samples_het, @excluded_samples_missing);
+	  $RESULTS{$gene}{num_excluded} = scalar(@excluded_all);
+	  scalar(@excluded_all) > 0 ? $RESULTS{$gene}{excluded_samples_all} = join(",",@excluded_all) : $RESULTS{$gene}{excluded_samples_all} = "None";
+	  $RESULTS{$gene}{num_samples_final} = ($RESULTS{$gene}{num_samples} - $RESULTS{$gene}{num_excluded}); ## num samples after excluding some samples based on missing data and/or het calls
 
     ## execute slightly different commands depending on whether additional sample filtering is required
     if (scalar(@excluded_all) > 0) {
-      print STDERR "[INFO] \tTotal samples excluded: ".scalar(@excluded_all)." (".percentage(scalar(@excluded_all),$RESULTS{$gene}{$pop}{num_samples},1).")\n";
-      # print STDERR "[INFO] Total samples excluded: ".scalar(@excluded_all)." (MISSING>$missing_threshold = ".scalar(@excluded_samples_missing)."; HET>$het_threshold = ".scalar(@excluded_samples_het).")\n";
+      print STDERR "[INFO] \tTotal samples excluded: ".scalar(@excluded_all)." (".percentage(scalar(@excluded_all),$RESULTS{$gene}{num_samples},1).")\n";
       my $exclude_string = join(",", @excluded_all);
 
       ## command block if samples are to be excluded
       ## skip if no SNPs
-      if ( $RESULTS{$gene}{$pop}{num_snps} > 0 ) {
-        print STDERR "[INFO] \tNumber SNPs: $RESULTS{$gene}{$pop}{num_snps}\n";
+      if ( $RESULTS{$gene}{num_snps} > 0 ) {
+      print STDERR "[INFO] \tNumber SNPs: $RESULTS{$gene}{num_snps}\n";
         ## run vcftools --site-pi
-        if ( system("bcftools view -Ou -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt $vcf_file | bcftools view -Ou -s ^$exclude_string | bcftools view -Ou -a -c1 | bcftools view -Ov -i 'TYPE=\"snp\"' | vcftools --vcf - --out $gene.$pop --site-pi --stdout >$pi_dir/$gene.$pop.sites.pi 2>/dev/null") != 0 ) {
+        if ( system("bcftools view -Ou -R $regions_dir/$gene.regions.txt $vcf_file | bcftools view -Ou -s ^$exclude_string | bcftools view -Ou -a -c1 | bcftools view -Ov -i 'TYPE=\"snp\"' | vcftools --vcf - --out $gene --site-pi --stdout >$pi_dir/$gene.sites.pi 2>/dev/null") != 0 ) {
           print STDERR "[INFO] Problem with vcftools command!\n\n";
           die 1;
         } else {
           # print STDERR "[INFO] Ran vcftools successfully\n";
-          open (my $SITESPI, "cut -f3 $pi_dir/$gene.$pop.sites.pi |") or die $!;
+          open (my $SITESPI, "cut -f3 $pi_dir/$gene.sites.pi |") or die $!;
           while (my $pi = <$SITESPI>) {
             next if $. == 1;
             chomp $pi;
             $sum_pi += $pi;
           }
           close $SITESPI;
-          $RESULTS{$gene}{$pop}{pi} = ($sum_pi/$gene_lengths{$gene});
-          print STDERR "[INFO] \tNucleotide diversity = $RESULTS{$gene}{$pop}{pi}\n";
+          $RESULTS{$gene}{pi} = ($sum_pi/$gene_lengths{$gene});
+          print STDERR "[INFO] \tNucleotide diversity = $RESULTS{$gene}{pi}\n";
         }
       } else {
         print STDERR "[INFO] \tNo variants found\n";
-        $RESULTS{$gene}{$pop}{pi} = 0;
+        $RESULTS{$gene}{pi} = 0;
       }
 
-    } else {
-      ## command block if no samples are to be excluded
-      ## skip if no SNPs
-      if ( $RESULTS{$gene}{$pop}{num_snps} > 0 ) {
-        print STDERR "[INFO] \tNumber SNPs: $RESULTS{$gene}{$pop}{num_snps}\n";
-        ## run vcftools --site-pi
-        if ( system("bcftools view -Ou -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt $vcf_file | bcftools view -Ou -a -c1 | bcftools view -Ov -i 'TYPE=\"snp\"' | vcftools --vcf - --out $gene.$pop --site-pi --stdout >$pi_dir/$gene.$pop.sites.pi 2>/dev/null") != 0 ) {
-          print STDERR "[INFO] Problem with vcftools command!\n\n";
-          die 1;
-        } else {
-          # print STDERR "[INFO] Ran vcftools successfully\n";
-          open (my $SITESPI, "cut -f3 $pi_dir/$gene.$pop.sites.pi |") or die $!;
-          while (my $pi = <$SITESPI>) {
-            next if $. == 1;
-            chomp $pi;
-            $sum_pi += $pi;
-          }
-          close $SITESPI;
-          $RESULTS{$gene}{$pop}{pi} = ($sum_pi/$gene_lengths{$gene});
-          print STDERR "[INFO] \tNucleotide diversity = $RESULTS{$gene}{$pop}{pi}\n";
-        }
-      } else {
-        print STDERR "[INFO] \tNo variants found\n";
-        $RESULTS{$gene}{$pop}{pi} = 0;
-      }
-    }
-  }
-  # print STDERR "\n";
+ 	  } else {
+	    ## command block if no samples are to be excluded
+	    ## skip if no SNPs
+	    if ( $RESULTS{$gene}{num_snps} > 0 ) {
+	      print STDERR "[INFO] \tNumber SNPs: $RESULTS{$gene}{num_snps}\n";
+	      ## run vcftools --site-pi
+	      if ( system("bcftools view -Ou -R $regions_dir/$gene.regions.txt $vcf_file | bcftools view -Ou -a -c1 | bcftools view -Ov -i 'TYPE=\"snp\"' | vcftools --vcf - --out $gene --site-pi --stdout >$pi_dir/$gene.sites.pi 2>/dev/null") != 0 ) {
+	        print STDERR "[INFO] Problem with vcftools command!\n\n";
+	        die 1;
+	      } else {
+	        # print STDERR "[INFO] Ran vcftools successfully\n";
+	        open (my $SITESPI, "cut -f3 $pi_dir/$gene.sites.pi |") or die $!;
+	        while (my $pi = <$SITESPI>) {
+	          next if $. == 1;
+	          chomp $pi;
+	          $sum_pi += $pi;
+	        }
+	        close $SITESPI;
+	        $RESULTS{$gene}{pi} = ($sum_pi/$gene_lengths{$gene});
+	        print STDERR "[INFO] \tNucleotide diversity = $RESULTS{$gene}{pi}\n";
+	      }
+	    } else {
+	      print STDERR "[INFO] \tNo variants found\n";
+	      $RESULTS{$gene}{pi} = 0;
+	    }
+	  }
+		
+	} else {
+		
+		##
+	  ## iterate thru pops
+	  ##
+		
+		POP: foreach my $pop (nsort keys %pops) {
+	    my $sum_pi = 0;
+	    ## samples to exclude based on missing data and/or proportion of het calls
+	    my @excluded_samples_het;
+	    my @excluded_samples_missing;
+
+	    ## get stats on SNPs in gene region, per population
+	    open (my $STATS, "bcftools view -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt -Ou $vcf_file | bcftools view -a -c1 -Ou | bcftools view -i 'TYPE=\"snp\"' -Ou | bcftools stats -s- |") or die $!;
+	    while (my $line = <$STATS>) {
+	      chomp $line;
+	      if ($line =~ m/^SN/) { ## summary numbers block
+	        my @F = split (/\s+/, $line);
+	        $RESULTS{$gene}{$pop}{num_samples} = $F[-1] if $line =~ "number of samples";
+	        $RESULTS{$gene}{$pop}{num_snps} = $F[-1] if $line =~ "number of SNPs";
+	        $RESULTS{$gene}{$pop}{num_mnps} = $F[-1] if $line =~ "number of MNPs";
+	        $RESULTS{$gene}{$pop}{num_indels} = $F[-1] if $line =~ "number of indels";
+	        $RESULTS{$gene}{$pop}{num_multiallelic} = $F[-1] if $line =~ "number of multiallelic SNP sites";
+
+	      } elsif ($line =~ m/^PSC/) { ## per-sample counts block
+	        if ($RESULTS{$gene}{$pop}{num_snps} > 0) { ## only do for genes with SNPs
+	          my @F = split (/\s+/, $line);
+	          ## sum of 4th, 5th, 6th and 14th cols = total num SNPs in subset VCF
+	## !      ## so this uses the number of SNPs as the denominator when defining %het and %missing... better to use gene length??
+	          # PSC, Per-sample counts. Note that the ref/het/hom counts include only SNPs, for indels see PSI. The rest include both SNPs and indels.
+	          # PSC	[2]id	[3]sample	[4]nRefHom	[5]nNonRefHom	[6]nHets	[7]nTransitions	[8]nTransversions	[9]nIndels	[10]average depth	[11]nSingletons	[12]nHapRef	[13]nHapAlt	[14]nMissing
+	          push (@excluded_samples_het, $F[2]) if (($F[5]/($F[3]+$F[4]+$F[5]+$F[13])) > $het_threshold);
+	          push (@excluded_samples_missing, $F[2]) if (($F[13]/($F[3]+$F[4]+$F[5]+$F[13])) > $missing_threshold);
+	        }
+	      }
+	    }
+	    close $STATS;
+	    print STDERR "[INFO] Population: '$pop' (N = $RESULTS{$gene}{$pop}{num_samples})\n";
+
+	    ## join lists, add info to RESULTS
+	    my @excluded_all = (@excluded_samples_het, @excluded_samples_missing);
+	    $RESULTS{$gene}{$pop}{num_excluded} = scalar(@excluded_all);
+	    # $RESULTS{$gene}{$pop}{excluded_samples_het} = join(",",@excluded_samples_het);
+	    # $RESULTS{$gene}{$pop}{excluded_samples_missing} = join(",",@excluded_samples_missing);
+	    scalar(@excluded_all) > 0 ? $RESULTS{$gene}{$pop}{excluded_samples_all} = join(",",@excluded_all) : $RESULTS{$gene}{$pop}{excluded_samples_all} = "None";
+	    $RESULTS{$gene}{$pop}{num_samples_final} = ($RESULTS{$gene}{$pop}{num_samples} - $RESULTS{$gene}{$pop}{num_excluded}); ## num samples after excluding some samples based on missing data and/or het calls
+
+	    ## iterate to next pop if N < sample_N_threshold after excluding additional samples
+	    if ( $RESULTS{$gene}{$pop}{num_samples_final} < $samples_N_threshold ) {
+	      print STDERR "[INFO] Pop '$pop' has < $samples_N_threshold samples after filtering, skipping\n";
+	      next POP;
+	    }
+
+	    ## execute slightly different commands depending on whether additional sample filtering is required
+	    if (scalar(@excluded_all) > 0) {
+	      print STDERR "[INFO] \tTotal samples excluded: ".scalar(@excluded_all)." (".percentage(scalar(@excluded_all),$RESULTS{$gene}{$pop}{num_samples},1).")\n";
+	      # print STDERR "[INFO] Total samples excluded: ".scalar(@excluded_all)." (MISSING>$missing_threshold = ".scalar(@excluded_samples_missing)."; HET>$het_threshold = ".scalar(@excluded_samples_het).")\n";
+	      my $exclude_string = join(",", @excluded_all);
+
+	      ## command block if samples are to be excluded
+	      ## skip if no SNPs
+	      if ( $RESULTS{$gene}{$pop}{num_snps} > 0 ) {
+	        print STDERR "[INFO] \tNumber SNPs: $RESULTS{$gene}{$pop}{num_snps}\n";
+	        ## run vcftools --site-pi
+	        if ( system("bcftools view -Ou -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt $vcf_file | bcftools view -Ou -s ^$exclude_string | bcftools view -Ou -a -c1 | bcftools view -Ov -i 'TYPE=\"snp\"' | vcftools --vcf - --out $gene.$pop --site-pi --stdout >$pi_dir/$gene.$pop.sites.pi 2>/dev/null") != 0 ) {
+	          print STDERR "[INFO] Problem with vcftools command!\n\n";
+	          die 1;
+	        } else {
+	          # print STDERR "[INFO] Ran vcftools successfully\n";
+	          open (my $SITESPI, "cut -f3 $pi_dir/$gene.$pop.sites.pi |") or die $!;
+	          while (my $pi = <$SITESPI>) {
+	            next if $. == 1;
+	            chomp $pi;
+	            $sum_pi += $pi;
+	          }
+	          close $SITESPI;
+	          $RESULTS{$gene}{$pop}{pi} = ($sum_pi/$gene_lengths{$gene});
+	          print STDERR "[INFO] \tNucleotide diversity = $RESULTS{$gene}{$pop}{pi}\n";
+	        }
+	      } else {
+	        print STDERR "[INFO] \tNo variants found\n";
+	        $RESULTS{$gene}{$pop}{pi} = 0;
+	      }
+
+	    } else {
+	      ## command block if no samples are to be excluded
+	      ## skip if no SNPs
+	      if ( $RESULTS{$gene}{$pop}{num_snps} > 0 ) {
+	        print STDERR "[INFO] \tNumber SNPs: $RESULTS{$gene}{$pop}{num_snps}\n";
+	        ## run vcftools --site-pi
+	        if ( system("bcftools view -Ou -R $regions_dir/$gene.regions.txt -S $samples_path/$pop.txt $vcf_file | bcftools view -Ou -a -c1 | bcftools view -Ov -i 'TYPE=\"snp\"' | vcftools --vcf - --out $gene.$pop --site-pi --stdout >$pi_dir/$gene.$pop.sites.pi 2>/dev/null") != 0 ) {
+	          print STDERR "[INFO] Problem with vcftools command!\n\n";
+	          die 1;
+	        } else {
+	          # print STDERR "[INFO] Ran vcftools successfully\n";
+	          open (my $SITESPI, "cut -f3 $pi_dir/$gene.$pop.sites.pi |") or die $!;
+	          while (my $pi = <$SITESPI>) {
+	            next if $. == 1;
+	            chomp $pi;
+	            $sum_pi += $pi;
+	          }
+	          close $SITESPI;
+	          $RESULTS{$gene}{$pop}{pi} = ($sum_pi/$gene_lengths{$gene});
+	          print STDERR "[INFO] \tNucleotide diversity = $RESULTS{$gene}{$pop}{pi}\n";
+	        }
+	      } else {
+	        print STDERR "[INFO] \tNo variants found\n";
+	        $RESULTS{$gene}{$pop}{pi} = 0;
+	      }
+	    }
+	  }
+	}	
 }
 close $GENES;
 
