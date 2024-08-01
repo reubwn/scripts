@@ -146,8 +146,9 @@ while (my $gene = <$GENES>) {
 	
 	## if using samples files or not
 	if ($pops_file eq 'all') {
-		
 	  ## run on all samples with no subsetting
+		my $pop = "all";
+		
 	  my $sum_pi = 0;
 	  ## samples to exclude based on missing data and/or proportion of het calls
 	  my @excluded_samples_het;
@@ -159,14 +160,14 @@ while (my $gene = <$GENES>) {
 	    chomp $line;
 	    if ($line =~ m/^SN/) { ## summary numbers block
 	      my @F = split (/\s+/, $line);
-	      $RESULTS{$gene}{num_samples} = $F[-1] if $line =~ "number of samples";
-	      $RESULTS{$gene}{num_snps} = $F[-1] if $line =~ "number of SNPs";
-	      $RESULTS{$gene}{num_mnps} = $F[-1] if $line =~ "number of MNPs";
-	      $RESULTS{$gene}{num_indels} = $F[-1] if $line =~ "number of indels";
-	      $RESULTS{$gene}{num_multiallelic} = $F[-1] if $line =~ "number of multiallelic SNP sites";
+	      $RESULTS{$gene}{$pop}{num_samples} = $F[-1] if $line =~ "number of samples";
+	      $RESULTS{$gene}{$pop}{num_snps} = $F[-1] if $line =~ "number of SNPs";
+	      $RESULTS{$gene}{$pop}{num_mnps} = $F[-1] if $line =~ "number of MNPs";
+	      $RESULTS{$gene}{$pop}{num_indels} = $F[-1] if $line =~ "number of indels";
+	      $RESULTS{$gene}{$pop}{num_multiallelic} = $F[-1] if $line =~ "number of multiallelic SNP sites";
 
 	    } elsif ($line =~ m/^PSC/) { ## per-sample counts block
-	      if ($RESULTS{$gene}{num_snps} > 0) { ## only do for genes with SNPs
+	      if ($RESULTS{$gene}{$pop}{num_snps} > 0) { ## only do for genes with SNPs
 	        my @F = split (/\s+/, $line);
 	        ## sum of 4th, 5th, 6th and 14th cols = total num SNPs in subset VCF
 	        ## so this uses the number of SNPs as the denominator when defining %het and %missing... better to use gene length??
@@ -181,19 +182,19 @@ while (my $gene = <$GENES>) {
 
 	  ## join lists, add info to RESULTS
 	  my @excluded_all = (@excluded_samples_het, @excluded_samples_missing);
-	  $RESULTS{$gene}{num_excluded} = scalar(@excluded_all);
-	  scalar(@excluded_all) > 0 ? $RESULTS{$gene}{excluded_samples_all} = join(",",@excluded_all) : $RESULTS{$gene}{excluded_samples_all} = "None";
-	  $RESULTS{$gene}{num_samples_final} = ($RESULTS{$gene}{num_samples} - $RESULTS{$gene}{num_excluded}); ## num samples after excluding some samples based on missing data and/or het calls
+	  $RESULTS{$gene}{$pop}{num_excluded} = scalar(@excluded_all);
+	  scalar(@excluded_all) > 0 ? $RESULTS{$gene}{$pop}{excluded_samples_all} = join(",",@excluded_all) : $RESULTS{$gene}{$pop}{excluded_samples_all} = "None";
+	  $RESULTS{$gene}{$pop}{num_samples_final} = ($RESULTS{$gene}{$pop}{num_samples} - $RESULTS{$gene}{$pop}{num_excluded}); ## num samples after excluding some samples based on missing data and/or het calls
 
     ## execute slightly different commands depending on whether additional sample filtering is required
     if (scalar(@excluded_all) > 0) {
-      print STDERR "[INFO] \tTotal samples excluded: ".scalar(@excluded_all)." (".percentage(scalar(@excluded_all),$RESULTS{$gene}{num_samples},1).")\n";
+      print STDERR "[INFO] \tTotal samples excluded: ".scalar(@excluded_all)." (".percentage(scalar(@excluded_all),$RESULTS{$gene}{$pop}{num_samples},1).")\n";
       my $exclude_string = join(",", @excluded_all);
 
       ## command block if samples are to be excluded
       ## skip if no SNPs
-      if ( $RESULTS{$gene}{num_snps} > 0 ) {
-      print STDERR "[INFO] \tNumber SNPs: $RESULTS{$gene}{num_snps}\n";
+      if ( $RESULTS{$gene}{$pop}{num_snps} > 0 ) {
+      print STDERR "[INFO] \tNumber SNPs: $RESULTS{$gene}{$pop}{num_snps}\n";
         ## run vcftools --site-pi
         if ( system("bcftools view -Ou -R $regions_dir/$gene.regions.txt $vcf_file | bcftools view -Ou -s ^$exclude_string | bcftools view -Ou -a -c1 | bcftools view -Ov -i 'TYPE=\"snp\"' | vcftools --vcf - --out $gene --site-pi --stdout >$pi_dir/$gene.sites.pi 2>/dev/null") != 0 ) {
           print STDERR "[INFO] Problem with vcftools command!\n\n";
@@ -207,19 +208,19 @@ while (my $gene = <$GENES>) {
             $sum_pi += $pi;
           }
           close $SITESPI;
-          $RESULTS{$gene}{pi} = ($sum_pi/$gene_lengths{$gene});
-          print STDERR "[INFO] \tNucleotide diversity = $RESULTS{$gene}{pi}\n";
+          $RESULTS{$gene}{$pop}{pi} = ($sum_pi/$gene_lengths{$gene});
+          print STDERR "[INFO] \tNucleotide diversity = $RESULTS{$gene}{$pop}{pi}\n";
         }
       } else {
         print STDERR "[INFO] \tNo variants found\n";
-        $RESULTS{$gene}{pi} = 0;
+        $RESULTS{$gene}{$pop}{pi} = 0;
       }
 
  	  } else {
 	    ## command block if no samples are to be excluded
 	    ## skip if no SNPs
-	    if ( $RESULTS{$gene}{num_snps} > 0 ) {
-	      print STDERR "[INFO] \tNumber SNPs: $RESULTS{$gene}{num_snps}\n";
+	    if ( $RESULTS{$gene}{$pop}{num_snps} > 0 ) {
+	      print STDERR "[INFO] \tNumber SNPs: $RESULTS{$gene}{$pop}{num_snps}\n";
 	      ## run vcftools --site-pi
 	      if ( system("bcftools view -Ou -R $regions_dir/$gene.regions.txt $vcf_file | bcftools view -Ou -a -c1 | bcftools view -Ov -i 'TYPE=\"snp\"' | vcftools --vcf - --out $gene --site-pi --stdout >$pi_dir/$gene.sites.pi 2>/dev/null") != 0 ) {
 	        print STDERR "[INFO] Problem with vcftools command!\n\n";
@@ -233,12 +234,12 @@ while (my $gene = <$GENES>) {
 	          $sum_pi += $pi;
 	        }
 	        close $SITESPI;
-	        $RESULTS{$gene}{pi} = ($sum_pi/$gene_lengths{$gene});
-	        print STDERR "[INFO] \tNucleotide diversity = $RESULTS{$gene}{pi}\n";
+	        $RESULTS{$gene}{$pop}{pi} = ($sum_pi/$gene_lengths{$gene});
+	        print STDERR "[INFO] \tNucleotide diversity = $RESULTS{$gene}{$pop}{pi}\n";
 	      }
 	    } else {
 	      print STDERR "[INFO] \tNo variants found\n";
-	      $RESULTS{$gene}{pi} = 0;
+	      $RESULTS{$gene}{$pop}{pi} = 0;
 	    }
 	  }
 		
@@ -359,12 +360,14 @@ close $GENES;
 
 # print Dumper(\%RESULTS);
 
+print STDERR "\n[INFO] Printing results...\n";
+
 ## print results to file
 open (my $RESULTS, ">".$outprefix."_RESULTS.tab") or die $!;
 print $RESULTS join ("\t",
   "GENE",
   "LENGTH",
-  "ADMIN",
+  "POP",
   "N_SAMPLES_INIT",
   "N_EXCLUDED",
   "EXCLUDED_IDS",
