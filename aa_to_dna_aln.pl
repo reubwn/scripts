@@ -116,8 +116,17 @@ ALN: foreach my $aln_file (@aln_files) {
     }
     my $dna_aln = aa_to_dna_aln($prot_aln, \%cds_seqs);
     my $dna_aln_filename = (basename ($aln_file, ".fa")) . "_dna.fa";
-    my $write_dna_aln = Bio::AlignIO -> new( -file => ">$outdir/$dna_aln_filename", -format => 'fasta', -verbose => -1 );
-    $write_dna_aln -> write_aln($dna_aln);
+
+    # Output cleaned FASTA with the NSE '/start-end' suffix removed from headers
+    my $out = Bio::SeqIO->new( -file => ">$outdir/$dna_aln_filename", -format => 'fasta' );
+
+    for my $seq ( $dna_aln->each_seq ) {
+      my $id = $seq->display_id;
+      $id =~ s{/[\d-]+$}{};
+      $out->write_seq( Bio::Seq->new( -id => $id, -seq => $seq->seq ));
+    }
+#    my $write_dna_aln = Bio::AlignIO -> new( -file => ">$outdir/$dna_aln_filename", -format => 'fasta', -verbose => -1 );
+#    $write_dna_aln -> write_aln($dna_aln);
   }
 }
 

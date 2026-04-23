@@ -78,6 +78,7 @@ $csv_summary->print($sw_fh, [
 # Process each file
 # -----------------------------
 for my $file (@files) {
+    print STDOUT "\r[INFO] Working on file: $file"; $|=1;
     my ($ids_ref, $seqs_ref) = read_fasta_alignment($file);
     my @ids  = @$ids_ref;
     my @seqs = @$seqs_ref;
@@ -125,6 +126,8 @@ for my $file (@files) {
 
 close $pw_fh;
 close $sw_fh;
+
+print STDOUT "\n[INFO] Finished! " . `date`;
 
 # -----------------------------
 # Subroutines
